@@ -3,16 +3,23 @@ package com.notwhat.shared.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.notwhat.shared.catalog.CreateReelRequestDto
+import com.notwhat.shared.catalog.DeleteResponseDto
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.ReelDto
 import com.notwhat.shared.catalog.seedProducts
 import com.notwhat.shared.catalog.seedReels
+import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.domain.seller.SellerUseCase
 import com.notwhat.shared.order.OrderDto
 import com.notwhat.shared.seller.seedSellerOrders
+import com.notwhat.shared.uploads.ImageUploadResponseDto
+import com.notwhat.shared.uploads.UploadRepository
+import com.notwhat.shared.uploads.VideoUploadResponseDto
 
 internal class SellerContentState(
     private val sellerUseCase: SellerUseCase,
+    private val uploadRepository: UploadRepository,
 ) {
     var products by mutableStateOf<List<ProductDto>>(emptyList())
         private set
@@ -45,23 +52,62 @@ internal class SellerContentState(
     fun removeReelLocally(id: String) {
         reels = reels.filterNot { it.id == id }
     }
+
+    suspend fun uploadVideo(
+        data: ByteArray,
+        fileName: String,
+        bearerToken: String,
+        mimeType: String,
+    ): NetworkResult<VideoUploadResponseDto> = uploadRepository.uploadVideo(data, fileName, bearerToken, mimeType)
+
+    suspend fun uploadImage(
+        data: ByteArray,
+        fileName: String,
+        bearerToken: String,
+        mimeType: String,
+    ): NetworkResult<ImageUploadResponseDto> = uploadRepository.uploadImage(data, fileName, bearerToken, mimeType)
+
+    suspend fun createReel(
+        request: CreateReelRequestDto,
+        bearerToken: String,
+    ): NetworkResult<ReelDto> {
+        val result = sellerUseCase.createReel(request, bearerToken)
+        result.getOrNull()?.let { created ->
+            reels = listOf(created) + reels.filterNot { it.id == created.id }
+        }
+        return result
+    }
+
+    suspend fun deleteReel(
+        id: String,
+        bearerToken: String,
+    ): NetworkResult<DeleteResponseDto> {
+        val result = sellerUseCase.deleteReel(id, bearerToken)
+        if (result.getOrNull()?.deleted == true) {
+            removeReelLocally(id)
+        }
+        return result
+    }
 }
 
 // Bridge: DemoSellerReel rendering still used by SellerReelListScreen components
-internal fun com.notwhat.shared.catalog.ReelDto.toDemoSellerReel(): DemoSellerReel = DemoSellerReel(
-    id = id,
-    title = caption ?: "Untitled Reel",
-    caption = caption ?: "",
-    thumbnailUrl = thumbnailUrl,
-    duration = "${duration.toInt()}s",
-    viewCount = viewCount.toString(),
-    isShared = status == "active",
-    taggedProducts = emptyList(),
-)
+internal fun com.notwhat.shared.catalog.ReelDto.toDemoSellerReel(): DemoSellerReel =
+    DemoSellerReel(
+        id = id,
+        title = caption ?: "Untitled Reel",
+        caption = caption ?: "",
+        thumbnailUrl = thumbnailUrl,
+        duration = "${duration.toInt()}s",
+        viewCount = viewCount.toString(),
+        isShared = status == "active",
+        taggedProducts = emptyList(),
+    )
+
 internal val ReelDto.displayCreator: String get() = storeId?.storeName ?: "@${id.take(6)}"
 internal val ReelDto.displayThumbnail: String get() = thumbnailUrl
-internal val ReelDto.displayLabel: String get() = when {
-    viewCount > 2000 -> "TRENDING"
-    likeCount > 500 -> "HOT"
-    else -> "NEW"
-}
+internal val ReelDto.displayLabel: String get() =
+    when {
+        viewCount > 2000 -> "TRENDING"
+        likeCount > 500 -> "HOT"
+        else -> "NEW"
+    }

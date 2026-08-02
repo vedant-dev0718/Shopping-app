@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun SellerReelListScreen(
@@ -72,6 +74,8 @@ internal fun SellerReelListScreen(
     }
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
     var tagPickerReelId by remember { mutableStateOf<String?>(null) }
+    var deleteError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     // Product tag picker overlay
     tagPickerReelId?.let { reelId ->
@@ -143,7 +147,22 @@ internal fun SellerReelListScreen(
                         }
                         Button(
                             onClick = {
-                                reels = reels.filterNot { it.id == reelId }
+                                val token = state.currentSession?.authToken
+                                if (token.isNullOrBlank()) {
+                                    deleteError = "Please sign in again to delete this reel."
+                                    pendingDeleteId = null
+                                    return@Button
+                                }
+
+                                scope.launch {
+                                    val deleteResult = state.sellerContent.deleteReel(reelId, token)
+                                    if (deleteResult.getOrNull()?.deleted == true) {
+                                        reels = reels.filterNot { it.id == reelId }
+                                        deleteError = null
+                                    } else {
+                                        deleteError = "Failed to delete reel. Please retry."
+                                    }
+                                }
                                 pendingDeleteId = null
                             },
                             modifier = Modifier.weight(1f),
@@ -190,6 +209,19 @@ internal fun SellerReelListScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = accent),
                 ) {
                     Text("+ Upload", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+
+        deleteError?.let { message ->
+            item {
+                Surface(color = Color(0xFF4A1F1F), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = message,
+                        color = Color(0xFFFFC9C9),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    )
                 }
             }
         }

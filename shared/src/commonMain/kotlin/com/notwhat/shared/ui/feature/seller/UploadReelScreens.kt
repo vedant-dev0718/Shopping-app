@@ -32,10 +32,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +46,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.delay
+import com.notwhat.shared.catalog.CreateReelRequestDto
+import com.notwhat.shared.catalog.ProductDto
+import com.notwhat.shared.core.NetworkResult
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun UploadReelScreen(
@@ -73,22 +76,120 @@ internal fun UploadReelScreen(
     var isSharing by remember { mutableStateOf(false) }
     var shareStatus by remember { mutableStateOf<String?>(null) }
     var tagQuery by remember { mutableStateOf("") }
-    var taggedProducts by remember { mutableStateOf(emptyList<String>()) }
+    var selectedProductIds by remember { mutableStateOf(emptyList<String>()) }
+    val scope = rememberCoroutineScope()
 
-    val suggestions =
+    val sellerProducts =
         state.sellerContent.products
             .ifEmpty {
                 com.notwhat.shared.catalog
                     .seedProducts()
-            }.map { it.displayTitle }
-            .filter { it.contains(tagQuery, ignoreCase = true) && !taggedProducts.contains(it) }
-            .take(5)
+            }
 
-    LaunchedEffect(isSharing) {
+    val selectedProducts = sellerProducts.filter { selectedProductIds.contains(it.id) }
+
+    val suggestions =
+        sellerProducts
+            .filter {
+                it.displayTitle.contains(tagQuery, ignoreCase = true) &&
+                    !selectedProductIds.contains(it.id)
+            }.take(5)
+
+    val shareReel = share@{
         if (isSharing) {
-            delay(1800)
+            return@share
+        }
+
+        val token = state.currentSession?.authToken
+        if (token.isNullOrBlank()) {
+            shareStatus = "Please sign in again to upload reels."
+            return@share
+        }
+
+        val selectedVideoUri = videoUri
+        if (selectedVideoUri.isNullOrBlank()) {
+            shareStatus = "Please select a reel video first."
+            return@share
+        }
+
+        if (selectedProductIds.size !in 1..3) {
+            shareStatus = "Tag 1 to 3 products before uploading."
+            return@share
+        }
+
+        scope.launch {
+            isSharing = true
+            shareStatus = null
+
+            val videoBytes = PlatformMediaFileReader.readBytes(selectedVideoUri)
+            if (videoBytes == null) {
+                isSharing = false
+                shareStatus = "Could not read the selected video. Please try again."
+                return@launch
+            }
+
+            val videoUploadResult =
+                state.sellerContent.uploadVideo(
+                    data = videoBytes,
+                    fileName = PlatformMediaFileReader.fileName(selectedVideoUri, "reel.mp4"),
+                    bearerToken = token,
+                    mimeType = PlatformMediaFileReader.guessMimeType(selectedVideoUri, "video/mp4"),
+                )
+
+            val videoUpload =
+                when (videoUploadResult) {
+                    is NetworkResult.Success -> {
+                        videoUploadResult.data
+                    }
+
+                    is NetworkResult.Failure -> {
+                        isSharing = false
+                        shareStatus = videoUploadResult.error.userMessage()
+                        return@launch
+                    }
+                }
+
+            val selectedThumbnailUri = thumbnailUri
+            var finalThumbnailUrl = videoUpload.thumbnailUrl.ifBlank { videoUpload.videoUrl }
+
+            if (!selectedThumbnailUri.isNullOrBlank()) {
+                val thumbnailBytes = PlatformMediaFileReader.readBytes(selectedThumbnailUri)
+                if (thumbnailBytes != null) {
+                    val imageUploadResult =
+                        state.sellerContent.uploadImage(
+                            data = thumbnailBytes,
+                            fileName = PlatformMediaFileReader.fileName(selectedThumbnailUri, "reel-thumb.jpg"),
+                            bearerToken = token,
+                            mimeType = PlatformMediaFileReader.guessMimeType(selectedThumbnailUri, "image/jpeg"),
+                        )
+
+                    if (imageUploadResult is NetworkResult.Success) {
+                        finalThumbnailUrl = imageUploadResult.data.imageUrl
+                    }
+                }
+            }
+
+            val primaryProduct = selectedProducts.firstOrNull()
+            val createRequest =
+                CreateReelRequestDto(
+                    videoUrl = videoUpload.videoUrl,
+                    thumbnailUrl = finalThumbnailUrl,
+                    caption = caption.trim().ifBlank { null },
+                    hashtags = caption.split(' ').filter { it.startsWith("#") }.map { it.trim() },
+                    region = primaryProduct?.region?.ifBlank { "India" } ?: "India",
+                    category = primaryProduct?.category?.ifBlank { "Fashion" } ?: "Fashion",
+                    subcategory = primaryProduct?.subcategory,
+                    taggedProductIds = selectedProductIds,
+                )
+
+            val createResult = state.sellerContent.createReel(createRequest, token)
             isSharing = false
-            shareStatus = "Reel uploaded and queued for feed publishing."
+
+            if (createResult is NetworkResult.Success) {
+                shareStatus = "Reel uploaded and published to buyer feed."
+            } else if (createResult is NetworkResult.Failure) {
+                shareStatus = createResult.error.userMessage()
+            }
         }
     }
 
@@ -106,7 +207,7 @@ internal fun UploadReelScreen(
                 TextButton(onClick = onBack) { Text("✕", color = text, fontWeight = FontWeight.SemiBold) }
                 Text("UPLOAD REEL", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                 TextButton(
-                    onClick = { if (videoUri != null && !isSharing) isSharing = true },
+                    onClick = shareReel,
                     enabled = videoUri != null && !isSharing,
                 ) {
                     Text("Done", color = if (videoUri != null) accent else muted, fontWeight = FontWeight.Bold)
@@ -156,7 +257,7 @@ internal fun UploadReelScreen(
                         if (uri != null) videoUri = uri
                     }
                 },
-                onShareReel = { if (!isSharing) isSharing = true },
+                onShareReel = shareReel,
             )
         }
 
@@ -224,7 +325,7 @@ internal fun UploadReelScreen(
 
         item {
             TagProductsCard(
-                taggedProducts = taggedProducts,
+                taggedProducts = selectedProducts.map { it.displayTitle },
                 tagQuery = tagQuery,
                 suggestions = suggestions,
                 text = text,
@@ -236,10 +337,17 @@ internal fun UploadReelScreen(
                 border = border,
                 onTagQueryChange = { tagQuery = it },
                 onAddProduct = { product ->
-                    if (taggedProducts.size < 5) taggedProducts = taggedProducts + product
+                    if (selectedProductIds.size < 3) {
+                        selectedProductIds = selectedProductIds + product.id
+                    }
                     tagQuery = ""
                 },
-                onRemoveProduct = { product -> taggedProducts = taggedProducts.filterNot { it == product } },
+                onRemoveProduct = { productName ->
+                    val productId = selectedProducts.firstOrNull { it.displayTitle == productName }?.id
+                    if (productId != null) {
+                        selectedProductIds = selectedProductIds.filterNot { it == productId }
+                    }
+                },
             )
         }
 
@@ -399,7 +507,7 @@ private fun BargainingToggle(
 private fun TagProductsCard(
     taggedProducts: List<String>,
     tagQuery: String,
-    suggestions: List<String>,
+    suggestions: List<ProductDto>,
     text: Color,
     muted: Color,
     accentSoft: Color,
@@ -408,7 +516,7 @@ private fun TagProductsCard(
     field: Color,
     border: Color,
     onTagQueryChange: (String) -> Unit,
-    onAddProduct: (String) -> Unit,
+    onAddProduct: (ProductDto) -> Unit,
     onRemoveProduct: (String) -> Unit,
 ) {
     Surface(color = panel, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
@@ -422,7 +530,7 @@ private fun TagProductsCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("TAG PRODUCTS", color = text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-                Text("${taggedProducts.size}/5", color = accentSoft, style = MaterialTheme.typography.labelSmall)
+                Text("${taggedProducts.size}/3", color = accentSoft, style = MaterialTheme.typography.labelSmall)
             }
 
             if (taggedProducts.isNotEmpty()) {
@@ -476,7 +584,7 @@ private fun TagProductsCard(
                             modifier = Modifier.clickable { onAddProduct(option) },
                         ) {
                             Text(
-                                option,
+                                option.displayTitle,
                                 color = text,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.bodySmall,

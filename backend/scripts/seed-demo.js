@@ -227,7 +227,7 @@ async function seed() {
   if (!existingAddress) {
     await Address.create({
       userId: buyer._id,
-      ownerType: 'buyer',
+      addressOwnerType: 'buyer',
       addressPurpose: 'delivery',
       addressType: 'home',
       contactName: 'Demo Buyer',

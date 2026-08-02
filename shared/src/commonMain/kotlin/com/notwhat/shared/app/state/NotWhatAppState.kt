@@ -54,6 +54,7 @@ class NotWhatAppState(
     internal val sellerContent =
         SellerContentState(
             sellerUseCase = serviceLocator.sellerUseCase,
+            uploadRepository = serviceLocator.uploadRepository,
         )
 
     val selectedRole: UserRole

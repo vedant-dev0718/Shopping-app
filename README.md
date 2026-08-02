@@ -95,7 +95,7 @@ then keep [All API endpoints](#all-api-endpoints) handy.
 | Payments | Razorpay (orders API + webhook verification, authorize/capture/refund flows) |
 | Shipping | Shiprocket (label + pickup sync, tracking webhook) |
 | Email | Resend (preferred) or Nodemailer SMTP (SendGrid, AWS SES, Gmail) |
-| File uploads | Multer + Cloudinary (streamifier) |
+| File uploads | Multer + AWS S3 (Cloudinary fallback) |
 | HTTP client | axios (Shiprocket / external calls) |
 | Security | Helmet, CORS, express-rate-limit, express-mongo-sanitize |
 | Logging | Morgan |
@@ -117,7 +117,7 @@ Before starting, make sure you have:
 
 Optional for payments and uploads:
 - Razorpay account (test keys work for development)
-- Cloudinary account (for real image/video upload)
+- AWS account + S3 bucket (for real image/video upload)
 - SMTP credentials (for order confirmation emails)
 
 ---
@@ -262,7 +262,7 @@ Expected response:
 
 ## Testing
 
-Backend automated tests use Jest, Supertest, mongodb-memory-server, and nock. They run with `NODE_ENV=test`, create an isolated in-memory MongoDB, and mock Razorpay, Shiprocket, and Cloudinary.
+Backend automated tests use Jest, Supertest, mongodb-memory-server, and nock. They run with `NODE_ENV=test`, create an isolated in-memory MongoDB, and mock Razorpay, Shiprocket, and media upload providers.
 
 ```sh
 cd backend
@@ -373,7 +373,7 @@ and mirrors `src/config/env.js`. The table below is a quick map of the groups.
 | **Google Sign-In** | `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_WEB_CLIENT_ID` | Google login (optional) |
 | **Email** | `RESEND_API_KEY` **or** `EMAIL_HOST`/`EMAIL_PORT`/`EMAIL_USER`/`EMAIL_PASSWORD`, plus `EMAIL_FROM` | Signup OTP + order emails (optional in dev) |
 | **Signup / reset OTP** | `SIGNUP_OTP_*`, `PASSWORD_RESET_OTP_TEST_CODE` | Tuning OTP flow; test codes let you sign up without real email |
-| **Uploads** | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Real image/video upload (optional) |
+| **Uploads** | `AWS_REGION`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (+ optional `AWS_S3_*`), or Cloudinary fallback vars | Real image/video upload (optional) |
 | **Payments** | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_*` flags | Checkout (optional in dev) |
 | **Shipping** | `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, `SHIPROCKET_*` | Live labels/pickup (optional) |
 | **Commission & timing** | `PLATFORM_COMMISSION_PERCENTAGE`, `SELLER_ACCEPTANCE_WINDOW_MINUTES`, `BID_ACCEPTANCE_WINDOW_MINUTES` | Business rules (have defaults) |
@@ -384,7 +384,7 @@ also sign up and log in with OTP without real email, set `SIGNUP_OTP_TEST_CODE`
 (and `PASSWORD_RESET_OTP_TEST_CODE`) to a fixed code like `123456` — these are
 only honoured when `NODE_ENV` is `development` or `test`.
 
-Without Razorpay keys, checkout fails at payment start. Without Cloudinary,
+Without Razorpay keys, checkout fails at payment start. Without S3 or Cloudinary,
 enter image/video URLs manually. Without any email backend, OTP and confirmation
 emails are skipped silently and the flow still succeeds.
 
@@ -668,7 +668,7 @@ Each module in `backend/src/modules/` contains:
 | `analytics` | AnalyticsEvent model, event tracking, seller summary endpoint |
 | `recommendations` | Recommendation engine (region/category-based) |
 | `trending` | Trending stores, products, regions, hashtags |
-| `uploads` | Multer + Cloudinary image/video upload |
+| `uploads` | Multer + AWS S3 image/video upload (Cloudinary fallback) |
 | `media` | Media asset management |
 | `safety` | Content/user safety reports and moderation |
 | `content` | Static content (Privacy Policy, Terms, Return Policy, Shipping Policy, About) |
@@ -869,8 +869,8 @@ Deprecation policy:
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/uploads/image` | Seller | Upload image to Cloudinary |
-| `POST` | `/api/uploads/video` | Seller | Upload video to Cloudinary |
+| `POST` | `/api/uploads/image` | Seller | Upload image to AWS S3 (Cloudinary fallback) |
+| `POST` | `/api/uploads/video` | Seller | Upload video to AWS S3 (Cloudinary fallback) |
 
 ### Trending and recommendations
 
@@ -992,7 +992,7 @@ In dev/test you can skip email entirely by setting `SIGNUP_OTP_TEST_CODE` /
 ## Known limitations
 
 - **Payments**: Razorpay test keys work end-to-end in development. Live keys require domain verification with Razorpay.
-- **Uploads**: Cloudinary credentials are needed for real image/video uploads. Without them, product and reel image URLs must be entered manually as public URLs.
+- **Uploads**: AWS S3 credentials are preferred for real image/video uploads (Cloudinary remains a fallback). Without either provider configured, product and reel media URLs must be entered manually as public URLs.
 - **Product images and reel videos**: The demo seed uses placeholder URLs. Real images must be uploaded via the upload endpoint or entered as full public URLs in the product/reel form.
 - **iOS session**: JWT is stored in Keychain, profiles in UserDefaults — this is solid for production but the buyer profile update endpoint is not yet wired to a dedicated profile-edit API call.
 - **Admin panel**: Admin routes exist in the backend but there is no iOS UI for admin functions.
@@ -1011,7 +1011,7 @@ Before going to production:
 - [ ] Switch Razorpay from test keys to live keys
 - [ ] Set up a real MongoDB instance (MongoDB Atlas recommended)
 - [ ] Configure a real SMTP provider for order emails
-- [ ] Set up Cloudinary for image/video uploads
+- [ ] Set up AWS S3 for image/video uploads
 - [ ] Register the Razorpay webhook URL pointing to your server's `/webhooks/razorpay`
 - [ ] Register the Shiprocket webhook URL pointing to your server's `/webhooks/shiprocket`
 - [ ] Set `SHIPROCKET_WEBHOOK_SECRET` to the exact shared secret configured in Shiprocket
