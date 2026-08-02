@@ -8,17 +8,24 @@ import kotlinx.serialization.json.Json
 
 expect object AuthPersistenceStore {
     fun readString(key: String): String?
-    fun writeString(key: String, value: String)
+
+    fun writeString(
+        key: String,
+        value: String,
+    )
+
     fun remove(key: String)
+
     fun clearAll()
 }
 
 class SharedAuthPersistence(
     @OptIn(ExperimentalSerializationApi::class)
-    private val json: Json = Json {
-        ignoreUnknownKeys = true
-        explicitNulls = false
-    },
+    private val json: Json =
+        Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+        },
 ) {
     private object Keys {
         const val backendMode = "shared.auth.backendMode"
@@ -27,7 +34,7 @@ class SharedAuthPersistence(
 
     fun loadBackendMode(): BackendFlowMode {
         val rawValue = AuthPersistenceStore.readString(Keys.backendMode)
-        return if (rawValue == null) BackendFlowMode.MOCK else BackendFlowMode.fromRawValue(rawValue)
+        return if (rawValue == null) BackendFlowMode.LIVE else BackendFlowMode.fromRawValue(rawValue)
     }
 
     fun saveBackendMode(mode: BackendFlowMode) {

@@ -1,8 +1,10 @@
 package com.notwhat.shared.ui
 
 import com.notwhat.shared.auth.AuthPersistenceStore
-import com.notwhat.shared.search.SearchFilterKind
 import com.notwhat.shared.config.BackendFlowMode
+import com.notwhat.shared.core.AppConfig
+import com.notwhat.shared.di.ServiceLocator
+import com.notwhat.shared.search.SearchFilterKind
 import com.notwhat.shared.session.UserRole
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +14,9 @@ import kotlin.test.assertTrue
 class NotWhatAppStateTest {
     private fun freshState(): NotWhatAppState {
         AuthPersistenceStore.clearAll()
-        return NotWhatAppState()
+        val locator = ServiceLocator(AppConfig(BackendFlowMode.MOCK))
+        locator.authPersistence.saveBackendMode(BackendFlowMode.MOCK)
+        return NotWhatAppState(locator)
     }
 
     @Test

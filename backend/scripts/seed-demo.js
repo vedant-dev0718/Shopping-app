@@ -1,5 +1,6 @@
 // Run: node scripts/seed-demo.js
-// Seeds one demo seller, one demo buyer, a store, and 5 products.
+// Seeds one demo seller, one demo buyer, a store, 5 products, 2 reels,
+// a buyer delivery address, and an active bargain schedule.
 // Prints credentials to use in the app.
 
 require('dotenv').config();
@@ -11,6 +12,9 @@ const User = require('../src/modules/users/user.model');
 const Store = require('../src/modules/stores/store.model');
 const SellerProfile = require('../src/modules/sellers/sellerProfile.model');
 const Product = require('../src/modules/products/product.model');
+const Reel = require('../src/modules/reels/reel.model');
+const Address = require('../src/modules/addresses/address.model');
+const BargainSchedule = require('../src/modules/bargain/bargainSchedule.model');
 const { getDefaultPickupAddress, hasPickupAddress } = require('../src/utils/pickupAddressDefaults');
 
 const SELLER_EMAIL = 'seller@notwhat.test';
@@ -145,6 +149,7 @@ async function seed() {
 
   // ── Products ─────────────────────────────────────────────────────────────────
   const existingCount = await Product.countDocuments({ sellerId: seller._id });
+  let seededProducts = [];
   if (existingCount === 0) {
     const productDocs = products.map((p) => ({
       ...p,
@@ -153,10 +158,51 @@ async function seed() {
       status: 'active',
       featured: true
     }));
-    await Product.insertMany(productDocs);
+    seededProducts = await Product.insertMany(productDocs);
     console.log(`✓ ${products.length} products created`);
   } else {
+    seededProducts = await Product.find({ sellerId: seller._id }).lean();
     console.log(`↩ ${existingCount} products already exist, skipping`);
+  }
+
+  // ── Reels ─────────────────────────────────────────────────────────────────────
+  const existingReelCount = await Reel.countDocuments({ sellerId: seller._id });
+  if (existingReelCount === 0 && seededProducts.length >= 2) {
+    await Reel.insertMany([
+      {
+        sellerId: seller._id,
+        storeId: store._id,
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600',
+        caption: 'New block-print collection just dropped 🎨 #IndianFashion',
+        region: 'Uttar Pradesh',
+        category: 'Textiles',
+        hashtags: ['indianfashion', 'handwoven', 'silk'],
+        taggedProductIds: [seededProducts[0]._id],
+        status: 'active',
+        viewCount: 1240,
+        likeCount: 340,
+        commentCount: 12,
+      },
+      {
+        sellerId: seller._id,
+        storeId: store._id,
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?w=600',
+        caption: 'Handpainted Jaipur blue pottery — every piece is unique 🏺',
+        region: 'Rajasthan',
+        category: 'Pottery',
+        hashtags: ['bluepottery', 'jaipur', 'handmade'],
+        taggedProductIds: [seededProducts[1]._id],
+        status: 'active',
+        viewCount: 3870,
+        likeCount: 820,
+        commentCount: 47,
+      },
+    ]);
+    console.log('✓ 2 reels created');
+  } else {
+    console.log(`↩ ${existingReelCount} reels already exist, skipping`);
   }
 
   // ── Buyer ────────────────────────────────────────────────────────────────────
@@ -174,6 +220,52 @@ async function seed() {
     console.log('✓ Buyer user created');
   } else {
     console.log('↩ Buyer already exists, skipping');
+  }
+
+  // ── Buyer delivery address ────────────────────────────────────────────────────
+  const existingAddress = await Address.findOne({ userId: buyer._id, addressPurpose: 'delivery' });
+  if (!existingAddress) {
+    await Address.create({
+      userId: buyer._id,
+      ownerType: 'buyer',
+      addressPurpose: 'delivery',
+      addressType: 'home',
+      contactName: 'Demo Buyer',
+      contactPhone: '9123456780',
+      addressLine1: '12 MG Road',
+      addressLine2: 'Indiranagar',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560038',
+      country: 'India',
+      isDefault: true,
+    });
+    console.log('✓ Buyer delivery address created');
+  } else {
+    console.log('↩ Buyer address already exists, skipping');
+  }
+
+  // ── Bargain schedule ──────────────────────────────────────────────────────────
+  if (seededProducts.length > 0) {
+    const bargainProduct = seededProducts[0];
+    const existingBargain = await BargainSchedule.findOne({
+      productId: bargainProduct._id,
+      status: 'active',
+    });
+    if (!existingBargain) {
+      const now = new Date();
+      await BargainSchedule.create({
+        productId: bargainProduct._id,
+        sellerId: seller._id,
+        startDate: now,
+        endDate: new Date(now.getTime() + 48 * 60 * 60 * 1000), // 48 h window
+        reservePrice: Math.round(bargainProduct.price * 0.6),
+        status: 'active',
+      });
+      console.log('✓ Active bargain schedule created');
+    } else {
+      console.log('↩ Active bargain already exists, skipping');
+    }
   }
 
   console.log('\n─────────────────────────────────────────');

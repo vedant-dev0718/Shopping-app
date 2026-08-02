@@ -9,7 +9,7 @@ import com.notwhat.shared.network.defaultApiBaseUrl
  * Create one instance at startup and inject it through [com.notwhat.shared.di.ServiceLocator].
  */
 class AppConfig(
-    initialBackendMode: BackendFlowMode = BackendFlowMode.MOCK,
+    initialBackendMode: BackendFlowMode = BackendFlowMode.LIVE,
     val apiBaseUrl: String = defaultApiBaseUrl(),
 ) {
     var backendMode: BackendFlowMode = initialBackendMode

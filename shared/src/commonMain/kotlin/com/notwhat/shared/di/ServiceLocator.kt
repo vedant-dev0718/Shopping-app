@@ -45,7 +45,7 @@ import com.notwhat.shared.uploads.UploadRepository
  * `AppConfig(BackendFlowMode.MOCK)`) so that the real network is never hit.
  */
 class ServiceLocator(
-    val config: AppConfig = AppConfig(initialBackendMode = BackendFlowMode.MOCK),
+    val config: AppConfig = AppConfig(initialBackendMode = BackendFlowMode.LIVE),
 ) {
     // Shared HTTP client — single instance for all feature repositories
     private val apiClient: ApiClient by lazy { ApiClient(baseUrl = config.apiBaseUrl) }

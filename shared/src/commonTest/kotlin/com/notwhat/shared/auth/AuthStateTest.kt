@@ -1,6 +1,8 @@
 package com.notwhat.shared.auth
 
 import com.notwhat.shared.config.BackendFlowMode
+import com.notwhat.shared.core.AppConfig
+import com.notwhat.shared.di.ServiceLocator
 import com.notwhat.shared.session.UserRole
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +14,9 @@ import kotlin.test.assertTrue
 class AuthStateTest {
     private fun freshState(): AuthState {
         AuthPersistenceStore.clearAll()
-        return AuthState()
+        val locator = ServiceLocator(AppConfig(BackendFlowMode.MOCK))
+        locator.authPersistence.saveBackendMode(BackendFlowMode.MOCK)
+        return AuthState(useCase = locator.authUseCase, persistence = locator.authPersistence, config = locator.config)
     }
 
     @Test

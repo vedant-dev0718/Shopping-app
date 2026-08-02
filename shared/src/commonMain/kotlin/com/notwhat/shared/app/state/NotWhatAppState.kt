@@ -16,10 +16,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class NotWhatAppState {
+class NotWhatAppState(
+    private val serviceLocator: ServiceLocator = ServiceLocator(),
+) {
     private var lockedRole: UserRole? = null
 
-    private val serviceLocator = ServiceLocator()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val searchUseCase = serviceLocator.searchUseCase
     internal val bargainUseCase = serviceLocator.bargainUseCase
@@ -30,26 +31,30 @@ class NotWhatAppState {
     var activeTab by mutableStateOf(NotWhatTab.Home)
         private set
 
-    val authState = AuthState(
-        useCase = serviceLocator.authUseCase,
-        persistence = serviceLocator.authPersistence,
-        config = serviceLocator.config,
-    )
+    val authState =
+        AuthState(
+            useCase = serviceLocator.authUseCase,
+            persistence = serviceLocator.authPersistence,
+            config = serviceLocator.config,
+        )
 
-    internal val content = BuyerContentState(
-        catalogUseCase = serviceLocator.catalogUseCase,
-        discoveryRepository = serviceLocator.discoveryRepository,
-    )
+    internal val content =
+        BuyerContentState(
+            catalogUseCase = serviceLocator.catalogUseCase,
+            discoveryRepository = serviceLocator.discoveryRepository,
+        )
 
-    internal val transaction = BuyerTransactionState(
-        cartUseCase = serviceLocator.cartUseCase,
-        orderUseCase = serviceLocator.orderUseCase,
-        addressRepository = serviceLocator.addressRepository,
-    )
+    internal val transaction =
+        BuyerTransactionState(
+            cartUseCase = serviceLocator.cartUseCase,
+            orderUseCase = serviceLocator.orderUseCase,
+            addressRepository = serviceLocator.addressRepository,
+        )
 
-    internal val sellerContent = SellerContentState(
-        sellerUseCase = serviceLocator.sellerUseCase,
-    )
+    internal val sellerContent =
+        SellerContentState(
+            sellerUseCase = serviceLocator.sellerUseCase,
+        )
 
     val selectedRole: UserRole
         get() = authState.selectedMockRole
@@ -118,11 +123,12 @@ class NotWhatAppState {
     }
 
     fun routeAuthenticatedUser(role: UserRole) {
-        activeTab = when (role) {
-            UserRole.Buyer -> NotWhatTab.Home
-            UserRole.Seller -> NotWhatTab.Bargains
-            UserRole.Admin -> NotWhatTab.Account
-        }
+        activeTab =
+            when (role) {
+                UserRole.Buyer -> NotWhatTab.Home
+                UserRole.Seller -> NotWhatTab.Bargains
+                UserRole.Admin -> NotWhatTab.Account
+            }
     }
 
     fun signOut() {
