@@ -8,6 +8,7 @@ set -euo pipefail
 BASE_URL="${STAGING_BASE_URL:-}"
 TEST_RESET_EMAIL="${TEST_RESET_EMAIL:-}"
 VERIFY_RATE_LIMIT_EMAIL="${VERIFY_RATE_LIMIT_EMAIL:-verify-reset-$(date +%s)@example.com}"
+SHIPROCKET_EXPECT_503="${SHIPROCKET_EXPECT_503:-false}"
 
 if [[ -z "$BASE_URL" ]]; then
   echo "ERROR: STAGING_BASE_URL is required (for example: https://staging-api.example.com)"
@@ -91,6 +92,11 @@ fi
 
 echo "4) Shiprocket bad signature (expects 400 when webhook secret is configured)"
 check_status_exact "POST /webhooks/shiprocket invalid signature" "400" "POST" "/webhooks/shiprocket" "{\"shipment_id\":123,\"current_status\":\"DELIVERED\"}" "x-shiprocket-signature: invalid-signature"
+
+if [[ "$SHIPROCKET_EXPECT_503" == "true" ]]; then
+  echo "5) Shiprocket missing secret mode (expects 503 in production)"
+  check_status_exact "POST /webhooks/shiprocket missing secret returns 503" "503" "POST" "/webhooks/shiprocket" "{\"shipment_id\":123,\"current_status\":\"DELIVERED\"}"
+fi
 
 echo ""
 echo "Staging smoke summary: PASS=$pass_count FAIL=$fail_count"

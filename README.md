@@ -291,8 +291,8 @@ xcodebuild test \
 ```
 
 More detail:
-- [Testing guide](docs/testing.md)
-- [Manual real-device QA checklist](docs/manual-qa-checklist.md)
+- [Testing guide](.github/docs/testing.md)
+- [Manual real-device QA checklist](.github/docs/manual-qa-checklist.md)
 
 ---
 
