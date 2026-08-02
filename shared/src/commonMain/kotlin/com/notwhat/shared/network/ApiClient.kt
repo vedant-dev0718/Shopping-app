@@ -8,12 +8,15 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.delete
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
@@ -38,9 +41,10 @@ class ApiClient(
         params: Map<String, String?> = emptyMap(),
     ): R {
         try {
-            val httpResponse = httpClient.get(buildUrl(path, params)) {
-                if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
-            }
+            val httpResponse =
+                httpClient.get(buildUrl(path, params)) {
+                    if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
+                }
             return unwrap(httpResponse.body<ApiEnvelope<R>>())
         } catch (e: AppError) {
             throw e
@@ -59,11 +63,12 @@ class ApiClient(
         bearerToken: String? = null,
     ): R {
         try {
-            val httpResponse = httpClient.post("$normalizedBase/$path") {
-                contentType(ContentType.Application.Json)
-                if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
-                setBody(body)
-            }
+            val httpResponse =
+                httpClient.post("$normalizedBase/$path") {
+                    contentType(ContentType.Application.Json)
+                    if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
+                    setBody(body)
+                }
             return unwrap(httpResponse.body<ApiEnvelope<R>>())
         } catch (e: AppError) {
             throw e
@@ -82,11 +87,12 @@ class ApiClient(
         bearerToken: String? = null,
     ): R {
         try {
-            val httpResponse = httpClient.patch("$normalizedBase/$path") {
-                contentType(ContentType.Application.Json)
-                if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
-                setBody(body)
-            }
+            val httpResponse =
+                httpClient.patch("$normalizedBase/$path") {
+                    contentType(ContentType.Application.Json)
+                    if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
+                    setBody(body)
+                }
             return unwrap(httpResponse.body<ApiEnvelope<R>>())
         } catch (e: AppError) {
             throw e
@@ -104,9 +110,48 @@ class ApiClient(
         bearerToken: String? = null,
     ): R {
         try {
-            val httpResponse = httpClient.delete("$normalizedBase/$path") {
-                if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
-            }
+            val httpResponse =
+                httpClient.delete("$normalizedBase/$path") {
+                    if (!bearerToken.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $bearerToken")
+                }
+            return unwrap(httpResponse.body<ApiEnvelope<R>>())
+        } catch (e: AppError) {
+            throw e
+        } catch (e: ClientRequestException) {
+            throw AppError.Api(e.response.status.value, parseMessage(runCatching { e.response.body<JsonObject>() }.getOrNull()))
+        } catch (e: ServerResponseException) {
+            throw AppError.Server(e.response.status.value)
+        } catch (e: Exception) {
+            throw AppError.fromException(e)
+        }
+    }
+
+    suspend inline fun <reified R : Any> submitMultipart(
+        path: String,
+        fieldName: String,
+        fileName: String,
+        mimeType: String,
+        data: ByteArray,
+        bearerToken: String,
+    ): R {
+        try {
+            val httpResponse =
+                httpClient.submitFormWithBinaryData(
+                    url = "$normalizedBase/$path",
+                    formData =
+                        formData {
+                            append(
+                                fieldName,
+                                data,
+                                Headers.build {
+                                    append(HttpHeaders.ContentType, mimeType)
+                                    append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                                },
+                            )
+                        },
+                ) {
+                    header(HttpHeaders.Authorization, "Bearer $bearerToken")
+                }
             return unwrap(httpResponse.body<ApiEnvelope<R>>())
         } catch (e: AppError) {
             throw e
@@ -122,7 +167,10 @@ class ApiClient(
     @PublishedApi internal inline fun <reified R : Any> unwrap(envelope: ApiEnvelope<R>): R =
         envelope.data ?: throw AppError.Api(200, envelope.message ?: "Server returned no data.")
 
-    @PublishedApi internal fun buildUrl(path: String, params: Map<String, String?>): String {
+    @PublishedApi internal fun buildUrl(
+        path: String,
+        params: Map<String, String?>,
+    ): String {
         val base = "$normalizedBase/$path"
         val filtered = params.filterValues { !it.isNullOrBlank() }
         if (filtered.isEmpty()) return base
@@ -131,12 +179,20 @@ class ApiClient(
     }
 
     @PublishedApi internal fun parseMessage(payload: JsonObject?): String =
-        payload?.get("message")?.jsonPrimitive?.content ?: "Request failed."
+        payload
+            ?.get(
+                "message",
+            )?.jsonPrimitive
+            ?.content ?: "Request failed."
 
     companion object {
         @OptIn(ExperimentalSerializationApi::class)
         fun buildDefaultClient(): HttpClient {
-            val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+            val json =
+                Json {
+                    ignoreUnknownKeys = true
+                    explicitNulls = false
+                }
             return createPlatformHttpClient { install(ContentNegotiation) { json(json) } }
         }
     }

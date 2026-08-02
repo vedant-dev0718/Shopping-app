@@ -723,6 +723,17 @@ Policy:
 - Keep response payloads minimal and stable (`{ received: true }` or `{ success: true/false, message }`).
 - Do not route webhook responses through user-facing API response wrappers.
 
+### API compatibility notes (legacy aliases)
+
+To support rolling client upgrades, the backend currently accepts the following request aliases:
+- `POST /api/checkout/verify`: `addressId` is accepted as a legacy alias for `deliveryAddressId`.
+- `PATCH /api/seller/orders/:orderId/ship`: `courier` is accepted as a legacy alias for `trackingCarrier`.
+
+Deprecation policy:
+- Preferred keys are `deliveryAddressId` and `trackingCarrier`.
+- Legacy aliases remain supported until **2026-11-30**.
+- After the sunset date, alias keys may be removed in a breaking-contract release.
+
 ---
 
 ## All API endpoints

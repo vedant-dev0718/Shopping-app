@@ -81,6 +81,11 @@ const shipOrderValidation = [
     .trim()
     .isLength({ max: 120 })
     .withMessage('Tracking carrier must be 120 characters or fewer'),
+  body('courier')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 120 })
+    .withMessage('Tracking carrier must be 120 characters or fewer'),
   body('trackingUrl')
     .optional({ checkFalsy: true })
     .trim()

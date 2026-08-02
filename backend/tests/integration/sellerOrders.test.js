@@ -84,6 +84,33 @@ describe('seller order management API', () => {
       .expect(400);
   });
 
+  test('seller ship accepts legacy courier alias and stores it as trackingCarrier', async () => {
+    const buyer = await createBuyer({ email: 'seller-ship-alias-buyer@example.com' });
+    const seller = await createSeller({ email: 'seller-ship-alias-seller@example.com' });
+    const product = await createProduct(seller);
+    const order = await createOrder({ buyer, seller, product });
+
+    await api()
+      .patch(`/api/seller/orders/${order._id}/status`)
+      .set('Authorization', authHeader(seller))
+      .send({ orderStatus: 'processing' })
+      .expect(200);
+
+    await api()
+      .patch(`/api/seller/orders/${order._id}/ship`)
+      .set('Authorization', authHeader(seller))
+      .send({
+        trackingNumber: 'TRACK-ALIAS-123',
+        courier: 'Legacy Courier Name',
+        trackingUrl: 'https://tracking.example/TRACK-ALIAS-123'
+      })
+      .expect(200);
+
+    const updated = await Order.findById(order._id).lean();
+    expect(updated.trackingNumber).toBe('TRACK-ALIAS-123');
+    expect(updated.trackingCarrier).toBe('Legacy Courier Name');
+  });
+
   test('seller can accept an awaiting acceptance order and stock is deducted once', async () => {
     const buyer = await createBuyer();
     const seller = await createSeller();

@@ -141,4 +141,22 @@ describe('checkout API with mocked Razorpay', () => {
       env.razorpayManualCaptureEnabled = originalManualCaptureEnabled;
     }
   });
+
+  test('checkout verify accepts legacy addressId alias as deliveryAddressId', async () => {
+    const buyer = await createBuyer({ email: 'checkout-alias-buyer@example.com' });
+
+    const response = await api()
+      .post('/api/checkout/verify')
+      .set('Authorization', authHeader(buyer))
+      .send({
+        razorpayOrderId: 'order_alias_contract_check',
+        razorpayPaymentId: 'pay_alias_contract_check',
+        razorpaySignature: 'invalid-signature',
+        addressId: '66b0e2b1a3f31ecbe0a12345',
+        paymentMethod: 'card'
+      })
+      .expect(400);
+
+    expect(response.body.message).toBe('Payment verification failed');
+  });
 });

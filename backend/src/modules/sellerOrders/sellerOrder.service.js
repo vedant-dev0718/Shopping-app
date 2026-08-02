@@ -145,8 +145,8 @@ const getSellerItems = (order, sellerId) => {
 
 const hasShiprocketShipment = (order, items = []) => Boolean(
   order.shiprocketShipmentId
-    || order.shiprocketOrderId
-    || items.some((item) => item.shiprocketShipmentId || item.shiprocketOrderId)
+  || order.shiprocketOrderId
+  || items.some((item) => item.shiprocketShipmentId || item.shiprocketOrderId)
 );
 
 const ensureSellerAcceptanceContainers = (order) => {
@@ -466,7 +466,7 @@ const markSellerOrderShipped = async (sellerId, orderId, data) => {
   });
   updateComputedOrderStatus(order);
   order.trackingNumber = data.trackingNumber;
-  order.trackingCarrier = data.trackingCarrier || '';
+  order.trackingCarrier = data.trackingCarrier || data.courier || '';
   order.trackingUrl = normalizeTrackingUrl(data.trackingUrl || '');
   order.shippedAt = new Date();
   order.trackingStatus = 'Shipped';

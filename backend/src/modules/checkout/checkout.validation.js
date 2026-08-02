@@ -2,10 +2,11 @@ const { body } = require('express-validator');
 
 const shippingInfoValidation = [
   body().custom((value) => {
-    if (value.deliveryAddressId || value.shippingInfo) return true;
+    if (value.deliveryAddressId || value.addressId || value.shippingInfo) return true;
     throw new Error('Please add a delivery address before checkout.');
   }),
   body('deliveryAddressId').optional({ checkFalsy: true }).isMongoId().withMessage('A valid delivery address id is required'),
+  body('addressId').optional({ checkFalsy: true }).isMongoId().withMessage('A valid delivery address id is required'),
   body('shippingInfo.name').if(body('shippingInfo').exists()).trim().notEmpty().withMessage('Shipping name is required'),
   body('shippingInfo.email').if(body('shippingInfo').exists()).trim().isEmail().withMessage('A valid shipping email is required').normalizeEmail(),
   body('shippingInfo.phone').if(body('shippingInfo').exists()).trim().notEmpty().withMessage('Shipping phone is required'),

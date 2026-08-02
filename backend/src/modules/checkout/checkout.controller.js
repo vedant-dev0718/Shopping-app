@@ -13,13 +13,15 @@ const startCheckout = asyncHandler(async (req, res) => {
 });
 
 const verifyAndPlaceOrder = asyncHandler(async (req, res) => {
+  const deliveryAddressId = req.body.deliveryAddressId || req.body.addressId || null;
+
   const confirmation = await checkoutService.verifyAndPlaceOrder(
     req.body.razorpayOrderId,
     req.body.razorpayPaymentId,
     req.body.razorpaySignature,
     req.user.id,
     {
-      deliveryAddressId: req.body.deliveryAddressId,
+      deliveryAddressId,
       shippingInfo: req.body.shippingInfo
     },
     req.body.paymentMethod

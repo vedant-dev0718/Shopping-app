@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonNames
 @Serializable
 data class CheckoutStartResponseDto(
     val razorpayOrderId: String = "",
-    val amount: Int = 0,       // paise
+    val amount: Int = 0, // paise
     val currency: String = "INR",
     val keyId: String = "",
 )
@@ -17,7 +17,7 @@ data class CheckoutVerifyRequestDto(
     val razorpayOrderId: String,
     val razorpayPaymentId: String,
     val razorpaySignature: String,
-    val addressId: String,
+    val deliveryAddressId: String,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
