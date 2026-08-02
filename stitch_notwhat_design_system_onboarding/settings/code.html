@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #0A0A0A;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(58, 58, 58, 0.5);
+        }
+        .electric-glow:focus-within {
+            box-shadow: 0 0 12px rgba(255, 77, 0, 0.3);
+            border-color: #FF4D00;
+        }
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "on-tertiary": "#00315e",
+                        "secondary-fixed": "#e2e2e2",
+                        "primary-container": "#ff571a",
+                        "on-secondary-container": "#b4b5b5",
+                        "surface-bright": "#49342e",
+                        "secondary": "#c6c6c7",
+                        "on-background": "#fcdcd3",
+                        "inverse-primary": "#ae3200",
+                        "inverse-on-surface": "#3f2c26",
+                        "on-secondary": "#2f3131",
+                        "on-primary": "#5e1700",
+                        "surface-container-high": "#382620",
+                        "on-tertiary-fixed": "#001c3a",
+                        "on-primary-fixed": "#3a0b00",
+                        "on-error": "#690005",
+                        "on-surface-variant": "#e6beb2",
+                        "surface-container-highest": "#44302a",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "on-surface": "#fcdcd3",
+                        "on-secondary-fixed-variant": "#454747",
+                        "primary-fixed": "#ffdbd0",
+                        "tertiary-fixed": "#d4e3ff",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#44302a",
+                        "surface-container-low": "#281712",
+                        "tertiary-container": "#2492ff",
+                        "on-primary-fixed-variant": "#852400",
+                        "inverse-surface": "#fcdcd3",
+                        "surface-tint": "#ffb59e",
+                        "surface-container-lowest": "#190a06",
+                        "tertiary": "#a5c8ff",
+                        "secondary-container": "#454747",
+                        "outline": "#ad897e",
+                        "on-primary-container": "#521300",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-tertiary-container": "#002a53",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "primary-fixed-dim": "#ffb59e",
+                        "error-container": "#93000a",
+                        "outline-variant": "#5c4037",
+                        "surface-dim": "#1f0f0b",
+                        "primary": "#ffb59e",
+                        "on-error-container": "#ffdad6",
+                        "background": "#1f0f0b",
+                        "surface": "#1f0f0b",
+                        "surface-container": "#2d1b16"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "margin": "16px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "gutter": "12px",
+                        "base": "4px",
+                        "sm": "8px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["inter"],
+                        "headline-sm": ["montserrat"],
+                        "headline-md": ["montserrat"],
+                        "body-md": ["inter"],
+                        "display-lg": ["montserrat"],
+                        "display-lg-mobile": ["montserrat"],
+                        "body-lg": ["inter"],
+                        "caption": ["inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen font-body-md overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md flex items-center justify-between px-margin h-16">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform hover:opacity-80">
+<span class="material-symbols-outlined text-primary" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile text-primary">Settings</h1>
+</div>
+<button class="active:scale-95 transition-transform hover:opacity-80">
+<span class="material-symbols-outlined text-primary" data-icon="shopping_bag">shopping_bag</span>
+</button>
+</header>
+<main class="pt-20 pb-32 px-4 max-w-md mx-auto space-y-8">
+<!-- Profile Anchor -->
+<section class="flex items-center gap-4 p-4 glass-card rounded-lg">
+<div class="relative w-16 h-16 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="Urban Rebel" class="w-full h-full object-cover" data-alt="A portrait of a stylish Gen-Z man with a confident gaze, wearing edgy urban streetwear including a distressed black denim jacket and silver chains. He is set against a blurred neon-lit city background at night, capturing a raw energy and premium urban aesthetic. The lighting is dramatic with orange and teal highlights reflecting off his features." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8xOa64Mnm8yzWN-mqOXN09_K_pH6FjS1PDjd2BDnRNXIkJkLhK2z5uTfOPOuCUKJAeDNIQsFXqqSvoB-drd9Sdevtl7Dnxame1vta6caSDvLo-sP90iVsRumjKP8DFkQmPBe4U2SxbIzNWznBWKMsCPbFncFx0kF8vH08rhBStf1nmuMdSn9WOfs9z3YaqL8KHKvzc-X-FriwMOOM5BxHBkgtxKTumh_lLXTBv25lZtobrJX02F3Z71EPj-VwIw7mC-UK4agMxYc"/>
+</div>
+<div>
+<h2 class="font-headline-sm text-on-surface">Urban Rebel</h2>
+<p class="font-label-md text-on-surface-variant">Bargain Hunter Level 4</p>
+</div>
+</section>
+<!-- Account Section -->
+<section class="space-y-3">
+<h3 class="font-label-md text-on-secondary-container uppercase tracking-widest px-1">Account</h3>
+<div class="glass-card rounded-lg overflow-hidden divide-y divide-white/5">
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="person">person</span>
+<span class="font-body-lg">Edit Profile</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="lock">lock</span>
+<span class="font-body-lg">Change Password</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="link">link</span>
+<span class="font-body-lg">Linked Accounts</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group border-b-primary-container/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="verified_user">verified_user</span>
+<span class="font-body-lg">Verify Details</span>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+</div>
+</section>
+<!-- Notifications Section -->
+<section class="space-y-3">
+<h3 class="font-label-md text-on-secondary-container uppercase tracking-widest px-1">Notifications</h3>
+<div class="glass-card rounded-lg overflow-hidden divide-y divide-white/5">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+<span class="font-body-lg">Push Notifications</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="inventory_2">inventory_2</span>
+<span class="font-body-lg">Orders</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="gavel">gavel</span>
+<span class="font-body-lg">Bargains</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="favorite">favorite</span>
+<span class="font-body-lg">Reel Likes</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Orders & Shopping Section -->
+<section class="space-y-3">
+<h3 class="font-label-md text-on-secondary-container uppercase tracking-widest px-1">Orders & Shopping</h3>
+<div class="glass-card rounded-lg overflow-hidden divide-y divide-white/5">
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="shopping_basket">shopping_basket</span>
+<span class="font-body-lg">Order History</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="payments">payments</span>
+<span class="font-body-lg">Payment Methods</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="location_on">location_on</span>
+<span class="font-body-lg">Saved Addresses</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Seller Section -->
+<section class="space-y-3">
+<h3 class="font-label-md text-on-secondary-container uppercase tracking-widest px-1">Seller</h3>
+<div class="glass-card rounded-lg overflow-hidden divide-y divide-white/5">
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="storefront">storefront</span>
+<span class="font-body-lg">Seller Dashboard</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="sell">sell</span>
+<span class="font-body-lg">Product Listings</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Legal & About Section -->
+<section class="space-y-3">
+<h3 class="font-label-md text-on-secondary-container uppercase tracking-widest px-1">Legal & Info</h3>
+<div class="glass-card rounded-lg overflow-hidden divide-y divide-white/5">
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="gavel">gavel</span>
+<span class="font-body-lg">Legal & Privacy Policy</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="info">info</span>
+<span class="font-body-lg">About NotWhat</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 active:bg-white/5 transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="help_center">help_center</span>
+<span class="font-body-lg">Support Center</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Sign Out -->
+<button class="w-full py-4 text-center text-error font-headline-sm hover:bg-error-container/10 active:scale-95 transition-all rounded-lg">
+            Sign Out
+        </button>
+<!-- App Version -->
+<div class="text-center py-4">
+<p class="font-label-md text-on-surface-variant opacity-40">NotWhat v4.2.1-stable</p>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 backdrop-blur-lg flex justify-around items-center h-20 px-4">
+<a class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-150 hover:text-primary-fixed-dim" href="#">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-150 hover:text-primary-fixed-dim" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-150 hover:text-primary-fixed-dim" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-150 hover:text-primary-fixed-dim" href="#">
+<span class="material-symbols-outlined" data-icon="local_mall">local_mall</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary active:scale-90 transition-all duration-150 hover:text-primary-fixed-dim" href="#">
+<span class="material-symbols-outlined fill-icon" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+</a>
+</nav>
+<script>
+        // Simple Interaction logic
+        document.querySelectorAll('.glass-card div').forEach(item => {
+            item.addEventListener('click', () => {
+                // Flash interaction
+                item.style.backgroundColor = 'rgba(255, 77, 0, 0.1)';
+                setTimeout(() => {
+                    item.style.backgroundColor = '';
+                }, 200);
+            });
+        });
+
+        // Add scrolling effect to header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-lg');
+                header.style.backgroundColor = 'rgba(10, 10, 10, 0.95)';
+            } else {
+                header.classList.remove('shadow-lg');
+                header.style.backgroundColor = 'rgba(10, 10, 10, 0.9)';
+            }
+        });
+    </script>
+</body></html>

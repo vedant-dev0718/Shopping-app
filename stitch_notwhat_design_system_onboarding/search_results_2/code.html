@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "on-error": "#690005",
+                    "inverse-on-surface": "#3f2c26",
+                    "error": "#ffb4ab",
+                    "on-surface": "#fcdcd3",
+                    "surface-dim": "#1f0f0b",
+                    "tertiary-fixed": "#d4e3ff",
+                    "primary-fixed-dim": "#ffb59e",
+                    "primary-fixed": "#ffdbd0",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "inverse-primary": "#ae3200",
+                    "on-primary": "#5e1700",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-tertiary-container": "#002a53",
+                    "on-primary-container": "#521300",
+                    "surface-tint": "#ffb59e",
+                    "tertiary": "#a5c8ff",
+                    "surface-container-highest": "#44302a",
+                    "on-error-container": "#ffdad6",
+                    "surface-container": "#2d1b16",
+                    "on-primary-fixed-variant": "#852400",
+                    "inverse-surface": "#fcdcd3",
+                    "secondary-container": "#454747",
+                    "outline": "#ad897e",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface-container-lowest": "#190a06",
+                    "tertiary-container": "#2492ff",
+                    "surface-bright": "#49342e",
+                    "outline-variant": "#5c4037",
+                    "on-background": "#fcdcd3",
+                    "surface-container-low": "#281712",
+                    "on-surface-variant": "#e6beb2",
+                    "surface": "#1f0f0b",
+                    "error-container": "#93000a",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-variant": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "on-tertiary": "#00315e",
+                    "background": "#1f0f0b",
+                    "primary-container": "#ff571a",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-secondary": "#2f3131",
+                    "primary": "#ffb59e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "margin": "16px",
+                    "xl": "32px",
+                    "xs": "4px",
+                    "gutter": "12px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["inter"],
+                    "caption": ["inter"],
+                    "label-md": ["inter"],
+                    "display-lg-mobile": ["montserrat"],
+                    "headline-md": ["montserrat"],
+                    "body-md": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #0A0A0A; color: #fcdcd3; }
+        .active-tab-glow { box-shadow: 0 4px 12px -2px rgba(255, 77, 0, 0.4); }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .input-focus-glow:focus-within {
+            box-shadow: 0 0 8px #FF4D00;
+            border-color: #FF4D00;
+        }
+        .custom-scrollbar::-webkit-scrollbar { display: none; }
+        .kinetic-tap:active { transform: scale(0.95); transition: transform 0.1s ease; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface select-none overflow-x-hidden">
+<!-- Top Search Header -->
+<header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md">
+<div class="flex items-center px-margin h-16 gap-sm">
+<button class="kinetic-tap text-primary">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex-1 flex items-center bg-surface-container rounded-full px-md py-xs border border-outline-variant input-focus-glow transition-all">
+<input class="bg-transparent border-none focus:ring-0 w-full text-on-surface font-body-md placeholder-secondary" placeholder="Search urban style..." type="text" value="Vintage Cargo Pants"/>
+<button class="text-secondary">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<button class="kinetic-tap text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<!-- Tab Filters -->
+<div class="flex px-margin gap-lg border-b border-surface-container-highest overflow-x-auto custom-scrollbar">
+<button class="pb-base border-b-2 border-primary-container text-primary font-label-md flex-shrink-0 transition-all">All</button>
+<button class="pb-base border-b-2 border-transparent text-secondary font-label-md flex-shrink-0 opacity-60 hover:opacity-100 transition-all">Products</button>
+<button class="pb-base border-b-2 border-transparent text-secondary font-label-md flex-shrink-0 opacity-60 hover:opacity-100 transition-all">Stores</button>
+<button class="pb-base border-b-2 border-transparent text-secondary font-label-md flex-shrink-0 opacity-60 hover:opacity-100 transition-all">Reels</button>
+</div>
+<!-- Sort & Filter Row -->
+<div class="flex justify-between items-center px-margin py-sm bg-surface-dim">
+<div class="flex gap-sm">
+<button class="flex items-center gap-xs px-sm py-[6px] bg-surface-container rounded-full text-caption border border-outline-variant kinetic-tap">
+                    Sort by: Popular <span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+</div>
+<button class="relative flex items-center gap-xs px-md py-[6px] bg-primary text-on-primary font-label-md rounded-full kinetic-tap">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+                Filter
+                <span class="absolute -top-1 -right-1 bg-white text-[#0A0A0A] w-4 h-4 flex items-center justify-center rounded-full text-[10px] font-bold">2</span>
+</button>
+</div>
+</header>
+<!-- Main Content Grid -->
+<main class="pt-40 pb-24 px-margin min-h-screen">
+<!-- Section: Products (2-column Grid) -->
+<div class="mb-xl">
+<h2 class="font-headline-sm text-headline-sm mb-md flex justify-between items-center">
+                Products <span class="text-caption text-secondary font-normal">Showing 24 results</span>
+</h2>
+<div class="grid grid-cols-2 gap-sm">
+<!-- Product Card 1 -->
+<div class="bg-surface-container rounded-lg overflow-hidden flex flex-col group kinetic-tap border border-transparent hover:border-primary/30">
+<div class="aspect-[3/4] relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A high-contrast fashion photography shot of oversized vintage charcoal gray cargo pants worn by a model in a dimly lit, neon-soaked urban alleyway. The lighting is dominated by electric orange and deep black shadows, creating a gritty street-culture aesthetic. The composition is focused on the texture and silhouette of the garment against a backdrop of industrial pipes and wet concrete." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUwMJJ0XBZl0CIo2Bh3U2eCGc8q84xph_DPtrydHM4iydfiraoLXyoAcJqEm8dChmDSl5DdhBhfI0McKG9IpjHv480I6lS8CyVdksUsif3yO6u5SiaS8Io3U1MQb97Nrn5BqLxK3Hkkfh1hMmCiaHeKS_Pb2lVFLPbrRfN-n57gNMZIKYQ0h2-kZUqmfWlYpd5-Mex9wYDSLdL0FlGQWTzg8Y9ZqBn_8fCiNplFa4tIzWiokHdgddqyaMYeSkgX-kuqRICnybb378"/>
+<div class="absolute top-sm right-sm">
+<span class="bg-primary-container text-white text-[10px] font-bold px-sm py-xs rounded-full">BARGAIN</span>
+</div>
+</div>
+<div class="p-sm flex flex-col gap-xs">
+<p class="text-secondary font-caption uppercase tracking-wider">Urban Flux</p>
+<h3 class="font-body-md text-on-surface line-clamp-1">Heavy-Duty Cargo V2</h3>
+<div class="flex justify-between items-center mt-xs">
+<p class="font-headline-sm text-primary">₹3,499</p>
+<span class="material-symbols-outlined text-secondary opacity-50">shopping_bag</span>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="bg-surface-container rounded-lg overflow-hidden flex flex-col group kinetic-tap border border-transparent hover:border-primary/30">
+<div class="aspect-[3/4] relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A cinematic product shot of high-end urban streetwear shorts in a deep matte black finish. The setting is a minimalist digital void with vibrant orange light bars reflecting off a glass surface. The lighting is sharp and high-contrast, emphasizing the premium fabric and metallic zippers of the shorts, embodying a Gen-Z high-energy commercial vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjftg0Amcrv9998CmfTpgvcLpYTwHdkbxSG1PjClgW8cpbHQ0kG3f442dPnNxJVGW-WfMMTVOeu02FMmuirHMFCl5tS_nJqtsPtwOE6EsaDa-OcLz-ozK-AGRlZMBuCu3VaqJMrmGEfj5W_V8cWCJUUlFDDujmjVMOPO34ujU2WBOnedik7gzwWhD5z2zswvRIJmQzjTT6XPXcvcZfR7gzo6qAXoqZTHqgu6A7kja2oSaywy-BTPzSHMCLn4Jq8yCjt_xOdE20mNk"/>
+<div class="absolute top-sm left-sm bg-black/60 backdrop-blur-md px-sm py-xs rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-[12px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[10px] font-bold">4.8</span>
+</div>
+</div>
+<div class="p-sm flex flex-col gap-xs">
+<p class="text-secondary font-caption uppercase tracking-wider">Chrome Street</p>
+<h3 class="font-body-md text-on-surface line-clamp-1">Tactical Tech Shorts</h3>
+<div class="flex justify-between items-center mt-xs">
+<p class="font-headline-sm text-primary">₹2,850</p>
+<span class="material-symbols-outlined text-secondary opacity-50">shopping_bag</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Stores (Horizontal Scroll / List Cards) -->
+<div class="mb-xl">
+<h2 class="font-headline-sm text-headline-sm mb-md">Top Stores</h2>
+<div class="flex flex-col gap-sm">
+<!-- Store Card -->
+<div class="bg-surface-container-low p-md rounded-lg flex items-center gap-md border border-outline-variant kinetic-tap">
+<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A futuristic circular brand logo displayed in a dimly lit studio setting. The logo is rendered in vibrant coral neon and sits against a textured dark concrete wall. Soft volumetric smoke and amber lighting create a premium, urban boutique atmosphere, specifically designed for a high-end streetwear brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJu_drzzGLzhV5TKik9t1K5uOnqCXZt_dAgpyUthc7XnHMpcS8b6Ja9NWhu7NpC2HnC6R8f-QAdyFC_edAiqM3Ffi5_Xed3GiK1HetnuJ5ESCsT6wx8Sxew-qJmgSKmpplo2wl9xFVFEofrI8uys1fVuaxHjqIug9Uet306EnZqkBog5wie0KojYlt1I-TPw0AqVCN7rhgCCKnTH5TYF1zwPZNxsHYqPZ8Smy0OtvFF6T_bPyTej-apDcziaIWVlKOcN4JF9b-pbc"/>
+</div>
+<div class="flex-1">
+<h4 class="font-headline-sm text-[16px]">VINTAGE HUB</h4>
+<p class="text-caption text-secondary">Verified Curator • 12.4k Items</p>
+<div class="flex gap-xs mt-sm">
+<span class="px-xs py-[2px] bg-surface-variant text-[9px] rounded uppercase font-bold tracking-tighter">Premium</span>
+<span class="px-xs py-[2px] bg-surface-variant text-[9px] rounded uppercase font-bold tracking-tighter">Quick Ship</span>
+</div>
+</div>
+<button class="bg-white text-[#0A0A0A] font-label-md px-md py-sm rounded-full kinetic-tap">Visit</button>
+</div>
+</div>
+</div>
+<!-- Section: Reels (3-column Grid) -->
+<div class="mb-xl">
+<h2 class="font-headline-sm text-headline-sm mb-md">Style Reels</h2>
+<div class="grid grid-cols-3 gap-[4px]">
+<!-- Reel Thumbnail 1 -->
+<div class="aspect-[9/16] relative bg-surface-container overflow-hidden group kinetic-tap">
+<img class="w-full h-full object-cover" data-alt="A vertical video frame showing a stylish individual performing a high-energy dance move in a vibrant urban environment. The scene is lit with purple and orange street lights at dusk, creating long shadows and high contrast. The style is raw, handheld, and kinetic, perfectly matching a social media reel aesthetic for Gen-Z fashion influencers." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALxs0Z87nof8BKxlJSYuwNnbeYK2qdT7GtGJ9TfrkWCqjj-oe5YicRyKyEPKSBuBUuxr3sV_bhuwuMCqWsFJEo2PoHRBjUL1VM1lmjOD2oZQiA7asrXPLZlQvs-w5bRrVDYNmSiFtYtrNsAe8u7uGoKygXmLIfGkvmraCPAlNj_AUiCkHWpxHGTi_y_y0qyTU6zXB_mTsfuaxnHG7XriCtEnG_IwpGSpQyJE7wuY9ddfc6rMvsM4gR4Avfbxqoh1ppYCPskbRRXLE"/>
+<div class="absolute bottom-xs left-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px] text-white">play_arrow</span>
+<span class="text-[10px] font-bold text-white">84k</span>
+</div>
+<div class="absolute top-xs left-xs">
+<span class="bg-primary text-[#0A0A0A] text-[8px] font-extrabold px-xs py-[2px] rounded-sm">LIVE</span>
+</div>
+</div>
+<!-- Reel Thumbnail 2 -->
+<div class="aspect-[9/16] relative bg-surface-container overflow-hidden group kinetic-tap">
+<img class="w-full h-full object-cover" data-alt="A portrait-oriented streetwear lookbook shot of a model walking down a busy city street. The camera uses a shallow depth of field to blur the vibrant city lights and traffic into a beautiful bokeh. The model's outfit is sharp and detailed, featuring layered techwear pieces in shades of deep black and orange, captured with a professional cinematic lens." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5Sun8VONn3Ot9foCRS-3GIuaVhzg7A5U3xvwrUoAQQ92GKFojrGpCv95u1uLlB26AvfsRcVtLez1ToNzbrmY-Tfme6Yx_SQVsORoePgANhU77d2LaXdGI54rk0EPPJxsblEVfFzu4EmXxDfh37xpZhX_r0S9bxaJ00LSk8cJ5T8Fdh3rZ_a-OX3XPUuRTpA-xfW7G03Ko8Fqtyb0KJveAqlyV2jqEpqoLVuawh0KtuTDjbdKWviQ6Sy6hKJAvGd1btx_J3w4dpEw"/>
+<div class="absolute bottom-xs left-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px] text-white">play_arrow</span>
+<span class="text-[10px] font-bold text-white">12k</span>
+</div>
+</div>
+<!-- Reel Thumbnail 3 -->
+<div class="aspect-[9/16] relative bg-surface-container overflow-hidden group kinetic-tap">
+<img class="w-full h-full object-cover" data-alt="An artistic fashion reel thumbnail featuring a high-speed motion blur effect. The subject is a model spinning in an oversized orange puffer jacket against a dark, industrial brick wall. Electric urban lighting creates dramatic rim lights around the silhouette. The image is dynamic, capturing the fast-paced energy of a streetwear reveal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcgWfRudMi_wtA4vvi0ZtuDChCxKaTlRO7qlLN9LgJc8hm40RODR6neAK0cv4ver3zp0MDom4mvWbtKd5Lk5he-sNcr4RuYzH80RhYQCn-fqOnDDOxC7e7GZI7K07Fjk_Pt4YhxU4iUAr242nmm0ovjN-Jy6CbWyeZ_HZjUtoEdsIx-9I3m0qt_IEWj_cv8hia7pGN-2FvK9ycX-nnyAYq8DvjzCvILNiPFXss9u-d3MykYn0Sp9SNsCS3w1wLOHUMcE0KGLJk6Cw"/>
+<div class="absolute bottom-xs left-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px] text-white">play_arrow</span>
+<span class="text-[10px] font-bold text-white">45k</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State (Hidden by default, shown via logic if needed) -->
+<div class="hidden flex flex-col items-center justify-center py-xl text-center" id="empty-state">
+<div class="w-48 h-48 mb-lg relative">
+<div class="absolute inset-0 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+<span class="material-symbols-outlined text-[120px] text-primary opacity-20">search_off</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs">No results for "Luxury Suit"</h3>
+<p class="text-secondary font-body-md mb-xl max-w-[280px]">Our urban explorers couldn't find that specific drop. Try these instead.</p>
+<div class="w-full flex flex-wrap justify-center gap-sm">
+<button class="px-md py-sm bg-surface-container rounded-full text-primary border border-primary/20 font-label-md">Utility Vests</button>
+<button class="px-md py-sm bg-surface-container rounded-full text-primary border border-primary/20 font-label-md">Graphic Tees</button>
+<button class="px-md py-sm bg-surface-container rounded-full text-primary border border-primary/20 font-label-md">Street Accessories</button>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 backdrop-blur-md flex justify-around items-center h-20 px-gutter">
+<a class="flex flex-col items-center justify-center text-secondary opacity-60 hover:opacity-100 transition-all kinetic-tap" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary transition-all kinetic-tap" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary opacity-60 hover:opacity-100 transition-all kinetic-tap" href="#">
+<span class="material-symbols-outlined">movie</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary opacity-60 hover:opacity-100 transition-all kinetic-tap" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary opacity-60 hover:opacity-100 transition-all kinetic-tap" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</nav>
+<!-- Decorative Electric Gradient -->
+<div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50 blur-[2px] z-[60]"></div>
+<script>
+        // Micro-interaction for tabs
+        const tabs = document.querySelectorAll('.pb-base');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('border-primary-container', 'text-primary');
+                    t.classList.add('border-transparent', 'text-secondary', 'opacity-60');
+                });
+                tab.classList.remove('border-transparent', 'text-secondary', 'opacity-60');
+                tab.classList.add('border-primary-container', 'text-primary');
+            });
+        });
+
+        // Simple toggle for empty state demo (trigger via console)
+        window.toggleResults = function() {
+            const mainContent = document.querySelectorAll('main > div:not(#empty-state)');
+            const emptyState = document.getElementById('empty-state');
+            
+            mainContent.forEach(div => div.classList.toggle('hidden'));
+            emptyState.classList.toggle('hidden');
+            emptyState.classList.toggle('flex');
+        };
+    </script>
+</body></html>

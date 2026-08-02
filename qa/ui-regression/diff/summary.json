@@ -1,0 +1,42 @@
+[
+  {
+    "name": "buyer_app_vs_baseline",
+    "status": "ok",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_app_vs_baseline",
+    "status": "ok",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller_app_vs_baseline.png"
+  },
+  {
+    "name": "admin_app_vs_baseline",
+    "status": "ok",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/admin_app_vs_baseline.png"
+  },
+  {
+    "name": "buyer_app_vs_stitch",
+    "status": "ok",
+    "mismatchedPixels": 478993,
+    "totalPixels": 662220,
+    "mismatchPct": 72.33,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_app_vs_stitch",
+    "status": "ok",
+    "mismatchedPixels": 145953,
+    "totalPixels": 482820,
+    "mismatchPct": 30.23,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller_app_vs_stitch.png"
+  }
+]

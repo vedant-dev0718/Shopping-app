@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "on-error": "#690005",
+                    "inverse-on-surface": "#3f2c26",
+                    "error": "#ffb4ab",
+                    "on-surface": "#fcdcd3",
+                    "surface-dim": "#1f0f0b",
+                    "tertiary-fixed": "#d4e3ff",
+                    "primary-fixed-dim": "#ffb59e",
+                    "primary-fixed": "#ffdbd0",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "inverse-primary": "#ae3200",
+                    "on-primary": "#5e1700",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-tertiary-container": "#002a53",
+                    "on-primary-container": "#521300",
+                    "surface-tint": "#ffb59e",
+                    "tertiary": "#a5c8ff",
+                    "surface-container-highest": "#44302a",
+                    "on-error-container": "#ffdad6",
+                    "surface-container": "#2d1b16",
+                    "on-primary-fixed-variant": "#852400",
+                    "inverse-surface": "#fcdcd3",
+                    "secondary-container": "#454747",
+                    "outline": "#ad897e",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface-container-lowest": "#190a06",
+                    "tertiary-container": "#2492ff",
+                    "surface-bright": "#49342e",
+                    "outline-variant": "#5c4037",
+                    "on-background": "#fcdcd3",
+                    "surface-container-low": "#281712",
+                    "on-surface-variant": "#e6beb2",
+                    "surface": "#1f0f0b",
+                    "error-container": "#93000a",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-variant": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "on-tertiary": "#00315e",
+                    "background": "#1f0f0b",
+                    "primary-container": "#ff571a",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-secondary": "#2f3131",
+                    "primary": "#ffb59e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "margin": "16px",
+                    "xl": "32px",
+                    "xs": "4px",
+                    "gutter": "12px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["inter"],
+                    "caption": ["inter"],
+                    "label-md": ["inter"],
+                    "display-lg-mobile": ["montserrat"],
+                    "headline-md": ["montserrat"],
+                    "body-md": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #1f0f0b; color: #fcdcd3; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .active-nav .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        .bento-glow { box-shadow: 0 0 15px rgba(255, 77, 0, 0.15); }
+        .kinetic-tap:active { transform: scale(0.96); transition: transform 0.1s ease; }
+        .glass-surface { background: rgba(45, 27, 22, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background dark:bg-background flex justify-between items-center px-margin h-16 w-full">
+<button class="text-primary dark:text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary">NOTWHAT</h1>
+<button class="text-primary dark:text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="pt-16 pb-24 overflow-x-hidden">
+<!-- Hero Section -->
+<section class="relative w-full aspect-[4/5] md:aspect-video flex flex-col items-center justify-end p-margin overflow-hidden">
+<div class="absolute inset-0 z-0">
+
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 text-center w-full max-w-md">
+<span class="inline-block bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-md text-label-md mb-sm uppercase tracking-wider">Limited Time Event</span>
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-white mb-xs animate-float">BARGAIN DAYS</h2>
+<p class="font-body-md text-on-surface-variant mb-lg px-lg">The streets are talking. Snag high-heat drops for prices you dictate.</p>
+<!-- Countdown -->
+<div class="grid grid-cols-4 gap-xs mb-xl">
+<div class="glass-surface p-sm rounded-lg flex flex-col items-center">
+<span class="font-headline-sm text-headline-sm text-primary">02</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">Days</span>
+</div>
+<div class="glass-surface p-sm rounded-lg flex flex-col items-center">
+<span class="font-headline-sm text-headline-sm text-primary">14</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">Hrs</span>
+</div>
+<div class="glass-surface p-sm rounded-lg flex flex-col items-center">
+<span class="font-headline-sm text-headline-sm text-primary">59</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">Min</span>
+</div>
+<div class="glass-surface p-sm rounded-lg flex flex-col items-center">
+<span class="font-headline-sm text-headline-sm text-primary" id="countdown-sec">42</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">Sec</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Auctions Section -->
+<section class="px-margin mb-xl">
+<div class="flex justify-between items-end mb-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm">Live Auctions</h3>
+<p class="text-caption text-on-surface-variant">Real-time bargaining in progress</p>
+</div>
+<button class="text-primary font-label-md text-label-md">View All</button>
+</div>
+<!-- Horizontal Scroll Product Feed -->
+<div class="flex gap-md overflow-x-auto pb-md snap-x -mx-margin px-margin no-scrollbar">
+<!-- Product Card 1 -->
+<div class="min-w-[240px] snap-start glass-surface rounded-lg overflow-hidden relative kinetic-tap">
+<div class="h-64 w-full bg-surface-container-highest relative">
+<img class="w-full h-full object-cover" data-alt="A professional high-angle studio photograph of premium high-top sneakers with a sleek black and orange colorway. The lighting is dramatic and moody, utilizing deep shadows and sharp orange highlights that match the urbanVOID aesthetic. The sneakers are placed on a reflective dark surface against a deep charcoal background, exuding a high-end streetwear fashion vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb2KXF4Zxb41vg4JCTzLnZe-GucPMVqufPUpEGSrB3CaURtQ8-MfMNqS8M2-mMnqgFooRhwpil9ReAWfUcLAkoSPueAXxXDf43aZW4z7fLiXNkAUrHPL40lJCqeYeCp_iKB3uVkpZJP4jVEO0cAOeYkKlu6z5USPZg7xT01yspEKDViG_yeqIhGZer2CDoNDDBv6dts_YOvplIEYsTscQ_kOFe24sES6aeBgFZSwCH_fSC-pWf7245vmoeLHcxMtbUnsWWYZ7Qpck"/>
+<div class="absolute top-sm left-sm bg-error text-on-error px-2 py-0.5 rounded-full flex items-center gap-1 font-label-md">
+<span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                            LIVE
+                        </div>
+</div>
+<div class="p-md">
+<h4 class="font-body-md font-bold truncate">Neon Pulse High-Tops</h4>
+<div class="flex items-center justify-between mt-sm">
+<span class="font-headline-sm text-primary">₹3,499</span>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">gavel</span>
+<span class="text-caption font-bold">124 Bids</span>
+</div>
+</div>
+<button class="w-full mt-md bg-primary text-on-primary py-2 rounded-full font-label-md uppercase tracking-tight">Bid Now</button>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="min-w-[240px] snap-start glass-surface rounded-lg overflow-hidden relative kinetic-tap">
+<div class="h-64 w-full bg-surface-container-highest relative">
+<img class="w-full h-full object-cover" data-alt="A detailed, close-up shot of a modern, oversized tech-wear hoodie featuring complex textures and neon orange drawstring details. The garment is shown on a faceless mannequin in a dark, urban setting with misty, low-key lighting. The color palette consists of obsidian blacks and vibrant orange accents, perfectly aligned with the Gen-Z social commerce visual identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJkHnyYEPbjjyfzOJyuueOz0pmNpNSsHvJD-2ujvhwtRKDNHUeiwcEQewyjtZBJaXp55tFx-Keksu1UkKsnZtKvqYeezHrpC9BX-Hwda0a_leFCMICkSTm-CdUQ3G3dDN0tYX4TN0rlVRM05typkZ4ajBZ9_Z1TGfFbVJYM12KUZUFr1sIpbTjxwxkxHz_MsdT1zPvUWGMGAdMafc9hTmjuIyoPW-e_E9-_XORjpEWhmcCN8o-9UEawkw2U5_3qa7Kna_M1sRihnM"/>
+<div class="absolute top-sm left-sm bg-error text-on-error px-2 py-0.5 rounded-full flex items-center gap-1 font-label-md">
+<span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                            LIVE
+                        </div>
+</div>
+<div class="p-md">
+<h4 class="font-body-md font-bold truncate">Cyber-Cargo Hoodie</h4>
+<div class="flex items-center justify-between mt-sm">
+<span class="font-headline-sm text-primary">₹1,850</span>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">gavel</span>
+<span class="text-caption font-bold">89 Bids</span>
+</div>
+</div>
+<button class="w-full mt-md bg-primary text-on-primary py-2 rounded-full font-label-md uppercase tracking-tight">Bid Now</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Upcoming Auctions -->
+<section class="px-margin mb-xl">
+<h3 class="font-headline-sm text-headline-sm mb-md">Upcoming Drops</h3>
+<div class="grid grid-cols-2 gap-md">
+<div class="glass-surface p-sm rounded-lg relative opacity-70">
+<div class="aspect-square rounded-md overflow-hidden mb-sm grayscale">
+<img class="w-full h-full object-cover" data-alt="A striking minimalist product photo of a bright orange athletic shoe against a dark, textured asphalt background. The lighting is cinematic with a strong directional key light that creates long shadows. The style is modern, energetic, and perfectly fits a high-contrast urban fashion brand aesthetic with focus on the vibrant orange primary color." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxUwwkcTislbvrpdCLGlLS3BnZLneVguMAhvtbjjwyaLYX-7GQPbsrYZRQehKVM-k7_leK94zmHcsNjYlVMjfmiMEPaUXz9S-XpvH5Meiffr6H7-0yD5699YzbA9P6gG5obgW8Y-ONtYN3CJdpPSjsSrYhgQizEjaYYO9UBMh8e4ItX4s4yVW68Vzx-_TX0mUCpOKQzncaF21djgvW3CSTYN4Y52q6FVy2kPDQ4dkdQ59GvPS4GtUuP56rykHZW9p9Pr5P3KT39P4"/>
+</div>
+<div class="absolute inset-0 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[2px] rounded-lg">
+<span class="material-symbols-outlined text-primary mb-xs">lock</span>
+<span class="font-label-md text-primary">Starts in 4h</span>
+</div>
+<span class="text-caption font-bold">Retro Runners</span>
+</div>
+<div class="glass-surface p-sm rounded-lg relative opacity-70">
+<div class="aspect-square rounded-md overflow-hidden mb-sm grayscale">
+<img class="w-full h-full object-cover" data-alt="A high-fashion shot of futuristic orange-tinted sunglasses placed on a sleek metallic surface. The background is a dark, gradient void that emphasizes the glass's transparency and vibrant color. The lighting is high-contrast with electric glows that mirror the urban Indian street culture vibe of the brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOWe2kGX3VU2S3Nd6fkcxzMzcwK-LWXqdy3ItbDpvupaBT2Vp2JxHwC0mP9CAcglhCY1sKFgCrVmvmNGvOZGUNlPiHz2Fs42IVtbRGKE_pevGJG4pysQJMEKgMJvAey5n4fYAQuF1Cl2X1WPSiWklbos_VZKRppG3Zl4yWcGq5m3TOa_F0QYJ9blQLcEIHdY07VxaxwFnXxXkws_C3iZrkdRUk3woz8gdoi9nmjb56qyTmDWeQkHZ0M8HJsZ5Cs5nYMSwf6m6QwjQ"/>
+</div>
+<div class="absolute inset-0 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[2px] rounded-lg">
+<span class="material-symbols-outlined text-primary mb-xs">lock</span>
+<span class="font-label-md text-primary">Starts in 8h</span>
+</div>
+<span class="text-caption font-bold">Solar Visors</span>
+</div>
+</div>
+</section>
+<!-- How it Works (Visual Explainer) -->
+<section class="px-margin mb-xl bg-surface-container-low py-xl -mx-margin">
+<div class="px-margin">
+<h3 class="font-headline-sm text-headline-sm mb-lg text-center">Bargain Blueprint</h3>
+<div class="relative">
+<!-- Vertical Line Connecting Steps -->
+<div class="absolute left-[20px] top-4 bottom-4 w-0.5 bg-outline-variant/30"></div>
+<!-- Step 1 -->
+<div class="relative flex items-start gap-lg mb-xl">
+<div class="z-10 w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-on-primary">1</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary mb-xs">Bid Low</h4>
+<p class="text-body-md text-on-surface-variant">Enter your price. Start low or go bold. It's your play.</p>
+<div class="mt-md glass-surface rounded-lg p-md flex items-center justify-between border-primary/20">
+<span class="font-label-md">Your Bid</span>
+<span class="font-headline-sm text-primary">₹899</span>
+</div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="relative flex items-start gap-lg mb-xl">
+<div class="z-10 w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-on-primary">2</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary mb-xs">Get Notified</h4>
+<p class="text-body-md text-on-surface-variant">If someone bids higher, we'll ping you instantly. Fast fingers win.</p>
+<div class="mt-md bg-error-container/30 border border-error/20 rounded-lg p-md flex items-center gap-md">
+<span class="material-symbols-outlined text-error">warning</span>
+<span class="text-caption font-bold">OUTBID! Update your price now.</span>
+</div>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="relative flex items-start gap-lg">
+<div class="z-10 w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-on-primary">3</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary mb-xs">Win &amp; Buy</h4>
+<p class="text-body-md text-on-surface-variant">Auction ends. If you're top of the pile, the deal is yours.</p>
+<div class="mt-md bg-primary-container text-on-primary-container rounded-lg p-md flex flex-col items-center">
+<span class="material-symbols-outlined text-[40px] mb-xs">celebration</span>
+<span class="font-headline-sm">WINNER!</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Banner -->
+<section class="px-margin mb-xl">
+<div class="relative rounded-lg overflow-hidden h-40 flex items-center p-lg">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover brightness-50" data-alt="A blurry, festive background of vibrant street lights and celebration atmosphere with neon orange and red streaks. The scene captures the energy of an urban Indian festival with light trails and high energy, creating a dynamic and exciting mood for a social commerce sale event. The style is cinematic and atmospheric." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzREu4u2hEN9x54VV5EKI8aVbBRBBw_iuiXt4A7mpsYQXLoDrCp1pNE51TAvQ4qajyuLAh1lCgFHkzSTUaCRVG-Y6daxiBBUhjjedjHXkY7j-NGh7ZJ-hZhBxMIKPKjyxSUCm2ip135tmbWhr2v6R7jHnkr48ZzjQ-pphVekZAIaRZv_eLorA90kpk7Ygp1DSIi9Im9C78jByLbCXH7_UDZVKV9gy_6A4E4unrLo3U-Vwhl_aONnkYaA2wMPq9ljLYSAW09xr8Pow"/>
+</div>
+<div class="relative z-10 w-full">
+<h4 class="font-headline-md text-white mb-xs">Join the Hustle</h4>
+<p class="text-body-md text-on-surface-variant mb-md">Invite friends to unlock VIP auctions.</p>
+<button class="bg-white text-black px-xl py-2 rounded-full font-label-md">Share Link</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 dark:bg-background/90 backdrop-blur-md flex justify-around items-center h-20 px-gutter w-full">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">movie</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for countdown
+        const countdownSec = document.getElementById('countdown-sec');
+        let sec = 42;
+        setInterval(() => {
+            sec = sec <= 0 ? 59 : sec - 1;
+            countdownSec.textContent = sec.toString().padStart(2, '0');
+        }, 1000);
+
+        // Scroll animations simulation
+        const cards = document.querySelectorAll('.kinetic-tap');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100');
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        cards.forEach(card => {
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
+            observer.observe(card);
+        });
+    </script>
+</body></html>

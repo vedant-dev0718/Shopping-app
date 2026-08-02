@@ -1,0 +1,18 @@
+Running on emulator-5554
+ > Flow seller_checkpoint_upload_reel
+Launch app "com.notwhat.app.seller" with clear state... COMPLETED
+Assert that "Welcome Back" is visible... COMPLETED
+Tap on "Mock"... COMPLETED
+Tap on "Email"... COMPLETED
+Input text seller@example.com... COMPLETED
+Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Tap on "Password"... COMPLETED
+Input text Password123!... COMPLETED
+Hide Keyboard... COMPLETED
+Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Tap on "Log In"... COMPLETED
+Assert that "Seller Hub" is visible... COMPLETED
+Scrolling DOWN until "NW-023 Upload Reel" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Tap on "NW-023 Upload Reel"... COMPLETED
+Assert that "NW-023 Upload Reel" is visible... COMPLETED
+Wait for animation to end... COMPLETED

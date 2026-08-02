@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bottom-sheet-enter {
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .bottom-sheet-active {
+            transform: translateY(0);
+        }
+        .glass-blur {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        input:focus, select:focus {
+            box-shadow: 0px 0px 8px #FF4D00;
+            outline: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#ffdad6",
+                        "inverse-surface": "#fcdcd3",
+                        "error-container": "#93000a",
+                        "surface-bright": "#49342e",
+                        "surface": "#1f0f0b",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "primary-fixed-dim": "#ffb59e",
+                        "inverse-primary": "#ae3200",
+                        "surface-container": "#2d1b16",
+                        "on-secondary-container": "#b4b5b5",
+                        "on-primary-fixed": "#3a0b00",
+                        "on-primary-fixed-variant": "#852400",
+                        "on-tertiary": "#00315e",
+                        "surface-container-high": "#382620",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-tertiary-fixed": "#001c3a",
+                        "surface-container-low": "#281712",
+                        "tertiary-container": "#2492ff",
+                        "outline-variant": "#5c4037",
+                        "on-surface-variant": "#e6beb2",
+                        "primary-fixed": "#ffdbd0",
+                        "on-primary-container": "#521300",
+                        "on-tertiary-container": "#002a53",
+                        "error": "#ffb4ab",
+                        "on-background": "#fcdcd3",
+                        "surface-container-highest": "#44302a",
+                        "on-secondary": "#2f3131",
+                        "secondary-container": "#454747",
+                        "background": "#1f0f0b",
+                        "tertiary": "#a5c8ff",
+                        "outline": "#ad897e",
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "inverse-on-surface": "#3f2c26",
+                        "surface-dim": "#1f0f0b",
+                        "secondary-fixed": "#e2e2e2",
+                        "secondary": "#c6c6c7",
+                        "surface-container-lowest": "#190a06",
+                        "on-primary": "#5e1700",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-surface": "#fcdcd3",
+                        "on-error": "#690005",
+                        "primary-container": "#ff571a",
+                        "primary": "#ffb59e",
+                        "surface-variant": "#44302a",
+                        "tertiary-fixed": "#d4e3ff",
+                        "surface-tint": "#ffb59e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin": "16px",
+                        "gutter": "12px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["montserrat"],
+                        "headline-md": ["montserrat"],
+                        "body-lg": ["inter"],
+                        "caption": ["inter"],
+                        "body-md": ["inter"],
+                        "display-lg": ["montserrat"],
+                        "display-lg-mobile": ["montserrat"],
+                        "label-md": ["inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#0A0A0A] text-on-surface font-body-md overflow-hidden">
+<!-- Mock Background Content (Dashboard View) -->
+<div class="relative w-full max-w-[390px] mx-auto h-screen bg-[#0A0A0A] p-margin pt-12">
+<header class="flex items-center justify-between mb-xl">
+<h1 class="font-headline-md text-headline-md-mobile italic tracking-tighter text-primary">NOTWHAT SELLER</h1>
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcvPVwMfUg55mlhGiZBrNSjh6zrI0iPZtr-VXX6R6l7HnX8US1JYJQGunDfM86s37SIrGj9C9GFcxLBa2W7Sl4y29YzZmZGLBe53AJM6XqIS_Mwz1NKeDckOI0TNbvea3Vtf8tJFNgwpGMJCSaBHDVIP6Rv-2IpY8nn439gVpaH6BH6cgDcdTj-deNId4ULkPMeokxy76Aapo_XTXBfpsocbAP92qD6RiQcUrbXUS_WmSP3tHqbnWJvzErnumpWb9u7rtdMjP0FgA"/>
+</div>
+</header>
+<div class="space-y-md">
+<div class="p-md bg-surface-container rounded-lg border border-outline-variant opacity-40">
+<div class="flex justify-between items-center mb-sm">
+<span class="text-primary font-label-md">ORDER #49201</span>
+<span class="text-caption bg-primary-container/20 text-primary px-2 py-0.5 rounded-full">PENDING</span>
+</div>
+<div class="h-2 w-3/4 bg-surface-variant rounded-full mb-2"></div>
+<div class="h-2 w-1/2 bg-surface-variant rounded-full"></div>
+</div>
+<div class="p-md bg-surface-container rounded-lg border border-outline-variant opacity-40">
+<div class="flex justify-between items-center mb-sm">
+<span class="text-primary font-label-md">ORDER #49198</span>
+<span class="text-caption bg-primary-container/20 text-primary px-2 py-0.5 rounded-full">PENDING</span>
+</div>
+<div class="h-2 w-2/3 bg-surface-variant rounded-full mb-2"></div>
+<div class="h-2 w-1/3 bg-surface-variant rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Backdrop Overlay -->
+<div class="fixed inset-0 bg-black/70 z-40 transition-opacity duration-300 opacity-0 pointer-events-none" id="backdrop"></div>
+<!-- Bottom Sheet Shell -->
+<div class="fixed bottom-0 left-0 right-0 z-50 w-full max-w-[390px] mx-auto bg-[#1A1A1A] rounded-t-lg shadow-2xl transition-transform duration-500 transform translate-y-full border-t border-[#3A3A3A] overflow-hidden" id="bottom-sheet">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center pt-3 pb-2">
+<div class="w-10 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Header Content -->
+<div class="px-margin pt-2 pb-md flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded-md bg-white flex items-center justify-center p-1">
+<img alt="Shiprocket" class="w-full h-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkt_tNs0-TdWkCkoq9V98BfufPv52mcywG2cWJv6fePRudwlP52hveAgb7dQTHEFHVaZ2BsOctn7lanlU1d3ckX4P7kgUbWrbKhekTjX88jatyCt_xp6Lgfnnrx0ISKKRzDYhOm4wqU9YTFPvAwnZe46bn7sgUrpkcf3AhnizjS-MBQWRJpLm_dS498yE4wOkvVtXGWeTn4vwVHTlYQSAio8R-L2SUIcn8lcmcVPTd2lGdbHbBDyElz5DR2yBy8oGvMfark-ZI7Tg"/>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Generate Label</h2>
+</div>
+<button class="p-1 hover:bg-surface-variant rounded-full transition-colors" onclick="closeSheet()">
+<span class="material-symbols-outlined text-outline">close</span>
+</button>
+</div>
+<!-- Form Scrollable Area -->
+<div class="px-margin max-h-[618px] overflow-y-auto pb-40 space-y-lg">
+<!-- Logistics Section -->
+<div class="space-y-md">
+<h3 class="font-label-md text-primary uppercase tracking-wider">Package Details</h3>
+<div class="grid grid-cols-2 gap-gutter">
+<div class="space-y-base">
+<label class="text-caption text-on-surface-variant pl-1">Weight (kg)</label>
+<input class="w-full bg-[#1A1A1A] border-outline-variant rounded-md text-on-surface font-body-md py-3 px-md" readonly="" type="text" value="0.850"/>
+</div>
+<div class="space-y-base">
+<label class="text-caption text-on-surface-variant pl-1">Dimensions (L×W×H)</label>
+<input class="w-full bg-[#1A1A1A] border-outline-variant rounded-md text-on-surface font-body-md py-3 px-md text-sm" readonly="" type="text" value="25x15x10 cm"/>
+</div>
+</div>
+</div>
+<!-- Address Section -->
+<div class="space-y-md">
+<div class="flex items-center justify-between">
+<h3 class="font-label-md text-primary uppercase tracking-wider">Delivery Route</h3>
+<span class="material-symbols-outlined text-primary text-sm">local_shipping</span>
+</div>
+<div class="relative pl-8 space-y-md">
+<!-- Vertical Timeline Line -->
+<div class="absolute left-[11px] top-3 bottom-3 w-[1.5px] bg-gradient-to-b from-primary to-outline-variant"></div>
+<!-- Pickup -->
+<div class="relative">
+<div class="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/20"></div>
+<p class="text-caption text-primary font-bold mb-1">PICKUP ADDRESS</p>
+<div class="bg-[#2A2A2A] p-md rounded-md border border-[#3A3A3A]">
+<p class="text-body-md font-semibold">Urban Streetwear Co. Warehouse</p>
+<p class="text-caption text-on-surface-variant">Sector 62, Gurgaon, HR - 122001</p>
+</div>
+</div>
+<!-- Buyer -->
+<div class="relative">
+<div class="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
+<p class="text-caption text-on-surface-variant font-bold mb-1">BUYER ADDRESS</p>
+<div class="bg-[#2A2A2A] p-md rounded-md border border-[#3A3A3A]">
+<p class="text-body-md font-semibold">Arjun Malhotra</p>
+<p class="text-caption text-on-surface-variant">B-42, Skyview Enclave, Andheri West, Mumbai, MH - 400053</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Courier Selection -->
+<div class="space-y-md">
+<h3 class="font-label-md text-primary uppercase tracking-wider">Courier Preference</h3>
+<div class="relative">
+<select class="w-full bg-[#1A1A1A] border-primary rounded-md text-on-surface font-body-md py-3 px-md appearance-none ring-1 ring-primary/50">
+<option>Delhivery Surface (Cheapest) - ₹64.00</option>
+<option>BlueDart Express (Fastest) - ₹142.00</option>
+<option>Xpressbees Lite - ₹68.00</option>
+<option>Ecom Express - ₹71.00</option>
+</select>
+<div class="absolute right-md top-1/2 -translate-y-1/2 pointer-events-none">
+<span class="material-symbols-outlined text-primary">expand_more</span>
+</div>
+</div>
+<p class="text-caption text-primary flex items-center gap-1 italic">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+                    Auto-selected the most cost-effective partner for this route.
+                </p>
+</div>
+</div>
+<!-- Sticky Bottom CTA Area -->
+<div class="absolute bottom-0 left-0 right-0 p-margin bg-[#1A1A1A]/90 glass-blur border-t border-[#3A3A3A] pb-10">
+<div class="flex items-center justify-between mb-md">
+<div class="flex flex-col">
+<span class="text-caption text-on-surface-variant">Total Estimated Cost</span>
+<span class="text-headline-md text-primary font-bold">₹64.00 <span class="text-sm font-normal text-on-surface-variant">incl. GST</span></span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border border-[#1A1A1A] bg-white flex items-center justify-center p-1">
+<img alt="S" class="w-full h-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBukNrusbZq7eld02PAZeqCdmJ5hMXFAHa_AdPqF4dshzUPx_kM-unRJvKu2Wr3kpsktR8-mquh6Ro08ZtYdHO1XC7Cye4iksP6Q1K0lMZRIYCNoZRGu0XwEM56Bp5hS-kU0cJtCh1x9A3yX79nDnGWynoBi2YAJtsbVLzghYPi077TFsLnwrdZyYoRHu_D9_M_kDNem13kSpmO2rBFcr8A1KJ1JCPvG8EiG9gTMvANnJFjD5MU7UsTybvpKXDzAsMzgNK-QhydZfQ"/>
+</div>
+<div class="w-8 h-8 rounded-full border border-[#1A1A1A] bg-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-surface">verified</span>
+</div>
+</div>
+</div>
+<button class="w-full py-4 bg-[#FF4D00] text-white font-bold rounded-full text-body-lg shadow-[0px_0px_12px_rgba(255,77,0,0.4)] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 group" onclick="handleGenerate()">
+<span class="material-symbols-outlined group-hover:translate-y-0.5 transition-transform" id="btn-icon">download</span>
+<span id="btn-text">Generate & Download Label</span>
+</button>
+</div>
+</div>
+<!-- Floating Action Trigger (Initial State) -->
+<div class="fixed bottom-margin right-margin z-30">
+<button class="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-[0px_0px_16px_#FF4D00] animate-bounce" onclick="openSheet()">
+<span class="material-symbols-outlined text-[32px]">local_shipping</span>
+</button>
+</div>
+<script>
+        const sheet = document.getElementById('bottom-sheet');
+        const backdrop = document.getElementById('backdrop');
+
+        function openSheet() {
+            sheet.classList.remove('translate-y-full');
+            backdrop.classList.remove('pointer-events-none', 'opacity-0');
+            backdrop.classList.add('opacity-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSheet() {
+            sheet.classList.add('translate-y-full');
+            backdrop.classList.add('opacity-0');
+            backdrop.classList.add('pointer-events-none');
+            backdrop.classList.remove('opacity-100');
+            document.body.style.overflow = 'auto';
+        }
+
+        function handleGenerate() {
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            
+            btnText.innerText = "Generating Label...";
+            btnIcon.innerText = "sync";
+            btnIcon.classList.add('animate-spin');
+            
+            setTimeout(() => {
+                btnIcon.classList.remove('animate-spin');
+                btnIcon.innerText = "check_circle";
+                btnText.innerText = "Label Downloaded!";
+                
+                setTimeout(() => {
+                    closeSheet();
+                    // Reset button for next time
+                    setTimeout(() => {
+                        btnIcon.innerText = "download";
+                        btnText.innerText = "Generate & Download Label";
+                    }, 500);
+                }, 1000);
+            }, 2000);
+        }
+
+        // Close on backdrop click
+        backdrop.addEventListener('click', closeSheet);
+
+        // Auto-open on load to demonstrate the prompt
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(openSheet, 800);
+        });
+    </script>
+</body></html>

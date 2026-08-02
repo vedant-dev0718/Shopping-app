@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&amp;family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#fcdcd3",
+                    "on-background": "#fcdcd3",
+                    "inverse-on-surface": "#3f2c26",
+                    "tertiary-container": "#2492ff",
+                    "surface-tint": "#ffb59e",
+                    "surface-container-lowest": "#190a06",
+                    "primary-container": "#ff571a",
+                    "on-error": "#690005",
+                    "primary-fixed": "#ffdbd0",
+                    "error-container": "#93000a",
+                    "secondary-container": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-surface": "#fcdcd3",
+                    "surface": "#1f0f0b",
+                    "surface-bright": "#49342e",
+                    "outline-variant": "#5c4037",
+                    "surface-dim": "#1f0f0b",
+                    "tertiary": "#a5c8ff",
+                    "on-tertiary-fixed": "#001c3a",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-primary-fixed": "#3a0b00",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-tertiary-container": "#002a53",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "outline": "#ad897e",
+                    "surface-container": "#2d1b16",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "primary": "#ffb59e",
+                    "background": "#1f0f0b",
+                    "on-surface-variant": "#e6beb2",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab",
+                    "surface-variant": "#44302a",
+                    "on-primary-fixed-variant": "#852400",
+                    "on-primary-container": "#521300",
+                    "on-primary": "#5e1700",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "secondary-fixed": "#e2e2e2",
+                    "primary-fixed-dim": "#ffb59e",
+                    "surface-container-highest": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "inverse-primary": "#ae3200",
+                    "on-secondary": "#2f3131",
+                    "on-tertiary": "#00315e",
+                    "surface-container-low": "#281712"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "gutter": "12px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "margin": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["inter"],
+                    "body-lg": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"],
+                    "label-md": ["inter"],
+                    "headline-md": ["montserrat"],
+                    "display-lg-mobile": ["montserrat"],
+                    "caption": ["inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #1f0f0b;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .active-tab-glow {
+            box-shadow: 0px 0px 8px #ffb59e;
+        }
+        .glass-card {
+            background: rgba(45, 27, 22, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(173, 137, 126, 0.2);
+        }
+        .card-gradient {
+            background: linear-gradient(135deg, #382620 0%, #1f0f0b 100%);
+        }
+        .electric-border:focus-within {
+            box-shadow: 0px 0px 8px #ff571a;
+            border-color: #ff571a;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md select-none">
+<!-- Top AppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md flex justify-between items-center px-margin h-16">
+<div class="flex items-center gap-md">
+<button class="active:scale-95 transition-transform text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile italic font-black text-primary tracking-tighter">NOTWHAT</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="active:scale-95 transition-transform text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-16 pb-24 min-h-screen">
+<!-- Screen Title Section -->
+<section class="px-margin pt-lg pb-md">
+<h2 class="font-headline-md text-headline-md text-on-background">Saved Hub</h2>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-80">Everything you’ve loved and bargain-ed for.</p>
+</section>
+<!-- Filter Tabs -->
+<section class="px-margin overflow-x-auto custom-scrollbar flex gap-sm mb-lg">
+<button class="px-lg py-sm rounded-full bg-primary-container text-on-primary-container font-label-md text-label-md active-tab-glow whitespace-nowrap">All Items</button>
+<button class="px-lg py-sm rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-variant transition-colors whitespace-nowrap">Products</button>
+<button class="px-lg py-sm rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-variant transition-colors whitespace-nowrap">Stores</button>
+<button class="px-lg py-sm rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-variant transition-colors whitespace-nowrap">Price Drops</button>
+</section>
+<!-- Saved Content Grid -->
+<section class="px-margin grid grid-cols-2 gap-md mb-xl">
+<!-- Product Card 1 -->
+<div class="glass-card rounded-lg overflow-hidden flex flex-col group active:scale-95 transition-transform duration-200">
+<div class="relative aspect-[3/4] bg-surface-container">
+<img class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all" data-alt="A cinematic product shot of high-end street fashion sneakers with bold orange accents, placed against a dark urban concrete background with moody neon lighting. The aesthetic is high-contrast, edgy, and premium, reflecting a Gen-Z urban lifestyle with deep blacks and vibrant coral highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCy7AnHIVs7KwX3qqQEmYqAAEZlMhSPfuBexY8HMPThjh36kqJ1SN-abD0Ae6Snq-GzK5YFpw9w1Tr9l5t4f8cQuhTBg_s5gBgRmNVPbAGiZxrg3Thsfp03Ey6w-uGsw62uRCkrdhNYlP60efICJ-h_Sytn_3U56uhP2gErMS9Tzgx5CcP3UmAWnfTYyOtw6PK-MqTYFpwKTAXkFussQcDfTEpBhJf6E_MmopSBCwPTm96QN6HhgVn0fCehLY4MV_j8gQlUPKkY19M"/>
+<span class="absolute top-2 left-2 bg-primary-container text-white px-2 py-0.5 rounded-full font-label-md text-[10px] uppercase">Bargain</span>
+<button class="absolute top-2 right-2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm text-primary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+</div>
+<div class="p-sm">
+<h3 class="font-body-md text-body-md truncate text-on-surface">Hyperion Low-Top</h3>
+<p class="font-headline-sm text-headline-sm text-primary">₹4,299</p>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="glass-card rounded-lg overflow-hidden flex flex-col group active:scale-95 transition-transform duration-200">
+<div class="relative aspect-[3/4] bg-surface-container">
+<img class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all" data-alt="A stylish portrait of an oversized designer streetwear jacket in a dark charcoal grey with glowing orange industrial zippers. The setting is a futuristic minimalist studio with dramatic side lighting and deep shadows, emphasizing the premium texture and bold tech-wear aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAL-tZg6Kv7GUuaKCRKiFxRhIXw2i6Pe-AL6jFd6DHKu_KElXgJ1FJ_cgwufgZEIQUA3k8ikssVlNskXiAUtEENi10UWdkj7hGlZ7_4EM7M-nTnJxrXGA0JB6u7uIIv3MytrQvefmEz8SHSE2leFtfg4ugo1MkvhCC7zYCeby8l1lwGjJG7xQSCmoDQrt2ou_P0EBDq9cVMa7u5GMHEzua4CVV9Vjt1jSAXF3OmvFKjcZ94n40EJvxduhnzmFqhaG-tcaKwDhBf2n0"/>
+<span class="absolute top-2 left-2 bg-tertiary-container text-white px-2 py-0.5 rounded-full font-label-md text-[10px] uppercase">Live</span>
+<button class="absolute top-2 right-2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm text-primary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+</div>
+<div class="p-sm">
+<h3 class="font-body-md text-body-md truncate text-on-surface">Void Shell Parka</h3>
+<p class="font-headline-sm text-headline-sm text-primary">₹12,800</p>
+</div>
+</div>
+</section>
+<!-- Payment Methods Section -->
+<section class="bg-surface-container-low px-margin py-xl rounded-t-lg">
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-background">Payment Methods</h2>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-80">Manage your cards and UPI IDs.</p>
+</div>
+<button class="text-primary font-label-md text-label-md flex items-center gap-xs active:scale-95 transition-transform">
+<span class="material-symbols-outlined">add</span> Add New
+                </button>
+</div>
+<!-- Cards List -->
+<div class="space-y-md">
+<!-- Card 1 -->
+<div class="card-gradient p-lg rounded-lg border border-outline-variant relative overflow-hidden group active:scale-[0.98] transition-all">
+<div class="flex justify-between items-start relative z-10">
+<div class="flex flex-col gap-xs">
+<span class="font-label-md text-label-md text-on-surface-variant/60 uppercase tracking-widest">Premium Debit</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">•••• •••• •••• 8842</span>
+</div>
+<span class="material-symbols-outlined text-primary text-display-lg">credit_card</span>
+</div>
+<div class="mt-lg flex justify-between items-end relative z-10">
+<div class="flex flex-col">
+<span class="font-caption text-caption text-on-surface-variant/60 uppercase">Expiry</span>
+<span class="font-body-md text-body-md">09/28</span>
+</div>
+<img alt="Visa Logo" class="h-4 w-auto opacity-80 grayscale brightness-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4J3xB0NIeo-tJAv3D27bcZ1uuq_d_a9dEny54A9Mz46zFoiMjt17ylPKjZu9Y1rRDPp7H8T5rPdiZzM2c5Wv4sz4v0BPXIid_qpjw8ohv0kYx9cSI2Ol3GFFM4V4m9bD5KEyUpciGj4tdqOluBKkeWdEM1nN3dbNv2Xzs4EnbDPpZupmgJQIfTOSXdI6RBrA-HI1dFEWFbcscvGIK_5yLE5ZZ6fq7OqZT1gCJ1dbn_FkVS8HsS9pQj2JNCxxHBXpuZSReUCmneec"/>
+</div>
+<!-- Decorative Background Element -->
+<div class="absolute -right-8 -bottom-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
+</div>
+<!-- UPI ID Item -->
+<div class="bg-surface-container-high p-md rounded-lg flex items-center justify-between border border-transparent hover:border-outline-variant transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-primary border border-outline-variant">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Primary UPI ID</p>
+<p class="font-body-md text-body-md text-on-surface-variant">alex.wick@paytm</p>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<span class="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-label-md">Default</span>
+<button class="text-on-surface-variant active:scale-90 transition-transform">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- UPI ID Item 2 -->
+<div class="bg-surface-container-high p-md rounded-lg flex items-center justify-between border border-transparent hover:border-outline-variant transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-on-surface-variant border border-outline-variant">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Secondary UPI</p>
+<p class="font-body-md text-body-md text-on-surface-variant">wick.notwhat@ybl</p>
+</div>
+</div>
+<button class="text-on-surface-variant active:scale-90 transition-transform">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- More Options -->
+<div class="mt-xl space-y-sm">
+<button class="w-full p-md glass-card rounded-lg flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">qr_code_scanner</span>
+<span class="font-body-lg text-body-lg">Manage Scan &amp; Pay</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+<button class="w-full p-md glass-card rounded-lg flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">history</span>
+<span class="font-body-lg text-body-lg">Transaction History</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full pb-safe z-50 bg-background/90 backdrop-blur-lg flex justify-around items-center h-20 px-4">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined">search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined">play_circle</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary fill-current active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for cards
+        document.querySelectorAll('.active-tab-glow').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active classes from siblings
+                this.parentElement.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('bg-primary-container', 'text-on-primary-container', 'active-tab-glow');
+                    btn.classList.add('bg-surface-container', 'text-on-surface-variant');
+                });
+                // Add to current
+                this.classList.remove('bg-surface-container', 'text-on-surface-variant');
+                this.classList.add('bg-primary-container', 'text-on-primary-container', 'active-tab-glow');
+            });
+        });
+    </script>
+</body></html>

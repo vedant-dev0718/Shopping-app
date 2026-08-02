@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Contact Support | NotWhat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #1f0f0b;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 77, 0, 0.1);
+        }
+        .electric-glow:focus-within {
+            box-shadow: 0 0 12px rgba(255, 77, 0, 0.3);
+            border-color: #ff4d00;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #44302a;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "on-tertiary": "#00315e",
+                        "secondary-fixed": "#e2e2e2",
+                        "primary-container": "#ff571a",
+                        "on-secondary-container": "#b4b5b5",
+                        "surface-bright": "#49342e",
+                        "secondary": "#c6c6c7",
+                        "on-background": "#fcdcd3",
+                        "inverse-primary": "#ae3200",
+                        "inverse-on-surface": "#3f2c26",
+                        "on-secondary": "#2f3131",
+                        "on-primary": "#5e1700",
+                        "surface-container-high": "#382620",
+                        "on-tertiary-fixed": "#001c3a",
+                        "on-primary-fixed": "#3a0b00",
+                        "on-error": "#690005",
+                        "on-surface-variant": "#e6beb2",
+                        "surface-container-highest": "#44302a",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "on-surface": "#fcdcd3",
+                        "on-secondary-fixed-variant": "#454747",
+                        "primary-fixed": "#ffdbd0",
+                        "tertiary-fixed": "#d4e3ff",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#44302a",
+                        "surface-container-low": "#281712",
+                        "tertiary-container": "#2492ff",
+                        "on-primary-fixed-variant": "#852400",
+                        "inverse-surface": "#fcdcd3",
+                        "surface-tint": "#ffb59e",
+                        "surface-container-lowest": "#190a06",
+                        "tertiary": "#a5c8ff",
+                        "secondary-container": "#454747",
+                        "outline": "#ad897e",
+                        "on-primary-container": "#521300",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-tertiary-container": "#002a53",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "primary-fixed-dim": "#ffb59e",
+                        "error-container": "#93000a",
+                        "outline-variant": "#5c4037",
+                        "surface-dim": "#1f0f0b",
+                        "primary": "#ffb59e",
+                        "on-error-container": "#ffdad6",
+                        "background": "#1f0f0b",
+                        "surface": "#1f0f0b",
+                        "surface-container": "#2d1b16"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "margin": "16px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "gutter": "12px",
+                        "base": "4px",
+                        "sm": "8px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["inter"],
+                        "headline-sm": ["montserrat"],
+                        "headline-md": ["montserrat"],
+                        "body-md": ["inter"],
+                        "display-lg": ["montserrat"],
+                        "display-lg-mobile": ["montserrat"],
+                        "body-lg": ["inter"],
+                        "caption": ["inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen custom-scrollbar pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md flex items-center justify-between px-margin h-16">
+<button class="text-primary active:scale-95 transition-transform hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile md:text-headline-sm text-primary">Support</h1>
+<button class="text-primary active:scale-95 transition-transform hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</button>
+</header>
+<main class="pt-24 px-margin max-w-lg mx-auto">
+<!-- Hero Heading -->
+<section class="mb-lg">
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-surface tracking-tighter leading-none mb-sm">
+                How can we help?
+            </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Select a category or describe your issue below.
+            </p>
+</section>
+<!-- Live Chat Status Card -->
+<div class="glass-card rounded-xl p-md mb-lg flex items-center justify-between group active:scale-[0.98] transition-transform cursor-pointer">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="forum">forum</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-[16px] text-on-surface">Live Chat</h3>
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+<span class="font-label-md text-label-md text-green-500">Online</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Issue Categories Grid -->
+<div class="grid grid-cols-2 gap-gutter mb-lg">
+<!-- Order Issue -->
+<button class="category-card flex flex-col items-start gap-sm p-md rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 transition-all active:scale-95">
+<span class="material-symbols-outlined text-primary" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-md text-label-md text-on-surface">Order Issue</span>
+</button>
+<!-- Payment -->
+<button class="category-card flex flex-col items-start gap-sm p-md rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 transition-all active:scale-95">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md text-on-surface">Payment</span>
+</button>
+<!-- Returns -->
+<button class="category-card flex flex-col items-start gap-sm p-md rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 transition-all active:scale-95">
+<span class="material-symbols-outlined text-primary" data-icon="keyboard_return">keyboard_return</span>
+<span class="font-label-md text-label-md text-on-surface">Returns</span>
+</button>
+<!-- Account -->
+<button class="category-card flex flex-col items-start gap-sm p-md rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 transition-all active:scale-95">
+<span class="material-symbols-outlined text-primary" data-icon="person_search">person_search</span>
+<span class="font-label-md text-label-md text-on-surface">Account</span>
+</button>
+<!-- Technical -->
+<button class="category-card flex flex-col items-start gap-sm p-md rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 transition-all active:scale-95">
+<span class="material-symbols-outlined text-primary" data-icon="terminal">terminal</span>
+<span class="font-label-md text-label-md text-on-surface">Technical</span>
+</button>
+<!-- Other -->
+<button class="category-card flex flex-col items-start gap-sm p-md rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 transition-all active:scale-95">
+<span class="material-symbols-outlined text-primary" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-md text-label-md text-on-surface">Other</span>
+</button>
+</div>
+<!-- Message Form -->
+<form class="space-y-lg">
+<div class="relative electric-glow rounded-xl overflow-hidden">
+<textarea class="w-full h-40 bg-surface-container border-none focus:ring-0 p-md font-body-md text-on-surface placeholder:text-on-surface-variant resize-none" placeholder="Describe your issue in detail..."></textarea>
+</div>
+<!-- Attach Screenshot -->
+<button class="w-full py-lg border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center gap-xs hover:bg-surface-container/50 transition-colors active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="add_a_photo">add_a_photo</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Attach Screenshot</span>
+</button>
+<!-- Send Button -->
+<button class="w-full bg-primary-container text-on-primary-container font-headline-sm py-md rounded-full shadow-lg shadow-primary-container/20 active:scale-95 transition-all hover:brightness-110" type="submit">
+                Send Message
+            </button>
+</form>
+<!-- Bottom Links -->
+<footer class="mt-xl text-center pb-xl">
+<p class="font-caption text-on-surface-variant mb-xs">Prefer email?</p>
+<a class="font-body-md text-primary underline underline-offset-4 decoration-primary/30" href="mailto:support@notwhat.com">support@notwhat.com</a>
+</footer>
+</main>
+<!-- Navigation Drawer (Example Layout Hidden initially) -->
+<div class="fixed inset-0 z-[60] pointer-events-none" id="drawer">
+<div class="absolute inset-0 bg-black/70 opacity-0 transition-opacity duration-300" id="drawer-overlay"></div>
+<aside class="absolute left-0 top-0 h-full w-80 bg-surface-container shadow-xl -translate-x-full transition-transform duration-300 flex flex-col p-lg pointer-events-auto" id="drawer-content">
+<div class="flex flex-col gap-sm mb-xl">
+<img alt="Urban Rebel Avatar" class="w-16 h-16 rounded-full border-2 border-primary object-cover" data-alt="A close-up portrait of a trendy young man in a dark streetwear hoodie, lit with dramatic orange and deep purple neon lights. He has a cool, confident expression, representing a modern urban rebel style. The background is a blurred city alleyway with high-contrast shadows and electric highlights, fitting the Gen-Z social commerce aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4JmibFXrwPo5F0tQj0PocKePDCxoVEFR3P_1Mfjr0msk5FjNOV2ZZPwUcscQPXfHzsTO6bD4LnKEykITspF4YTnlmy1DRFe41-Cnqo7KrRi84WKS1v1D_-BSP5ZDekiN4ch-TWk9YoSCghe6z6KytJntS4UaVnF7pi8nC76xYfeN66Y172aGJP68CCK2gjYTynvc2uzC9a9KiNjQM-40j6q3d39NYwxzeQjUvCbgj0H5G3vKnoeni4_QH7Izr_0iuJqTc2753WEU"/>
+<div>
+<h4 class="font-headline-md text-primary">Urban Rebel</h4>
+<p class="font-body-md text-on-surface-variant">Bargain Hunter Level 4</p>
+</div>
+</div>
+<nav class="flex flex-col gap-base">
+<button class="flex items-center gap-md p-md rounded-full text-on-surface-variant hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-lg">Settings</span>
+</button>
+<button class="flex items-center gap-md p-md rounded-full text-on-surface-variant hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-body-lg">Legal</span>
+</button>
+<button class="flex items-center gap-md p-md rounded-full text-on-surface-variant hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+<span class="font-body-lg">About</span>
+</button>
+<button class="flex items-center gap-md p-md rounded-full bg-secondary-container text-primary font-bold transition-colors">
+<span class="material-symbols-outlined fill-icon" data-icon="help_center">help_center</span>
+<span class="font-body-lg">Support</span>
+</button>
+</nav>
+</aside>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 backdrop-blur-lg flex justify-around items-center h-20 px-4">
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined" data-icon="local_mall">local_mall</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined fill-icon" data-icon="person">person</span>
+</button>
+</nav>
+<script>
+        // Micro-interactions for category selection
+        const categoryCards = document.querySelectorAll('.category-card');
+        categoryCards.forEach(card => {
+            card.addEventListener('click', () => {
+                categoryCards.forEach(c => {
+                    c.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
+                    c.classList.add('bg-surface-container', 'border-outline-variant/30', 'text-on-surface');
+                    c.querySelector('.material-symbols-outlined').classList.remove('fill-icon');
+                });
+                card.classList.remove('bg-surface-container', 'border-outline-variant/30', 'text-on-surface');
+                card.classList.add('bg-primary/20', 'border-primary', 'text-primary');
+                card.querySelector('.material-symbols-outlined').classList.add('fill-icon');
+            });
+        });
+
+        // Simple Drawer Logic (Can be triggered via menu if added)
+        const openDrawer = () => {
+            document.getElementById('drawer').classList.remove('pointer-events-none');
+            document.getElementById('drawer-overlay').classList.add('opacity-100');
+            document.getElementById('drawer-content').classList.remove('-translate-x-full');
+        };
+
+        const closeDrawer = () => {
+            document.getElementById('drawer-overlay').classList.remove('opacity-100');
+            document.getElementById('drawer-content').classList.add('-translate-x-full');
+            setTimeout(() => {
+                document.getElementById('drawer').classList.add('pointer-events-none');
+            }, 300);
+        };
+
+        document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
+    </script>
+</body></html>

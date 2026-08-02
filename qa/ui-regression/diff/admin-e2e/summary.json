@@ -1,0 +1,35 @@
+[
+  {
+    "name": "admin_e2e_auth_login_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/admin-e2e/admin_e2e_auth_login_app_vs_baseline.png"
+  },
+  {
+    "name": "admin_e2e_auth_login_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 103815,
+    "totalPixels": 329160,
+    "mismatchPct": 31.54,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/admin-e2e/admin_e2e_auth_login_app_vs_stitch.png"
+  },
+  {
+    "name": "admin_e2e_console_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/admin-e2e/admin_e2e_console_app_vs_baseline.png"
+  }
+]

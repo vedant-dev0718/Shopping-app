@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "primary-container": "#ff571a",
+                    "inverse-on-surface": "#3f2c26",
+                    "on-surface-variant": "#e6beb2",
+                    "on-tertiary-fixed": "#001c3a",
+                    "outline-variant": "#5c4037",
+                    "surface-bright": "#49342e",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-primary": "#5e1700",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-high": "#382620",
+                    "on-primary-fixed-variant": "#852400",
+                    "surface-container-lowest": "#190a06",
+                    "surface-container": "#2d1b16",
+                    "surface-container-low": "#281712",
+                    "primary-fixed-dim": "#ffb59e",
+                    "on-surface": "#fcdcd3",
+                    "surface": "#1f0f0b",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-error": "#690005",
+                    "primary-fixed": "#ffdbd0",
+                    "surface-variant": "#44302a",
+                    "on-primary-container": "#521300",
+                    "inverse-primary": "#ae3200",
+                    "tertiary-container": "#2492ff",
+                    "error-container": "#93000a",
+                    "on-tertiary": "#00315e",
+                    "on-background": "#fcdcd3",
+                    "secondary": "#c6c6c7",
+                    "outline": "#ad897e",
+                    "on-tertiary-container": "#002a53",
+                    "inverse-surface": "#fcdcd3",
+                    "tertiary": "#a5c8ff",
+                    "secondary-fixed": "#e2e2e2",
+                    "on-secondary": "#2f3131",
+                    "secondary-container": "#454747",
+                    "background": "#1f0f0b",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-secondary-fixed-variant": "#454747",
+                    "tertiary-fixed": "#d4e3ff",
+                    "surface-container-highest": "#44302a",
+                    "surface-dim": "#1f0f0b",
+                    "surface-tint": "#ffb59e",
+                    "primary": "#ffb59e",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "margin": "16px",
+                    "xl": "32px",
+                    "gutter": "12px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "label-md": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "body-md": ["inter"],
+                    "display-lg-mobile": ["montserrat"],
+                    "body-lg": ["inter"],
+                    "caption": ["inter"],
+                    "headline-md": ["montserrat"],
+                    "display-lg": ["montserrat"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+        }
+        .video-overlay-gradient {
+            background: linear-gradient(0deg, rgba(10,10,10,0.8) 0%, rgba(10,10,10,0) 40%, rgba(10,10,10,0) 60%, rgba(10,10,10,0.6) 100%);
+        }
+        .scrolling-text {
+            animation: scroll-left 10s linear infinite;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .active-pill {
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+        }
+        /* Mobile height fix */
+        .h-screen-safe {
+            height: 100dvh;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md overflow-hidden select-none">
+<!-- Video Feed Container -->
+<main class="relative h-screen-safe w-full overflow-hidden bg-black">
+<!-- Video Background Layer -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover" data-alt="A dynamic, high-energy fashion reel showing a stylish Gen-Z model walking through a vibrant urban Indian street at night. The scene is illuminated by glowing neon signs in electric coral and deep void blacks, creating a high-contrast cinematic look. The camera captures fluid motion, reflecting the raw energy of modern social commerce with sharp details on the textured streetwear fabric and cinematic lens flare." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBC-n5XQNqfxNb57HTWYXiQM1O7TEIxcsQY6Ngbry-RgLBWzkTZQx_c17Fd8nMY-GmQEaJlmaj8hTUvNqu0Duhh9DJUkCkGFWXY-bGL-4XEc2w7H8eniD6CI5vzgGWxvEjwE-fAwgIINRVpnzwLDTgoIeleIqC2o-sObsyUvp-BhgK0mhQH1oloOEAJkJOcuHjB3xDEBtx6t4kXuqcZAnQdeLs-osGi587psRhJRXe7_kZxOV7I_zarf8aH1AMKHALzLPVZ0MRYsv0"/>
+<div class="absolute inset-0 video-overlay-gradient"></div>
+</div>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex flex-col pt-10">
+<div class="flex justify-between items-center px-margin h-16">
+<button class="p-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-white">photo_camera</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-white tracking-tighter uppercase">REELS</h1>
+<button class="p-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-white">search</span>
+</button>
+</div>
+<!-- Tab Pills -->
+<nav class="flex justify-center gap-xs mt-sm">
+<button class="px-md py-xs rounded-full text-white/60 font-label-md text-label-md">For You</button>
+<button class="px-md py-xs rounded-full text-white font-label-md text-label-md active-pill border border-white/20">Following</button>
+<button class="px-md py-xs rounded-full text-white/60 font-label-md text-label-md">Near Me</button>
+</nav>
+</header>
+<!-- Right Side Action Stack -->
+<aside class="absolute right-md bottom-32 z-50 flex flex-col items-center gap-lg">
+<!-- Profile -->
+<div class="relative mb-2">
+<div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up professional studio headshot of a trendy young Indian fashion influencer with a confident expression. The lighting is dramatic and warm, set against a dark minimalist background, emphasizing clean skin and sharp features. The overall style is premium and high-fashion, aligned with a social commerce aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoMnvv6izUlFTTazBDXOsMoMnhiFBDWHiunKHuhazFa9eSlpRiklTTd3j4hCF_beH0kA-ZQJsKK4xbaoX4zRnDHD953jE5GuztksGBukVX5D2MEydeS3h6VYbNmsnU4ttpA6-wSNHs9PeJRXOsJ1Uxyzv-iPbh_r82BgGlkiBB_Y6gDNRuLN34XBbUs6eCP-ckwU_5u8EI-q50NYENVOpTNf0sI8o8GdZHtLQ99CuaGjdw71mdvHdguNunX4BnthRBklImgifEBEg"/>
+</div>
+<button class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-primary-container rounded-full flex items-center justify-center border-2 border-black">
+<span class="material-symbols-outlined text-[12px] text-white font-bold">add</span>
+</button>
+</div>
+<!-- Like -->
+<button class="flex flex-col items-center gap-xs">
+<span class="material-symbols-outlined text-3xl text-white" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="font-label-md text-label-md text-white">12.4K</span>
+</button>
+<!-- Comments -->
+<button class="flex flex-col items-center gap-xs">
+<span class="material-symbols-outlined text-3xl text-white" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="font-label-md text-label-md text-white">842</span>
+</button>
+<!-- Share -->
+<button class="flex flex-col items-center gap-xs">
+<span class="material-symbols-outlined text-3xl text-white" style="font-variation-settings: 'FILL' 1;">reply</span>
+<span class="font-label-md text-label-md text-white">Share</span>
+</button>
+<!-- Shop Button -->
+<button class="mt-4 px-md py-3 bg-primary-container text-white rounded-full font-label-md text-label-md flex items-center gap-xs shadow-[0_0_12px_#ff571a] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">shopping_bag</span>
+                Shop Now
+            </button>
+</aside>
+<!-- Bottom Left Content Overlay -->
+<section class="absolute left-margin bottom-28 z-40 max-w-[70%]">
+<h2 class="font-headline-sm text-headline-sm text-white mb-xs flex items-center gap-sm">
+                @TheStreetVibe
+                <span class="material-symbols-outlined text-sm text-blue-400">verified</span>
+</h2>
+<h3 class="font-body-lg text-body-lg text-primary-fixed mb-xs font-bold">Urban Utility Cargo - V2</h3>
+<p class="font-body-md text-body-md text-white/90 line-clamp-2 mb-md">
+                Limited drop! The ultimate fit for the street scene. 4-way stretch & water resistant. 🔥 #streetwear #mumbai
+            </p>
+<div class="flex items-center gap-sm bg-black/40 backdrop-blur-md rounded-full px-sm py-1 w-fit">
+<span class="material-symbols-outlined text-sm text-white">music_note</span>
+<div class="overflow-hidden w-32 relative">
+<p class="font-label-md text-label-md text-white whitespace-nowrap scrolling-text">
+                        Original Audio - TheStreetVibe x Badshah
+                    </p>
+</div>
+</div>
+</section>
+<!-- Bottom Navigation Bar (Shared Component Logic) -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 backdrop-blur-lg flex justify-around items-center h-20 px-4">
+<button class="flex items-center justify-center text-on-surface-variant hover:text-primary/80 transition-colors active:scale-90 duration-150">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant hover:text-primary/80 transition-colors active:scale-90 duration-150">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="flex items-center justify-center text-primary scale-110 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">movie</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant hover:text-primary/80 transition-colors active:scale-90 duration-150">
+<span class="material-symbols-outlined">shopping_bag</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant hover:text-primary/80 transition-colors active:scale-90 duration-150">
+<span class="material-symbols-outlined">person</span>
+</button>
+</nav>
+</main>
+<script>
+        // Simple micro-interaction for the Like button
+        const likeBtn = document.querySelector('aside button:nth-child(2)');
+        let liked = false;
+        likeBtn.addEventListener('click', () => {
+            liked = !liked;
+            const icon = likeBtn.querySelector('.material-symbols-outlined');
+            icon.style.color = liked ? '#ff571a' : '#ffffff';
+            icon.style.transform = 'scale(1.2)';
+            setTimeout(() => icon.style.transform = 'scale(1)', 150);
+            
+            const count = likeBtn.querySelector('span:last-child');
+            count.textContent = liked ? '12.5K' : '12.4K';
+        });
+
+        // Shop button click effect
+        const shopBtn = document.querySelector('button.bg-primary-container');
+        shopBtn.addEventListener('click', () => {
+            shopBtn.classList.add('brightness-125');
+            setTimeout(() => shopBtn.classList.remove('brightness-125'), 200);
+        });
+
+        // Vertical drag simulate (visual only)
+        let startY;
+        document.addEventListener('touchstart', e => startY = e.touches[0].pageY);
+        document.addEventListener('touchend', e => {
+            const endY = e.changedTouches[0].pageY;
+            if (startY - endY > 100) {
+                // Swipe up
+                document.body.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.style.opacity = '1';
+                }, 300);
+            }
+        });
+    </script>
+</body></html>

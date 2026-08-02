@@ -1,0 +1,3 @@
+APP_ROLE = admin
+PRODUCT_BUNDLE_IDENTIFIER = com.notwhat.app.admin
+INFOPLIST_KEY_CFBundleDisplayName = NotWhat Admin

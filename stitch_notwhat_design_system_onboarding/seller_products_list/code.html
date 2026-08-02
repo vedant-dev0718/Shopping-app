@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab {
+            position: relative;
+        }
+        .active-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #ffb59e;
+            border-radius: 2px;
+        }
+        body {
+            background-color: #1f0f0b;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(45, 27, 22, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(173, 137, 126, 0.1);
+        }
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#fcdcd3",
+                        "surface": "#1f0f0b",
+                        "surface-bright": "#49342e",
+                        "surface-dim": "#1f0f0b",
+                        "outline-variant": "#5c4037",
+                        "tertiary": "#a5c8ff",
+                        "on-tertiary-fixed": "#001c3a",
+                        "tertiary-fixed": "#d4e3ff",
+                        "on-primary-fixed": "#3a0b00",
+                        "on-background": "#fcdcd3",
+                        "inverse-surface": "#fcdcd3",
+                        "tertiary-container": "#2492ff",
+                        "surface-tint": "#ffb59e",
+                        "inverse-on-surface": "#3f2c26",
+                        "primary-container": "#ff571a",
+                        "surface-container-lowest": "#190a06",
+                        "primary-fixed": "#ffdbd0",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "secondary-container": "#454747",
+                        "on-secondary-container": "#b4b5b5",
+                        "on-primary-container": "#521300",
+                        "on-primary": "#5e1700",
+                        "surface-variant": "#44302a",
+                        "on-primary-fixed-variant": "#852400",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "secondary-fixed": "#e2e2e2",
+                        "surface-container-highest": "#44302a",
+                        "secondary": "#c6c6c7",
+                        "primary-fixed-dim": "#ffb59e",
+                        "inverse-primary": "#ae3200",
+                        "on-secondary": "#2f3131",
+                        "surface-container-low": "#281712",
+                        "on-tertiary": "#00315e",
+                        "on-tertiary-container": "#002a53",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-container-high": "#382620",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "surface-container": "#2d1b16",
+                        "outline": "#ad897e",
+                        "primary": "#ffb59e",
+                        "background": "#1f0f0b",
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "on-surface-variant": "#e6beb2",
+                        "on-error-container": "#ffdad6",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "lg": "24px",
+                        "margin": "16px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "gutter": "12px",
+                        "sm": "8px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["montserrat"],
+                        "display-lg-mobile": ["montserrat"],
+                        "caption": ["inter"],
+                        "headline-sm": ["montserrat"],
+                        "display-lg": ["montserrat"],
+                        "label-md": ["inter"],
+                        "body-md": ["inter"],
+                        "body-lg": ["inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen">
+<!-- Top AppBar -->
+<header class="fixed top-0 w-full z-50 bg-background dark:bg-background flex justify-between items-center px-margin h-16 w-full">
+<div class="flex items-center gap-sm">
+<button class="hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-primary">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary">NOTWHAT</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</div>
+</header>
+<main class="flex-1 mt-16 mb-24 px-margin">
+<!-- Seller Header Section -->
+<section class="py-lg flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">My Products (42)</h2>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-70">Manage your store inventory</p>
+</div>
+<button class="bg-primary-container text-on-primary-container px-lg py-sm rounded-full font-label-md text-label-md flex items-center gap-xs active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Add Product
+            </button>
+</section>
+<!-- Filter Tabs -->
+<nav class="flex gap-lg border-b border-outline-variant/30 pb-sm mb-lg sticky top-16 bg-background z-40 overflow-x-auto no-scrollbar">
+<button class="font-label-md text-label-md text-primary active-tab whitespace-nowrap">All</button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-primary whitespace-nowrap">Active</button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-primary whitespace-nowrap">Draft</button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-primary whitespace-nowrap">Out of Stock</button>
+</nav>
+<!-- Product List -->
+<div class="space-y-md">
+<!-- Row 1 -->
+<div class="glass-card p-md rounded-lg flex items-center gap-md group">
+<div class="relative w-20 h-24 rounded overflow-hidden flex-shrink-0">
+<img alt="product" class="w-full h-full object-cover" data-alt="A trendy young model wearing a vibrant oversized coral hoodie posing in a futuristic neon-lit urban alleyway. The style is cinematic and high-contrast, perfectly aligning with a Gen-Z urban aesthetic. Deep shadows and electric orange highlights dominate the composition, creating a bold, energetic, and premium streetwear fashion atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDp6tEGGjNNG4oUT8_ZjwrLMkJdNZzNCi72v3bJF_w-JUfzO12FPYr2VMjUaBsTcNycHhdkGAYhZvN5kHOMgm_grvMbtW0p5h__AYYEsm4hoJXtM9kHxSSoz3izmmP--3eACxptA1Yji3jb3xuKKjQnYN-eXHsOhoi6wm915JTC3ypWmywcR2b9LwWcaWdQ_C_6vkqM-p5nI80z0ljDePcbQjx7FfEgKO9qHUE6nLJfNI5bYvWYYpSjgftNDQ5eOJrWdNgARlXHh6Q"/>
+<div class="absolute top-1 left-1 bg-primary text-on-primary text-[8px] font-bold px-1 rounded uppercase">Live</div>
+</div>
+<div class="flex-1 flex flex-col justify-between h-20">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">Oversized "Neon Pulse" Hoodie</h3>
+<p class="font-caption text-caption text-on-surface-variant">Stock: <span class="text-on-surface">24 units</span></p>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">₹3,499</div>
+</div>
+<div class="flex flex-col items-end gap-sm">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="glass-card p-md rounded-lg flex items-center gap-md group">
+<div class="relative w-20 h-24 rounded overflow-hidden flex-shrink-0">
+<img alt="product" class="w-full h-full object-cover grayscale" data-alt="A pair of sleek, high-tech black running shoes floating in a dark, minimalist digital void. Subtle electric coral laser lines intersect in the background, creating a sense of motion and high-velocity performance. The lighting is low-key with intense highlights on the shoe's textures, maintaining a premium, high-contrast, and kinetic social commerce vibe consistent with a dark-themed UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrwJZFp_n823z2Z5jGNksbJyA2JAyk44L9-fcnnXZPDZYT1AnRynu487Zojddle6X2JzG3fNXBrE5IaU-_I-fYgjHMB3w72tO9qYjhco6P9ATtB1djbFQoyciuC0Ob8I8DrNFnr_GD9g66E3NcbnrXhS7gEjSpgyZwhq7XvNqdHszWhexqUpY9nbVlBz8XEC-9BPJfDT-w5fNfCCFDASF5nhWkcnfzqJxgwmzZTuT5sjHR2vKoHmoe1HC-3ow7YQAc0NAC0CcsHFg"/>
+<div class="absolute inset-0 bg-surface/60 flex items-center justify-center">
+<span class="text-[10px] font-bold text-white uppercase tracking-widest">Out of Stock</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col justify-between h-20 opacity-60">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">Apex V2 Performance Kicks</h3>
+<p class="font-caption text-caption text-on-surface-variant">Stock: <span class="text-error">0 units</span></p>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">₹8,999</div>
+</div>
+<div class="flex flex-col items-end gap-sm">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="glass-card p-md rounded-lg flex items-center gap-md group">
+<div class="relative w-20 h-24 rounded overflow-hidden flex-shrink-0">
+<img alt="product" class="w-full h-full object-cover" data-alt="A collection of designer tech-wear accessories including a chrome carabiner, a paracord keychain, and a reflective utility pouch arranged on a dark, textured obsidian surface. The lighting is sharp and directional, casting long artistic shadows that evoke a raw, urban street culture aesthetic. Vibrant coral accents tie the tech-wear items into a unified, high-end Gen-Z fashion ecosystem." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA66rrpZg0kdqvB_4c6yXG7bB0_PgtUza1voN5tUCK6_SAkrIQPP83fKU9j8JikVOE3b4SLmpCKXNfdRJuAHmwR0vYvpjGzXJqUGHTihnZVwclqClTnCkta4K1Tcp43i2nq-MRyT0nzYl4PLs511zLp6HDn8u-KSu1oYV28VvolOPmeTFA1HoQRaxozYbx_3N0lPB3L80Iv8kKiaVbbMEg3PgWKxypxwbsIJ5H-fFxQ8X2nu1DdzxvBqUBsHUcZVEWaS41-pqwECxE"/>
+</div>
+<div class="flex-1 flex flex-col justify-between h-20">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">Urban Utility Tech-Kit</h3>
+<p class="font-caption text-caption text-on-surface-variant">Stock: <span class="text-on-surface">112 units</span></p>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">₹1,250</div>
+</div>
+<div class="flex flex-col items-end gap-sm">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="glass-card p-md rounded-lg flex items-center gap-md group">
+<div class="relative w-20 h-24 rounded overflow-hidden flex-shrink-0">
+<img alt="product" class="w-full h-full object-cover" data-alt="A premium minimalist white smartwatch with a clean circular display showing abstract digital art, resting on a dark velvet pedestal. The scene is illuminated by an electric coral glow from below, highlighting the watch's elegant industrial design. The atmosphere is sophisticated, modern, and technologically advanced, catering to a friction-less high-energy shopping experience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCI_Mv6Rv_wuLgs2ghVKd01G04QBNP5dvwjMDMG5HvkiT2BVNSPMMATBljorGLCshIzGjkkn41fgxH3SzpxG0Cdmr1ei4pDPkouh1Rc6U06soPXPW6qMY5dziBE8rUzCzyAodA9-D6umhSSEeIvIJSPr3E5u2IkYW8XLPfroXL4fIAi0FK1hF28_Oo3BBJVvZiyILGhqzP-hSAkkKGEmKRFOdtmrGxnlLkO9BjtueuftIMO_ZM4OWjtuy3FaStIpvus0r-BU0JPEAM"/>
+<div class="absolute top-1 left-1 bg-surface-bright text-on-surface text-[8px] font-bold px-1 rounded uppercase">Draft</div>
+</div>
+<div class="flex-1 flex flex-col justify-between h-20">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">Core-Link Smart Watch v3</h3>
+<p class="font-caption text-caption text-on-surface-variant">Stock: <span class="text-on-surface">--</span></p>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">₹12,499</div>
+</div>
+<div class="flex flex-col items-end gap-sm">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- FAB Button -->
+<button class="fixed bottom-24 right-margin w-14 h-14 bg-primary-container text-on-primary-container rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform duration-200 z-50">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 dark:bg-background/90 backdrop-blur-md flex justify-around items-center h-20 px-gutter w-full">
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">movie</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">person</span>
+</button>
+</nav>
+<script>
+        // Micro-interactions for tabs
+        const tabs = document.querySelectorAll('nav button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('text-primary', 'active-tab');
+                    t.classList.add('text-on-surface-variant');
+                });
+                tab.classList.add('text-primary', 'active-tab');
+                tab.classList.remove('text-on-surface-variant');
+            });
+        });
+
+        // Simple vibration/feedback for toggle
+        const toggles = document.querySelectorAll('input[type="checkbox"]');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('change', () => {
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(50);
+                }
+            });
+        });
+    </script>
+</body></html>

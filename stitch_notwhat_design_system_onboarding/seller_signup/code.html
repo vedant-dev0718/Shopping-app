@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#852400",
+                        "on-primary-fixed": "#3a0b00",
+                        "on-tertiary-fixed": "#001c3a",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "tertiary-container": "#2492ff",
+                        "surface": "#1f0f0b",
+                        "surface-bright": "#49342e",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "inverse-surface": "#fcdcd3",
+                        "on-secondary-container": "#b4b5b5",
+                        "surface-dim": "#1f0f0b",
+                        "on-tertiary": "#00315e",
+                        "inverse-on-surface": "#3f2c26",
+                        "surface-container-low": "#281712",
+                        "tertiary": "#a5c8ff",
+                        "primary-container": "#ff571a",
+                        "on-tertiary-container": "#002a53",
+                        "tertiary-fixed": "#d4e3ff",
+                        "surface-tint": "#ffb59e",
+                        "surface-container": "#2d1b16",
+                        "on-secondary": "#2f3131",
+                        "surface-container-lowest": "#190a06",
+                        "primary-fixed-dim": "#ffb59e",
+                        "outline": "#ad897e",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-primary-container": "#521300",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-surface": "#fcdcd3",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#454747",
+                        "primary": "#ffb59e",
+                        "error": "#ffb4ab",
+                        "on-primary": "#5e1700",
+                        "error-container": "#93000a",
+                        "outline-variant": "#5c4037",
+                        "surface-container-highest": "#44302a",
+                        "surface-variant": "#44302a",
+                        "secondary": "#c6c6c7",
+                        "on-error": "#690005",
+                        "on-surface-variant": "#e6beb2",
+                        "primary-fixed": "#ffdbd0",
+                        "background": "#1f0f0b",
+                        "surface-container-high": "#382620",
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "on-background": "#fcdcd3",
+                        "inverse-primary": "#ae3200",
+                        "secondary-fixed": "#e2e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "gutter": "12px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "margin": "16px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["inter"],
+                        "display-lg": ["montserrat"],
+                        "headline-md": ["montserrat"],
+                        "body-md": ["inter"],
+                        "label-md": ["inter"],
+                        "display-lg-mobile": ["montserrat"],
+                        "headline-sm": ["montserrat"],
+                        "caption": ["inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        input:focus, textarea:focus, select:focus {
+            box-shadow: 0 0 8px #FF4D00;
+            outline: none;
+            border-color: #FF4D00 !important;
+        }
+        .step-active { color: #ffb59e; }
+        .step-inactive { color: #5c4037; }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 58, 58, 0.5);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin h-16 bg-background">
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-100">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary tracking-tighter uppercase">NotWhat</span>
+<div class="w-6"></div> <!-- Spacer for centering -->
+</header>
+<main class="pt-24 pb-12 px-margin max-w-[390px] mx-auto">
+<!-- Progress Indicator -->
+<section class="mb-xl">
+<div class="flex justify-between items-center relative mb-4">
+<div class="absolute top-1/2 left-0 w-full h-[2px] bg-outline-variant -z-10 -translate-y-1/2"></div>
+<!-- Step 1: Account (Completed) -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-3 h-3 rounded-full bg-primary-container"></div>
+</div>
+<!-- Step 2: Store Info (Active) -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-4 h-4 rounded-full bg-primary border-4 border-background ring-2 ring-primary"></div>
+</div>
+<!-- Step 3: Business -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Step 4: Verify -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+</div>
+</div>
+<div class="flex justify-between text-label-md font-label-md">
+<span class="step-inactive">Account</span>
+<span class="step-active">Store Info</span>
+<span class="step-inactive">Business</span>
+<span class="step-inactive">Verify</span>
+</div>
+</section>
+<!-- Header Text -->
+<section class="mb-lg">
+<h1 class="font-headline-sm text-headline-sm-mobile text-on-surface mb-xs">Set up your store</h1>
+<p class="text-on-surface-variant font-body-md">Tell us about your brand. This info will be visible to shoppers.</p>
+</section>
+<!-- Form Canvas -->
+<form class="space-y-lg">
+<!-- Store Logo Upload -->
+<div class="space-y-sm">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Store Logo</label>
+<div class="w-full h-32 rounded-lg border-2 border-dashed border-outline-variant flex flex-col items-center justify-center bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-3xl">add_a_photo</span>
+<span class="text-caption font-caption text-outline-variant mt-sm">Upload PNG, JPG (1:1 recommended)</span>
+</div>
+</div>
+<!-- Store Name -->
+<div class="space-y-sm">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider" for="store_name">Store Name</label>
+<input class="w-full bg-surface border-outline-variant rounded-lg px-md py-sm text-body-md text-on-surface placeholder:text-outline-variant transition-all" id="store_name" placeholder="e.g. Urban Threads Mumbai" type="text"/>
+</div>
+<!-- Category Dropdown -->
+<div class="space-y-sm relative">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider" for="category">Store Category</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border-outline-variant rounded-lg px-md py-sm text-body-md text-on-surface transition-all" id="category">
+<option disabled="" selected="" value="">Select a category</option>
+<option value="streetwear">Streetwear & Apparel</option>
+<option value="accessories">Jewelry & Accessories</option>
+<option value="sneakers">Sneakers & Footwear</option>
+<option value="vintage">Vintage & Thrift</option>
+<option value="lifestyle">Home & Lifestyle</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+<!-- Store Description -->
+<div class="space-y-sm">
+<div class="flex justify-between">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider" for="description">Store Description</label>
+<span class="text-caption font-caption text-outline-variant">0/240</span>
+</div>
+<textarea class="w-full bg-surface border-outline-variant rounded-lg px-md py-sm text-body-md text-on-surface placeholder:text-outline-variant transition-all resize-none" id="description" placeholder="Describe your brand vibe, shipping speed, or what makes you unique..." rows="4"></textarea>
+</div>
+<!-- CTA -->
+<div class="pt-xl pb-md">
+<button class="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm-mobile py-md rounded-full active:scale-95 duration-200 ease-in-out shadow-lg flex items-center justify-center gap-2" type="submit">
+                    Create Seller Account
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_forward</span>
+</button>
+<p class="text-center text-caption font-caption text-outline-variant mt-md px-lg">By clicking create, you agree to NotWhat's Seller Terms & Privacy Policy.</p>
+</div>
+</form>
+<!-- Decorative Card (Bento-style element) -->
+<div class="mt-lg p-md glass-card rounded-lg flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-tertiary">Quick Start Tip</p>
+<p class="text-caption font-caption text-on-surface-variant">Sellers with a clear bio see 40% more 'bargain' requests in their first week.</p>
+</div>
+</div>
+</main>
+<!-- Bottom spacing for mobile indicator -->
+<div class="h-8"></div>
+<script>
+        // Simple micro-interaction for the character counter
+        const textarea = document.getElementById('description');
+        const counter = document.querySelector('.text-caption.font-caption.text-outline-variant');
+        
+        textarea.addEventListener('input', (e) => {
+            const count = e.target.value.length;
+            counter.innerText = `${count}/240`;
+            if (count > 240) {
+                counter.classList.add('text-error');
+            } else {
+                counter.classList.remove('text-error');
+            }
+        });
+
+        // Submit animation logic
+        const form = document.querySelector('form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span>';
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                alert('Store profile draft saved! Moving to Step 3.');
+            }, 1200);
+        });
+    </script>
+</body></html>

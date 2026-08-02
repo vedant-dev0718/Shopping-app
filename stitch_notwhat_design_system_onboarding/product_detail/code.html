@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#001c3a",
+                        "on-secondary-container": "#b4b5b5",
+                        "on-surface": "#fcdcd3",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#a5c8ff",
+                        "background": "#1f0f0b",
+                        "surface-variant": "#44302a",
+                        "surface-container": "#2d1b16",
+                        "surface-tint": "#ffb59e",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#454747",
+                        "on-primary": "#5e1700",
+                        "on-background": "#fcdcd3",
+                        "on-primary-container": "#521300",
+                        "surface-container-low": "#281712",
+                        "tertiary-container": "#2492ff",
+                        "inverse-on-surface": "#3f2c26",
+                        "outline": "#ad897e",
+                        "primary-fixed": "#ffdbd0",
+                        "on-surface-variant": "#e6beb2",
+                        "inverse-primary": "#ae3200",
+                        "surface-container-lowest": "#190a06",
+                        "primary-container": "#ff571a",
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-error": "#690005",
+                        "outline-variant": "#5c4037",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-dim": "#1f0f0b",
+                        "surface-container-highest": "#44302a",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-tertiary": "#00315e",
+                        "on-secondary": "#2f3131",
+                        "inverse-surface": "#fcdcd3",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-primary-fixed-variant": "#852400",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "tertiary-fixed": "#d4e3ff",
+                        "on-tertiary-container": "#002a53",
+                        "secondary": "#c6c6c7",
+                        "surface-container-high": "#382620",
+                        "primary-fixed-dim": "#ffb59e",
+                        "on-primary-fixed": "#3a0b00",
+                        "surface": "#1f0f0b",
+                        "error-container": "#93000a",
+                        "surface-bright": "#49342e",
+                        "primary": "#ffb59e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "md": "16px",
+                        "margin": "16px",
+                        "xs": "4px",
+                        "base": "4px",
+                        "lg": "24px",
+                        "gutter": "12px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["inter"],
+                        "headline-md": ["montserrat"],
+                        "caption": ["inter"],
+                        "display-lg-mobile": ["montserrat"],
+                        "body-lg": ["inter"],
+                        "headline-sm": ["montserrat"],
+                        "display-lg": ["montserrat"],
+                        "body-md": ["inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .electric-glow {
+            box-shadow: 0px 0px 12px rgba(255, 77, 0, 0.4);
+        }
+
+        .aspect-3-4 {
+            aspect-ratio: 3 / 4;
+        }
+
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 34px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden">
+<!-- Top Navigation (Floating UI Overlay) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin h-16 pointer-events-none">
+<button class="w-10 h-10 rounded-full bg-surface/40 backdrop-blur-md flex items-center justify-center pointer-events-auto active:scale-90 transition-all text-on-surface">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex gap-sm pointer-events-auto">
+<button class="w-10 h-10 rounded-full bg-surface/40 backdrop-blur-md flex items-center justify-center active:scale-90 transition-all text-on-surface">
+<span class="material-symbols-outlined">share</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-surface/40 backdrop-blur-md flex items-center justify-center active:scale-90 transition-all text-on-surface">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pb-32">
+<!-- Image Carousel -->
+<section class="relative w-full aspect-square bg-surface-container-low overflow-hidden">
+<div class="flex h-full transition-transform duration-500 ease-out" id="carousel">
+<div class="min-w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="A cinematic, high-contrast close-up shot of a premium streetwear hoodie featuring bold graphic text. The lighting is dramatic and urban, with neon orange highlights casting deep shadows on the rich black fabric texture. The aesthetic is gritty yet luxurious, reflecting modern Indian street fashion under dim city lights. Deep blacks and vibrant orange accents dominate the frame." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6DVBbHMpQhbryGWaLA8VWqIroPTARsWCsAlT4SmMjAbChpycm8FpNZOyOPaK1nxZaNtz8Et8K4Hbvi3X5p8jyCII-Ptfs9xV6cMBD1PHItONPy7vOzI-csA3rgsDtrXA6AyHU7gpHR-qhQZmlyOvwF0Q3LgBqDycjZTyizZwNePAhWxp7O18CAiQlvTAoI3dtRUq29NdNgH_ekGTOSfJMleujF_KcprWzZYxnJFuspzxupbNj64OSQksVflcD4tCwu7zoM5Rrwuo"/>
+</div>
+</div>
+<!-- Pagination Dots -->
+<div class="absolute bottom-lg w-full flex justify-center gap-xs">
+<div class="w-6 h-1 rounded-full bg-primary-container"></div>
+<div class="w-2 h-1 rounded-full bg-on-surface/30"></div>
+<div class="w-2 h-1 rounded-full bg-on-surface/30"></div>
+</div>
+</section>
+<!-- Product Details Header -->
+<section class="px-margin pt-lg">
+<div class="flex justify-between items-start mb-xs">
+<h1 class="font-headline-md text-headline-md leading-tight text-on-background">Obsidian Oversize V2 "Cyber-Grit"</h1>
+<div class="flex items-center gap-1 bg-surface-container-high px-sm py-xs rounded-full">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-on-surface">4.8</span>
+</div>
+</div>
+<!-- Seller Link -->
+<div class="flex items-center gap-sm mb-lg">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A portrait-style logo for a modern street-fashion brand, featuring sharp typography on a matte black background with a subtle glow. The image uses a minimalist aesthetic with a focus on premium branding for a youth-oriented Gen-Z demographic. High-contrast lighting and a monochromatic palette with a single pop of electric orange." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOxdg9YuTFrhhHGhRTo1Y0mFV9iQG_--57fPfNUviXrsu5RM5NUWJouZCZS_I8fsrvzRle-D8s2S6V1rq9g_QT5dbgL4-WRJNXF_F1TvUnWKie1RaupWYv8gOEuncjMVfVyUBU-LRYgZxn59tn37tRckUHe-KnAww2I8xIr19g_f2LJqIkxJTmlSewa0v2fP2_k_4rNryZSA4yeYBfsQaQaXEPXpPS2bCJRoG-x-NcClujke30DVC4jlkyLolOafELaRMQ6daXVJA"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">RENEGADE_STREET</span>
+<a class="text-[12px] font-medium text-primary-container hover:underline uppercase tracking-wider" href="#">Visit Store</a>
+</div>
+</div>
+<!-- Pricing -->
+<div class="flex items-end gap-md mb-xl">
+<div class="flex flex-col">
+<span class="text-on-secondary-container line-through text-body-md">₹4,999</span>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary-container font-extrabold tracking-tighter">₹2,499</span>
+</div>
+<div class="mb-1.5 px-sm py-1 bg-primary-container text-on-primary font-label-md text-label-md rounded-md uppercase">
+                    50% OFF
+                </div>
+</div>
+<!-- Size Selectors -->
+<div class="mb-xl">
+<h3 class="font-label-md text-label-md text-on-secondary-container uppercase tracking-widest mb-md">Select Size</h3>
+<div class="flex gap-md">
+<button class="w-12 h-12 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface font-bold hover:border-primary-container transition-colors">S</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-primary-container bg-primary-container/10 text-primary-container font-bold electric-glow transition-all">M</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface font-bold hover:border-primary-container transition-colors">L</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface font-bold hover:border-primary-container transition-colors">XL</button>
+</div>
+</div>
+<!-- CTAs -->
+<div class="flex flex-col gap-md mb-xl">
+<button class="w-full h-14 bg-primary-container text-on-primary-container font-headline-sm-mobile font-extrabold rounded-lg active:scale-95 transition-transform flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined">shopping_bag</span>
+                    ADD TO CART
+                </button>
+<button class="w-full h-14 border-[1.5px] border-on-surface text-on-surface font-headline-sm-mobile font-extrabold rounded-lg active:scale-95 transition-transform">
+                    BUY IT NOW
+                </button>
+</div>
+</section>
+<!-- Bargain / Make an Offer Section -->
+<section class="px-margin mb-xl">
+<div class="bg-surface-container p-md rounded-xl border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 bg-primary-container/20 rounded-full flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">gavel</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface uppercase tracking-tight">Make an Offer</h4>
+<p class="text-caption text-on-secondary-container">Start bidding from <span class="text-primary-container font-bold">₹2,100</span></p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-md text-label-md text-primary-container">12 Bids</span>
+<button class="text-caption font-bold text-on-surface bg-surface-container-high px-sm py-xs rounded mt-xs uppercase">Bargain</button>
+</div>
+</div>
+</section>
+<!-- Description Accordion -->
+<section class="px-margin mb-xl">
+<div class="border-y border-outline-variant/30">
+<button class="w-full py-md flex justify-between items-center group" onclick="this.nextElementSibling.classList.toggle('hidden');">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-widest">Description & Features</span>
+<span class="material-symbols-outlined text-on-secondary-container transition-transform group-hover:text-on-surface">expand_more</span>
+</button>
+<div class="pb-md text-body-md text-on-secondary-container leading-relaxed">
+                    Heavyweight 400GSM french terry cotton. Featuring high-density silicone puff print on chest and back. Distressed ribbing for an urban, lived-in aesthetic. Machine wash cold, hang dry.
+                </div>
+</div>
+</section>
+<!-- Reels Featuring Section -->
+<section class="mb-xl">
+<div class="px-margin flex justify-between items-end mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Seen in Reels</h3>
+<span class="text-caption font-bold text-primary-container uppercase">View All</span>
+</div>
+<div class="flex overflow-x-auto gap-md px-margin hide-scrollbar">
+<!-- Reel Card 1 -->
+<div class="relative min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover opacity-80" data-alt="A vertical video thumbnail of a fashion influencer modeling streetwear in a vibrant neon-lit city alley. The lighting is cinematic with strong orange and blue hues. The person is performing a stylized walk, showcasing the flow and fit of the garment. The mood is high-energy and urban." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKsHCTBuCgufyclriE-IK7_zPZPnQgSi_S83J_UkiHkWn4CXNRZzZS-EV1XI9lCKFFyFQTN-NNUgtxhtvKnbMBD-KS1-dQ91-ssP5jEJNj3W7uZw9tHKVTy8atEcmIKb6bv2_uIy5uuxA7GF630iSBaSmw4A1PzFydArHPWbzdNIgAj6BelmemS0JxD7dp4zq7zv3rtB3cY11wVlkH6UnlIR4LJ4BfPmIG1rUNi_wMmmeSGILiqZbyQcMROHVOzbc114n-Ofxi_E4"/>
+<div class="absolute top-sm left-sm bg-primary-container px-xs py-0.5 rounded text-[10px] font-extrabold text-on-primary">LIVE</div>
+<div class="absolute bottom-sm left-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-white text-[16px]">play_circle</span>
+<span class="text-[10px] font-bold text-white">12.4K</span>
+</div>
+</div>
+<!-- Reel Card 2 -->
+<div class="relative min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover opacity-80" data-alt="A fashion-forward thumbnail for a short-form video featuring a model in a high-contrast urban environment. Soft golden hour light mixes with hard shadows. The style is minimalist and moody, emphasizing textures of cotton and metal accessories. Deep black tones with bright highlight pops." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr_YcMwLT73N_8njmhGHkdtHTpr9Kufik06VtbDfMXaXaKAN8mRQNGp9EEmZ4TYC5JcywX68Nt6pY_3pmD-VKbXFTNQSRwgnUZsqIxXg6zRBiO25rpMjl2622xS4_T6e3tTy72nfDO452DVxSycO0CzRwNbYg7T4hFxbRoZQehrH0eu0EggThOnHeXkUpbuWLXdZqZuVpLavsSBS-A6mb0p8Lvb5Nf0otzGK4TLTDINmaYZ_aieCb1s4SEjCdI49MMgtSkACgIpQs"/>
+<div class="absolute bottom-sm left-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-white text-[16px]">play_circle</span>
+<span class="text-[10px] font-bold text-white">8.1K</span>
+</div>
+</div>
+<!-- Reel Card 3 -->
+<div class="relative min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover opacity-80" data-alt="A high-energy urban style video thumbnail. A person is captured mid-motion, jumping or dancing in a gritty concrete setting. Strong dramatic lighting from the side creates deep contrasts. The overall aesthetic is dark, premium, and focused on Gen-Z street culture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqIH2o3fhSyxsyYyfD-IepGYEamhS2OlMYPGv9pbTWkb74s4c3bnykCs7eJrEIRm4zstAhy_sFsuvs4_u-CB13QZqQz9bJDzkh-uIYN9nxuEEeW7Mr5cbcuYz_tW2TG12ooKWCz6wN0RKUhB3uebt_fpGuQW--8gtBYoIjgrNx24ab5HTwCGcdbzypCmKHXCigNfszrUpmzmyKBasZypSukO6OrpFP8_PA4z40OcTHGRFDsuYLCGkARPd7rY8-O7ogijVfX5mZuZY"/>
+<div class="absolute bottom-sm left-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-white text-[16px]">play_circle</span>
+<span class="text-[10px] font-bold text-white">4.2K</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Seller Info Card -->
+<section class="px-margin mb-xl">
+<div class="bg-surface-container-high p-lg rounded-2xl">
+<div class="flex items-center justify-between mb-lg">
+<div class="flex items-center gap-md">
+<div class="w-14 h-14 rounded-full border-2 border-primary-container p-0.5">
+<img class="w-full h-full rounded-full object-cover" data-alt="Store profile logo with high-energy branding." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBUnaD63uA6BtTOa4iKaCKhmKD7kQ8WGhv4g6EPUQQFhDEOqKKpq5NZVOhL1DzJgWTL0pjlr7WcoeIRCBo0Oq18DGzSH2Hv_KlO_8J2Aoun_2-hvoyjPMMA4oLp7QtIBBJ6iJgZapR9iXsEgNsJX-9XKilLo9iKnptaliR3Me_Z7Y3R3AYMVyJYJnrYIxmBx-elYvIscPzI8aGq6THe4gUgBB5c6svMbT0PCiGROC9fqUhJIfcPTBCGh9aE__MbBIxa_Qs9gdMvQc"/>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">RENEGADE_STREET</h4>
+<div class="flex items-center gap-xs text-on-secondary-container">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">4.9 (2.4k sales)</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<button class="h-12 border border-outline-variant rounded-lg text-on-surface font-label-md uppercase tracking-wider flex items-center justify-center gap-xs active:bg-surface-variant transition-all">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+                        Follow
+                    </button>
+<button class="h-12 border border-outline-variant rounded-lg text-on-surface font-label-md uppercase tracking-wider flex items-center justify-center gap-xs active:bg-surface-variant transition-all">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+                        Message
+                    </button>
+</div>
+</div>
+</section>
+<!-- Related Products Grid -->
+<section class="px-margin">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-md">You might also like</h3>
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Related Item 1 -->
+<div class="group">
+<div class="aspect-3-4 rounded-xl overflow-hidden bg-surface-container mb-sm relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A product photography shot of a sleek black zip-up hoodie. The lighting is crisp and modern, emphasizing the premium fabric quality and metallic hardware details. Set against a dark, minimalist background with orange ambient light spills." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu_P7mNf_qwj6HScEoMf24hvOQhOJ3hh9qHl5jUsEjnvazHRI7vo66bPxcROYRUPKG1aJFslrFs872tihXB9RzuUZt4Ly8e0X5jPOsazO6yCGmYYAVROsqXhKAuRzEBMUQJs5yuZBPbY3-PSeQnRFPazyJUHnHHxuv9FdNXoKauHbKVsTYFSY9o65KM-v6nT0T1o1F5zfcKeDEJeoeDr8g4mkQYGCI8TCgOpZLEat-_6TCNXkE9q60h88QSVWmubpy6C_1leU0iIk"/>
+<div class="absolute top-sm right-sm w-8 h-8 rounded-full bg-surface/60 backdrop-blur-md flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface line-clamp-1 mb-xs uppercase tracking-tight">Void Cargo Pants</p>
+<p class="font-bold text-primary-container">₹3,299</p>
+</div>
+<!-- Related Item 2 -->
+<div class="group">
+<div class="aspect-3-4 rounded-xl overflow-hidden bg-surface-container mb-sm relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A studio shot of a graphic tee with bold orange futuristic typography on a black base. The shot is high-contrast, professional, and captures the edgy urban vibe of modern streetwear. Soft focus on the background adds depth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIKmAoYYX-IGsegwhqICvtWSH8nSHI5PZWDzKfvAUNlo3QnAxWBxTxz7nGfgxZEwkVl8eOBvZ-1kJN6SxWtnrUNMC2pNbJHRi4Du56pDZMgjY6mBX3y-2k3lcz1a7nOoyvPRNAMmdPEGUKhig40pCAh6kFgLV4RhCenDusvfM-_FZdFvvfy_z6Q9QnKZ8mtSapISV-ddZ69Wn2zAnEz-lCOsvG4WHl4q4JK8Tpv9ftiRxMHr0A_as0TC3r4UdgNLzyo-K08hTP0tk"/>
+<div class="absolute top-sm right-sm w-8 h-8 rounded-full bg-surface/60 backdrop-blur-md flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface line-clamp-1 mb-xs uppercase tracking-tight">Matrix Graphic Tee</p>
+<p class="font-bold text-primary-container">₹1,899</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Bottom CTA -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/80 backdrop-blur-xl px-margin pt-md safe-bottom border-t border-outline-variant/20 z-50">
+<div class="flex items-center gap-md">
+<div class="flex flex-col">
+<span class="text-caption text-on-secondary-container">Total</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">₹2,499</span>
+</div>
+<button class="flex-1 h-14 bg-primary-container text-on-primary-container font-headline-sm-mobile font-extrabold rounded-lg electric-glow active:scale-95 transition-all flex items-center justify-center gap-sm">
+                ADD TO CART
+            </button>
+</div>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple Carousel Interaction Logic
+        const carousel = document.getElementById('carousel');
+        let currentIdx = 0;
+        const totalItems = 1; // Simplified for this view
+
+        // Size selector active state toggle (simplified logic)
+        document.querySelectorAll('.border-outline-variant').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // This is a mockup behavior, in real UI would manage state
+                console.log('Size selected');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,134 @@
+[
+  {
+    "name": "buyer_e2e_auth_login_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_auth_login_app_vs_baseline.png"
+  },
+  {
+    "name": "buyer_e2e_auth_login_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 102387,
+    "totalPixels": 329160,
+    "mismatchPct": 31.11,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_auth_login_app_vs_stitch.png"
+  },
+  {
+    "name": "buyer_e2e_home_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 122953,
+    "totalPixels": 2617920,
+    "mismatchPct": 4.7,
+    "thresholdPct": 1,
+    "pass": false,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_home_app_vs_baseline.png"
+  },
+  {
+    "name": "buyer_e2e_home_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 198598,
+    "totalPixels": 329160,
+    "mismatchPct": 60.33,
+    "thresholdPct": 35,
+    "pass": false,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_home_app_vs_stitch.png"
+  },
+  {
+    "name": "buyer_e2e_search_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_search_app_vs_baseline.png"
+  },
+  {
+    "name": "buyer_e2e_search_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 159872,
+    "totalPixels": 329160,
+    "mismatchPct": 48.57,
+    "thresholdPct": 35,
+    "pass": false,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_search_app_vs_stitch.png"
+  },
+  {
+    "name": "buyer_e2e_bargains_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_bargains_app_vs_baseline.png"
+  },
+  {
+    "name": "buyer_e2e_bargains_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 217819,
+    "totalPixels": 329160,
+    "mismatchPct": 66.17,
+    "thresholdPct": 35,
+    "pass": false,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_bargains_app_vs_stitch.png"
+  },
+  {
+    "name": "buyer_e2e_cart_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_cart_app_vs_baseline.png"
+  },
+  {
+    "name": "buyer_e2e_cart_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 133827,
+    "totalPixels": 329160,
+    "mismatchPct": 40.66,
+    "thresholdPct": 35,
+    "pass": false,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_cart_app_vs_stitch.png"
+  },
+  {
+    "name": "buyer_e2e_store_profile_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_store_profile_app_vs_baseline.png"
+  },
+  {
+    "name": "buyer_e2e_store_profile_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 202923,
+    "totalPixels": 329160,
+    "mismatchPct": 61.65,
+    "thresholdPct": 35,
+    "pass": false,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/buyer-e2e/buyer_e2e_store_profile_app_vs_stitch.png"
+  }
+]

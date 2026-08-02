@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "on-error": "#690005",
+                    "inverse-on-surface": "#3f2c26",
+                    "error": "#ffb4ab",
+                    "on-surface": "#fcdcd3",
+                    "surface-dim": "#1f0f0b",
+                    "tertiary-fixed": "#d4e3ff",
+                    "primary-fixed-dim": "#ffb59e",
+                    "primary-fixed": "#ffdbd0",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "inverse-primary": "#ae3200",
+                    "on-primary": "#5e1700",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-tertiary-container": "#002a53",
+                    "on-primary-container": "#521300",
+                    "surface-tint": "#ffb59e",
+                    "tertiary": "#a5c8ff",
+                    "surface-container-highest": "#44302a",
+                    "on-error-container": "#ffdad6",
+                    "surface-container": "#2d1b16",
+                    "on-primary-fixed-variant": "#852400",
+                    "inverse-surface": "#fcdcd3",
+                    "secondary-container": "#454747",
+                    "outline": "#ad897e",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface-container-lowest": "#190a06",
+                    "tertiary-container": "#2492ff",
+                    "surface-bright": "#49342e",
+                    "outline-variant": "#5c4037",
+                    "on-background": "#fcdcd3",
+                    "surface-container-low": "#281712",
+                    "on-surface-variant": "#e6beb2",
+                    "surface": "#1f0f0b",
+                    "error-container": "#93000a",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-variant": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "on-tertiary": "#00315e",
+                    "background": "#1f0f0b",
+                    "primary-container": "#ff571a",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-secondary": "#2f3131",
+                    "primary": "#ffb59e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "margin": "16px",
+                    "xl": "32px",
+                    "xs": "4px",
+                    "gutter": "12px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["inter"],
+                    "caption": ["inter"],
+                    "label-md": ["inter"],
+                    "display-lg-mobile": ["montserrat"],
+                    "headline-md": ["montserrat"],
+                    "body-md": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .urgent-glow {
+            box-shadow: 0 0 12px rgba(255, 77, 0, 0.4);
+        }
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background dark:bg-background flex justify-between items-center px-margin h-16 w-full">
+<div class="flex items-center gap-sm transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined text-primary dark:text-primary">menu</span>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary">NOTWHAT</h1>
+<div class="flex items-center gap-sm transition-transform duration-150 active:scale-95">
+<span class="material-symbols-outlined text-primary dark:text-primary">notifications</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-20 px-margin">
+<!-- Section Header -->
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">gavel</span>
+<h2 class="font-headline-sm text-headline-sm">Bargain Deals</h2>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-sm overflow-x-auto pb-md no-scrollbar">
+<button class="px-lg py-xs rounded-full bg-primary-container text-on-primary-fixed font-label-md text-label-md whitespace-nowrap">All</button>
+<button class="px-lg py-xs rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md whitespace-nowrap hover:bg-surface-container-highest transition-colors">Ending Soon</button>
+<button class="px-lg py-xs rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md whitespace-nowrap hover:bg-surface-container-highest transition-colors">New</button>
+<button class="px-lg py-xs rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md whitespace-nowrap hover:bg-surface-container-highest transition-colors">Won</button>
+</div>
+<!-- Bargain List -->
+<div class="space-y-md">
+<!-- Item 1: Ending Soon (Urgent) -->
+<div class="bg-surface-container rounded-lg overflow-hidden flex h-40 border border-outline-variant/30 relative">
+<div class="w-1/3 relative">
+<img class="w-full h-full object-cover" data-alt="A pair of high-performance neon orange running shoes against a minimalist dark background. The lighting is dramatic and cinematic, emphasizing the texture and aerodynamic design of the footwear. The overall aesthetic is high-energy, urban, and modern, utilizing deep blacks and electric orange accents to create a sense of urgency and premium social commerce appeal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgHsXzFaJhGHEq0hJCgfTi-Ijp_ketstT_AXCTqvxSejq8XzMXu9yftVBTZWYV5RZBkDS4oGcR8gKpLfQ9dyFq2BEMrc5BGCMK-sYogmAgOonjbruNCHRg8V8-zpBSz6y1fUG5ki2PcER3cV1jltAzpFb0XBfoTTPYm4ZjjhR9vlezpo8G03hctCjpL1v8bAAVLWQnsI_lOUvbhuGTxFMQY-QzRWzIYo12yGm2IFzYtZkuV91-pA4el-IyhBYrSGOGl22wgfsuYrc"/>
+<div class="absolute top-2 left-2 bg-error-container/90 text-on-error-container text-[10px] px-sm py-[2px] rounded-full font-bold uppercase tracking-wider">Hot</div>
+</div>
+<div class="w-2/3 p-md flex flex-col justify-between">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">Vortex Runner X-90</h3>
+<div class="flex justify-between items-end mt-xs">
+<div class="flex flex-col">
+<span class="text-caption text-on-surface-variant">Highest Bid</span>
+<span class="font-headline-sm text-headline-sm text-primary">₹4,200</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-caption text-on-surface-variant">Your Bid</span>
+<span class="font-body-md text-body-md text-secondary">₹3,800</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-primary-container">schedule</span>
+<span class="font-label-md text-label-md text-primary-container">48m 12s</span>
+</div>
+<button class="bg-primary-container text-on-primary-fixed px-md py-xs rounded-full font-label-md text-label-md active:scale-95 transition-transform urgent-glow">Bid Now</button>
+</div>
+</div>
+</div>
+<!-- Item 2: Mid Duration -->
+<div class="bg-surface-container rounded-lg overflow-hidden flex h-40 border border-outline-variant/30">
+<div class="w-1/3">
+<img class="w-full h-full object-cover" data-alt="A sleek black minimalist smartwatch with a circular face glowing with white interface elements. The watch is placed on a matte black surface with soft orange ambient lighting from the side, creating a futuristic tech aesthetic. The composition is clean and premium, focusing on the high-contrast display and refined materials of the gadget." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFbxmPe0xBF4HZ3QwqDD4ccnVpBAIMhP2WMj_scSkapWbYU_Qa_jwwwyPuvtmE4QQbVieAU4EW2tmFrk8BbDTRaPt83kESYy5I_YSZrjLegFnAGdpMgmi1XuLvNBc2uqQwzwSp99uFDc2P_2l9Ibu_HLp00D2z4PQV8DJO8ESMJ4DezjG03r0NoVGmYNn58qcEsxpapRD7hG6lcpPDbG4Se9AF64whYJPCI1lNNk_a20iMU0b-StVUDnQfv5hiUBefSGPMG5ztJJk"/>
+</div>
+<div class="w-2/3 p-md flex flex-col justify-between">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">AeroWatch Series G</h3>
+<div class="flex justify-between items-end mt-xs">
+<div class="flex flex-col">
+<span class="text-caption text-on-surface-variant">Highest Bid</span>
+<span class="font-headline-sm text-headline-sm text-primary">₹12,500</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-caption text-on-surface-variant">Bids</span>
+<span class="font-body-md text-body-md text-secondary">24</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-[#FFA500]">schedule</span>
+<span class="font-label-md text-label-md text-[#FFA500]">05h 22m</span>
+</div>
+<button class="bg-primary-container text-on-primary-fixed px-md py-xs rounded-full font-label-md text-label-md active:scale-95 transition-transform">Bid Now</button>
+</div>
+</div>
+</div>
+<!-- Item 3: Long Duration -->
+<div class="bg-surface-container rounded-lg overflow-hidden flex h-40 border border-outline-variant/30">
+<div class="w-1/3">
+<img class="w-full h-full object-cover" data-alt="Premium professional studio headphones in matte black finish, featuring luxurious leather ear pads. The headphones are photographed in a high-contrast void style, with subtle orange light reflecting off the metallic hinges. The mood is deep, moody, and sophisticated, perfect for a high-end Gen-Z social commerce platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqC6Zusj5oSW-EITqFXlVIEClacmIIed-Qv8HoGyz8kdbZMxDaO-fxnCy-14FlrqdUJ5hjHOV2pNLYd-4vV0loGsbcIInBinxo3jc2fVt8CHuALQC0XPPdp_7MhHKYsFTgNvRJixfpo3PVqFLnAzRpwqNDfpUKbiXB-dM7gWVOpFCLuOCiuV_0nAhYBTM5x7UQUFIetVjw20vq5TgHIcgyyFWFiJ3-yIthUmBDbiLFaSvXQ_QqZnj_fGaw49NFq38_GIDRXcj2vxc"/>
+</div>
+<div class="w-2/3 p-md flex flex-col justify-between">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">SonicPro Noise-Cancel 2</h3>
+<div class="flex justify-between items-end mt-xs">
+<div class="flex flex-col">
+<span class="text-caption text-on-surface-variant">Highest Bid</span>
+<span class="font-headline-sm text-headline-sm text-primary">₹8,900</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-caption text-on-surface-variant">Bids</span>
+<span class="font-body-md text-body-md text-secondary">12</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-[#4CAF50]">schedule</span>
+<span class="font-label-md text-label-md text-[#4CAF50]">28h 15m</span>
+</div>
+<button class="bg-primary-container text-on-primary-fixed px-md py-xs rounded-full font-label-md text-label-md active:scale-95 transition-transform">Bid Now</button>
+</div>
+</div>
+</div>
+<!-- Item 4: Leading Item -->
+<div class="bg-surface-container rounded-lg overflow-hidden flex h-40 border border-outline-variant/30">
+<div class="w-1/3">
+<img class="w-full h-full object-cover" data-alt="A vintage-inspired oversized streetwear hoodie in a charcoal grey color, displayed on a minimalist wire frame. The setting is an urban industrial loft with harsh directional lighting creating strong shadows. Accents of vibrant orange light glow from a nearby neon sign, casting a trendy Gen-Z streetwear vibe over the scene." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBonJwWBL4r1dhYBTTeK1aVDP1CO5Rn_SIv60q-8X1_R3TJY4s4iAkndG3kTHALJSlAn_AfkxC9MxpKSnS5Mbji3M9t1awRzHWGidQqaNoH1ThpkP8tJ04GmAHK_Djzw7OF3ZZxXzVBbKFvnqcBC4_4oRTMSSSTKGgYmeBbFQvd0jiLijeBmzsjzWy1sFhp0PmbU69S0Qd0MCx5xjg9MzqWHlYkAN1KzGiB1ruMM09jIVk-2MNXiCcPTB4e2Jb0l1wZ2UU8FMD0u0c"/>
+</div>
+<div class="w-2/3 p-md flex flex-col justify-between">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface line-clamp-1">StreetSoul Oversized Hoodie</h3>
+<div class="flex justify-between items-end mt-xs">
+<div class="flex flex-col">
+<span class="text-caption text-on-surface-variant">Highest Bid</span>
+<span class="font-headline-sm text-headline-sm text-primary">₹2,100</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-caption text-on-surface-variant">Your Bid</span>
+<span class="font-body-md text-body-md text-primary">₹2,100</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-[#FFA500]">schedule</span>
+<span class="font-label-md text-label-md text-[#FFA500]">02h 10m</span>
+</div>
+<div class="bg-secondary-container text-on-secondary-container px-md py-xs rounded-full font-label-md text-label-md">Leading</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 dark:bg-background/90 backdrop-blur-md flex justify-around items-center h-20 px-gutter w-full">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">movie</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for bid buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(btn.innerText === "Bid Now") {
+                    btn.classList.add('scale-95');
+                    setTimeout(() => {
+                        btn.classList.remove('scale-95');
+                        btn.innerText = "Bidding...";
+                        btn.classList.replace('bg-primary-container', 'bg-secondary-container');
+                        setTimeout(() => {
+                            btn.innerText = "Bid Placed";
+                        }, 800);
+                    }, 100);
+                }
+            });
+        });
+    </script>
+</body></html>

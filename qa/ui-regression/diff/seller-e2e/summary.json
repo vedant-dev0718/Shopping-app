@@ -1,0 +1,156 @@
+[
+  {
+    "name": "seller_e2e_auth_login_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_auth_login_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_e2e_auth_login_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 76662,
+    "totalPixels": 329160,
+    "mismatchPct": 23.29,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_auth_login_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_e2e_dashboard_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_dashboard_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_e2e_dashboard_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 70192,
+    "totalPixels": 329160,
+    "mismatchPct": 21.32,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_dashboard_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_e2e_insights_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_insights_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_e2e_insights_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 83094,
+    "totalPixels": 329160,
+    "mismatchPct": 25.24,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_insights_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_e2e_orders_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_orders_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_e2e_orders_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 73266,
+    "totalPixels": 329160,
+    "mismatchPct": 22.26,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_orders_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_e2e_products_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_products_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_e2e_products_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 55197,
+    "totalPixels": 329160,
+    "mismatchPct": 16.77,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_products_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_e2e_returns_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_returns_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_e2e_returns_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 67466,
+    "totalPixels": 329160,
+    "mismatchPct": 20.5,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_returns_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_e2e_upload_reel_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_upload_reel_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_e2e_upload_reel_app_vs_stitch",
+    "status": "ok",
+    "gate": "stitch-hard",
+    "mismatchedPixels": 113471,
+    "totalPixels": 329160,
+    "mismatchPct": 34.47,
+    "thresholdPct": 35,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller-e2e/seller_e2e_upload_reel_app_vs_stitch.png"
+  }
+]

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&amp;family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .electric-glow {
+            box-shadow: 0px 0px 8px #FF4D00;
+        }
+        .video-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: linear-gradient(to top, #1f0f0b, transparent);
+            pointer-events: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#3f2c26",
+                        "error": "#ffb4ab",
+                        "on-surface": "#fcdcd3",
+                        "surface-dim": "#1f0f0b",
+                        "tertiary-fixed": "#d4e3ff",
+                        "primary-fixed-dim": "#ffb59e",
+                        "primary-fixed": "#ffdbd0",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "inverse-primary": "#ae3200",
+                        "on-primary": "#5e1700",
+                        "surface-container-high": "#382620",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-secondary-container": "#b4b5b5",
+                        "on-tertiary-container": "#002a53",
+                        "on-primary-container": "#521300",
+                        "surface-tint": "#ffb59e",
+                        "tertiary": "#a5c8ff",
+                        "surface-container-highest": "#44302a",
+                        "on-error-container": "#ffdad6",
+                        "surface-container": "#2d1b16",
+                        "on-primary-fixed-variant": "#852400",
+                        "inverse-surface": "#fcdcd3",
+                        "secondary-container": "#454747",
+                        "outline": "#ad897e",
+                        "on-tertiary-fixed": "#001c3a",
+                        "surface-container-lowest": "#190a06",
+                        "tertiary-container": "#2492ff",
+                        "surface-bright": "#49342e",
+                        "outline-variant": "#5c4037",
+                        "on-background": "#fcdcd3",
+                        "surface-container-low": "#281712",
+                        "on-surface-variant": "#e6beb2",
+                        "surface": "#1f0f0b",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#e2e2e2",
+                        "surface-variant": "#44302a",
+                        "secondary": "#c6c6c7",
+                        "on-tertiary": "#00315e",
+                        "background": "#1f0f0b",
+                        "primary-container": "#ff571a",
+                        "on-primary-fixed": "#3a0b00",
+                        "on-secondary": "#2f3131",
+                        "primary": "#ffb59e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "margin": "16px",
+                        "xl": "32px",
+                        "xs": "4px",
+                        "gutter": "12px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["inter"],
+                        "caption": ["inter"],
+                        "label-md": ["inter"],
+                        "display-lg-mobile": ["montserrat"],
+                        "headline-md": ["montserrat"],
+                        "body-md": ["inter"],
+                        "headline-sm": ["montserrat"],
+                        "display-lg": ["montserrat"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin h-16 w-full bg-background dark:bg-background">
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-primary dark:text-primary active:scale-95 transition-transform duration-150">arrow_back</button>
+<span class="font-headline-md text-headline-md-mobile font-bold tracking-tighter text-primary dark:text-primary uppercase">NOTWHAT</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary dark:text-primary hover:opacity-80 transition-opacity">search</button>
+<button class="material-symbols-outlined text-primary dark:text-primary hover:opacity-80 transition-opacity">notifications</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-16 pb-24 overflow-y-auto h-screen hide-scrollbar">
+<!-- Video Hero Section (16:9 Aspect) -->
+<section class="relative w-full aspect-video video-container bg-surface-container-lowest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A cinematic, high-speed lifestyle reel frame capturing a young urban model wearing neon-accented streetwear in a rainy Mumbai street at night. Neon signs reflect on the wet asphalt in vibrant shades of electric coral and cyan. The visual style is high-contrast, edgy, and kinetic, perfectly matching the Gen-Z social commerce void aesthetic with deep blacks and intense lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYScMd9CU6q-z_3yDEk5HbGg8dN_Zmkj7M6kAD8m3hIK8rxaeLjl1JTzkZ4dYnNIM1qg0CZu-kUcXRIiCdARsLdNSR25mczlF1kUSFysKcUSTeNeBJAFEJ37N0oDO5tXSygSaO5JlTs5i24PNskb1sTVSiowhJc2LN7PBFqgdY9QEjhxmuFIj4yIIada7oHIhU74WCqvCKJaaxxQ9ZnpslN6Z9NVV0aboRYJ6oG9a9UacxJky-0iGxRQSeKS3CuING8CFE9sWVboY"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-white/80 text-[64px]" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</div>
+<!-- Live Badge Overlay -->
+<div class="absolute top-4 left-4 z-10">
+<span class="bg-primary-container text-white px-3 py-1 rounded-full font-label-md text-label-md uppercase tracking-wider">Live Bargain</span>
+</div>
+</section>
+<!-- Product & Shop Info -->
+<section class="px-margin -mt-4 relative z-20">
+<div class="bg-surface-container p-md rounded-lg border border-outline-variant/30">
+<!-- Store Row -->
+<div class="flex items-center justify-between mb-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-bright overflow-hidden border border-primary">
+<img class="w-full h-full object-cover" data-alt="A professional, modern studio headshot of a boutique store owner in a minimalist urban setting. The lighting is soft but high-contrast, reflecting the brand's premium dark-theme aesthetic with hints of electric coral in the background. The style is clean, trendy, and trustworthy for a high-end social commerce platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgDW3dVKwsP5rAk2nsKKJyB4qrJb6H0VkN2OPufNMy6TXD339L4IjV9LXXprYvY5pnGt-TRN7M6ZLxAcBqlla87dLkxTTaH7aLlKIDVDeuo-AqyQZPP7ED-FBQ-mRAGMg1PZ0oEin-1k7gH-36vO-bbCQ53sYucHscckdb4S6cr5aswYA26-5NtIeHrPxdQtpONvSsun7mSF6VtSGOfksLff5w6PtAwQ8imyRpjiUNYz4wbXKaCv9uqRPunDeQcIuY9g_4q9hYJP8"/>
+</div>
+<div>
+<p class="font-body-md text-on-surface font-bold">UrbanEdge Collective</p>
+<p class="font-caption text-secondary flex items-center gap-xs">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span> Official Store
+                            </p>
+</div>
+</div>
+<button class="bg-surface-container-high border border-outline px-4 py-1.5 rounded-full font-label-md text-on-surface-variant hover:bg-surface-bright transition-colors">Follow</button>
+</div>
+<!-- Product Details -->
+<h1 class="font-headline-sm text-headline-sm-mobile text-on-surface mb-xs">Cyber-Punk Utility Oversized Hoodie</h1>
+<div class="flex items-center gap-md mb-lg">
+<span class="font-headline-md text-primary">₹2,499</span>
+<span class="font-body-md text-secondary line-through">₹4,999</span>
+<span class="bg-error-container text-error px-2 py-0.5 rounded text-caption font-bold">50% OFF</span>
+</div>
+<div class="flex items-center gap-sm mb-lg">
+<div class="flex text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]">star_half</span>
+</div>
+<span class="font-body-md text-on-surface-variant">4.8 (240 reviews)</span>
+</div>
+<!-- Action Buttons -->
+<div class="flex gap-md">
+<button class="flex-1 bg-primary-container text-on-primary-container py-4 rounded-lg font-headline-sm text-headline-sm-mobile uppercase electric-glow active:scale-95 transition-all">Shop Now</button>
+<button class="flex-1 border-2 border-primary-container text-primary-container py-4 rounded-lg font-headline-sm text-headline-sm-mobile uppercase active:scale-95 transition-all">Add to Cart</button>
+</div>
+</div>
+</section>
+<!-- Comments Preview -->
+<section class="mt-xl px-margin mb-xl">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-headline-sm-mobile text-on-surface">Buzz (42)</h3>
+<a class="text-primary font-label-md" href="#">See all comments</a>
+</div>
+<div class="space-y-md">
+<!-- Single Comment Item -->
+<div class="flex gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex-shrink-0"></div>
+<div>
+<p class="font-body-md text-on-surface"><span class="font-bold mr-2">rahul_vibe</span>This fit is absolutely insane! The glow is real 🔥</p>
+<p class="font-caption text-secondary mt-1">2h ago • Reply</p>
+</div>
+</div>
+<!-- Single Comment Item -->
+<div class="flex gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex-shrink-0"></div>
+<div>
+<p class="font-body-md text-on-surface"><span class="font-bold mr-2">priya_shops</span>How is the fabric quality? Does it shrink?</p>
+<p class="font-caption text-secondary mt-1">4h ago • Reply</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Related Reels -->
+<section class="mt-xl pb-10">
+<div class="px-margin mb-md flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm-mobile text-on-surface">Related Drops</h3>
+<span class="material-symbols-outlined text-secondary">trending_up</span>
+</div>
+<div class="flex gap-md overflow-x-auto px-margin hide-scrollbar snap-x">
+<!-- Related Item 1 -->
+<div class="flex-shrink-0 w-40 snap-start">
+<div class="aspect-[9/16] rounded-lg bg-surface-container overflow-hidden relative border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A vertical portrait of a trendy streetwear accessory, a metallic tech-wear bag, displayed in a dark room with dramatic red laser lighting. The background is a deep, void black, and the accessory glows under the intense electric accents. The aesthetic is futuristic, sharp, and high-energy for a Gen-Z social commerce platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH_AARwWNgy4D6aSjUxE8f7FYqKSn4JWS1kJpJCHBFRDd3WlWEyQ3fh_6PMcbxzUYOwO7NE2Ib2zoptOEjqfnauvcqOVPxHVE9Vr9jpuyQPXyzqG1TCRATGutvfxaadAmkzv0mYoKZD7Z67sC-0EQEQ5BjiiRZWFFhcVNEsjtcoU0VtxLoorqHLx4mELXQHweL0hb9L3jY36IT0LUpI7ENefOk8BvrdZaxwxV8J6zF-o3KPEWppsJGkTqZb_OMbfNDH6kbAZL-uC0"/>
+<div class="absolute bottom-2 left-2 flex items-center gap-xs">
+<span class="material-symbols-outlined text-white text-[16px]">play_arrow</span>
+<span class="text-white font-label-md">1.2k</span>
+</div>
+</div>
+<p class="font-body-md text-on-surface mt-2 truncate">Tech-wear Bag</p>
+<p class="font-label-md text-primary">₹1,200</p>
+</div>
+<!-- Related Item 2 -->
+<div class="flex-shrink-0 w-40 snap-start">
+<div class="aspect-[9/16] rounded-lg bg-surface-container overflow-hidden relative border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A stylish portrait of a model wearing iridescent sneakers that change color under street lighting. The setting is a dark, gritty metropolitan alleyway with rain reflections and neon light-mode aesthetic elements. The mood is urgent and kinetic, focusing on the high-contrast textures of the urban footwear." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfZfKsGbilPhUSV8n0FUMMwCQCUArGjT7pfqNm-yJ7_5ss6rxYcEMTXD8Up3S_A-ArsYT9gbvdiiUkiycGDoDMr5secZ3MP7BQC3ur99H3MJL6zwFbyeEu4zIOGvxNp2I4yOxYgjjmMM6SKeY4g6psAlI3gV0IRSEssEHFSroGZzHHGZwg0exzBDEelTruB_ED-Tx9Qj844ZjCBpCiRv9GbeQrhNKviNMmemROiP6-OnvWpIxo6u6YNGfA7FtSWrb9_Dg9BeZKUAk"/>
+<div class="absolute bottom-2 left-2 flex items-center gap-xs">
+<span class="material-symbols-outlined text-white text-[16px]">play_arrow</span>
+<span class="text-white font-label-md">8.5k</span>
+</div>
+</div>
+<p class="font-body-md text-on-surface mt-2 truncate">Iridescent Kicks</p>
+<p class="font-label-md text-primary">₹3,499</p>
+</div>
+<!-- Related Item 3 -->
+<div class="flex-shrink-0 w-40 snap-start">
+<div class="aspect-[9/16] rounded-lg bg-surface-container overflow-hidden relative border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A high-contrast close-up of a street-artist-inspired puffer jacket with bold, graffiti-style patterns. The lighting is harsh and direct, creating deep shadows in a minimalist void space. Electric coral accents pop against the deep black and grey tones of the jacket, maintaining a premium, edgy social shopping vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJ7UCaVN10BFCdyGm-CvSH5czPYIDf-rTNIyHQrWy3ryCBt8xCWuyNYCFx7ApIgP1L1t6qwhYVseeVeVDEeLzagUXAUxd_N-azNKhz9wqf6B5QkJZuboNKLNMeyeddRhYeKNTdJv8PfMs0pgT6JhMlRYfccf2_uWj-XCFJLkBgIJY1UMGN2scMaa14HavNlgFKj79GjHTKGWYM5vsIKsvrtn-Fhjl0hUNyDv1YMYlq33UUxo1uMeb8MpZHLKf40-myVpe7Ak9srtE"/>
+<div class="absolute bottom-2 left-2 flex items-center gap-xs">
+<span class="material-symbols-outlined text-white text-[16px]">play_arrow</span>
+<span class="text-white font-label-md">5.2k</span>
+</div>
+</div>
+<p class="font-body-md text-on-surface mt-2 truncate">Graffiti Puffer</p>
+<p class="font-label-md text-primary">₹5,999</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe flex justify-around items-center h-20 px-gutter w-full bg-background/90 dark:bg-background/90 backdrop-blur-md">
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">movie</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">shopping_bag</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined">person</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction for shop buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('scale-95');
+                setTimeout(() => this.classList.remove('scale-95'), 100);
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#fcdcd3",
+                    "on-background": "#fcdcd3",
+                    "inverse-on-surface": "#3f2c26",
+                    "tertiary-container": "#2492ff",
+                    "surface-tint": "#ffb59e",
+                    "surface-container-lowest": "#190a06",
+                    "primary-container": "#ff571a",
+                    "on-error": "#690005",
+                    "primary-fixed": "#ffdbd0",
+                    "error-container": "#93000a",
+                    "secondary-container": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-surface": "#fcdcd3",
+                    "surface": "#1f0f0b",
+                    "surface-bright": "#49342e",
+                    "outline-variant": "#5c4037",
+                    "surface-dim": "#1f0f0b",
+                    "tertiary": "#a5c8ff",
+                    "on-tertiary-fixed": "#001c3a",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-primary-fixed": "#3a0b00",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-tertiary-container": "#002a53",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "outline": "#ad897e",
+                    "surface-container": "#2d1b16",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "primary": "#ffb59e",
+                    "background": "#1f0f0b",
+                    "on-surface-variant": "#e6beb2",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab",
+                    "surface-variant": "#44302a",
+                    "on-primary-fixed-variant": "#852400",
+                    "on-primary-container": "#521300",
+                    "on-primary": "#5e1700",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "secondary-fixed": "#e2e2e2",
+                    "primary-fixed-dim": "#ffb59e",
+                    "surface-container-highest": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "inverse-primary": "#ae3200",
+                    "on-secondary": "#2f3131",
+                    "on-tertiary": "#00315e",
+                    "surface-container-low": "#281712"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "gutter": "12px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "margin": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["inter"],
+                    "body-lg": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"],
+                    "label-md": ["inter"],
+                    "headline-md": ["montserrat"],
+                    "display-lg-mobile": ["montserrat"],
+                    "caption": ["inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(58, 58, 58, 0.5);
+        }
+        .active-glow {
+            box-shadow: 0px 0px 12px rgba(255, 77, 0, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md flex justify-between items-center px-margin h-16">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary active:scale-95 transition-transform">arrow_back</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile italic font-black text-primary tracking-tighter">NOTWHAT</h1>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative">
+<span class="material-symbols-outlined text-on-surface">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary-container rounded-full border border-background"></span>
+</div>
+</div>
+</header>
+<main class="pt-20 pb-40 px-margin max-w-md mx-auto custom-scrollbar overflow-y-auto">
+<!-- Cart Header -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">My Cart</h2>
+<p class="text-on-surface-variant font-label-md text-label-md uppercase tracking-widest">3 Items</p>
+</div>
+<button class="text-primary-container font-label-md text-label-md hover:opacity-80 active:scale-95 transition-all">CLEAR ALL</button>
+</div>
+<!-- Store Group 1 -->
+<section class="mb-xl">
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-primary text-body-lg">storefront</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Urban Flux Studio</h3>
+</div>
+<!-- Product Row 1 -->
+<div class="glass-card rounded-DEFAULT p-md mb-md flex gap-md relative overflow-hidden group">
+<div class="w-24 h-32 rounded-sm overflow-hidden flex-shrink-0 bg-surface-container-highest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="High-contrast studio photography of a Gen-Z streetwear model wearing an oversized neon orange hoodie with tactical black straps. The background is a deep black void with sharp, electric orange rim lighting. The aesthetic is gritty, urban, and premium, following the Indian street culture vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPhkU8zu67cCRU80cJZHKaMafWWOjfkz9JPK44C2CUzpLirUV15R3xa46Se7XOdBCqhMGSk_JE8AEVveDrhnR5fhccPo122nzUOZrHtSdiFUrMt66naJEKFiywtZK8Z6jv9Yu6JWZBOhP-_c6ga9D_r3aXMxyPqAZgWtdYgsojS-tTJzd7q63duR_-ng8qJzzaL_MpT9vM6--toizJvfTllXWhTe5GsOFr-KlNz91Pxnjy2GKICrYz_yrLCqTWmgOSr8JUS4f62nc"/>
+</div>
+<div class="flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<h4 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">Hyper-Focus Oversized Hoodie</h4>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">delete</button>
+</div>
+<p class="text-on-surface-variant text-caption font-caption mt-xs">Size: XL • Color: Electric Coral</p>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">₹2,499</span>
+<div class="flex items-center bg-surface-container rounded-full px-base py-base border border-outline-variant">
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="w-8 text-center font-label-md text-label-md text-on-surface">1</span>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Product Row 2 -->
+<div class="glass-card rounded-DEFAULT p-md mb-md flex gap-md relative overflow-hidden group">
+<div class="w-24 h-32 rounded-sm overflow-hidden flex-shrink-0 bg-surface-container-highest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Close-up commercial shot of a high-performance athletic sneaker in vibrant orange and deep black. The shoe is suspended in a dark, atmospheric environment with dynamic light trails and a subtle floor reflection. The lighting is cinematic and high-contrast, emphasizing the premium textures and raw energy of the urban style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGs-MvxbPMoXS9qojY28uvbmAN4D3dPiacrlW7J1qiJI8ptvZGV9VOT4x7sl_Uts5vCRrWG2-fqSYZ4wCVlBHCV4JpQPSP8_jY7dvfKd0RG4X_K7Gbdy06iANtMcBoOOdsaQEfSm0lTzUz1CgTqWMNkkfvCmPrAmnoLb0n5V157W7IXUh7cUoqUKEQJWBqgqiSL8B03LXqH6PSNr3rHzHvuU9a0XwgYj8dNHSSgXxpLy_AKzxCAmOoYovtlPhP3prU8Bdg5DFOgug"/>
+</div>
+<div class="flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<h4 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">Neon Pulse Tech-Sneakers</h4>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">delete</button>
+</div>
+<p class="text-on-surface-variant text-caption font-caption mt-xs">Size: UK 9 • Color: Shadow/Volt</p>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">₹5,999</span>
+<div class="flex items-center bg-surface-container rounded-full px-base py-base border border-outline-variant">
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="w-8 text-center font-label-md text-label-md text-on-surface">1</span>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center mt-md border-t border-outline-variant pt-md">
+<span class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">Subtotal: Urban Flux</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">₹8,498</span>
+</div>
+</section>
+<!-- Store Group 2 -->
+<section class="mb-xl">
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-primary text-body-lg">storefront</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Gully Gang Merch</h3>
+</div>
+<!-- Product Row 3 -->
+<div class="glass-card rounded-DEFAULT p-md mb-md flex gap-md relative overflow-hidden group">
+<div class="w-24 h-32 rounded-sm overflow-hidden flex-shrink-0 bg-surface-container-highest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A portrait of a white cotton t-shirt featuring bold, artistic typography in black and neon coral. The t-shirt is draped over a minimalist mannequin in a dark studio. Sharp shadows and high-key highlights create a sophisticated depth, with a vibe that blends high fashion and raw Indian street culture aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNJNGLSlNZC9aoiJQ9j-dn34r4JN35FW5tJpScoJ72RCFuVS_1uNOb-OPWTieuz50oFPEwJajEMC1ShQSInAKMc1ky0PWj3WijgwcB0TnalCwMoPdP79hfVI1vhHlY55YB2kpHAaUcZge8y7p1c8VxuYP84wV8kDaA-C_eZ5IsQp2q5EX-ZU3hkTKmQo0tKSAIw8Xh9TtsHLrEWCUQ7d6-hRQR9g4YpnTJTgj1-onkawfRJvUz7EJYaWAIj0YhT_umdJNcLWl740Q"/>
+</div>
+<div class="flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<h4 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">Typography Series Tee</h4>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors">delete</button>
+</div>
+<p class="text-on-surface-variant text-caption font-caption mt-xs">Size: M • Color: Arctic White</p>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">₹1,299</span>
+<div class="flex items-center bg-surface-container rounded-full px-base py-base border border-outline-variant">
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="w-8 text-center font-label-md text-label-md text-on-surface">1</span>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center mt-md border-t border-outline-variant pt-md">
+<span class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">Subtotal: Gully Gang</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">₹1,299</span>
+</div>
+</section>
+<!-- Coupon Row -->
+<div class="mb-xl">
+<div class="flex gap-sm">
+<div class="flex-grow bg-surface-container rounded-DEFAULT border border-outline-variant px-md flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">sell</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-on-surface-variant font-label-md text-label-md flex-grow uppercase" placeholder="APPLY COUPON CODE" type="text"/>
+</div>
+<button class="bg-primary-container text-on-primary-container px-lg rounded-DEFAULT font-label-md text-label-md active:scale-95 transition-transform">APPLY</button>
+</div>
+</div>
+<!-- Order Summary Card -->
+<div class="glass-card rounded-lg p-lg mb-xl">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-md">Order Summary</h3>
+<div class="space-y-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span class="font-body-md text-body-md">Subtotal</span>
+<span class="font-body-md text-body-md">₹9,797</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span class="font-body-md text-body-md">Shipping</span>
+<span class="font-body-md text-body-md">₹99</span>
+</div>
+<div class="flex justify-between text-tertiary">
+<span class="font-body-md text-body-md">Discount</span>
+<span class="font-body-md text-body-md">-₹499</span>
+</div>
+<div class="pt-md mt-md border-t border-outline-variant flex justify-between items-center">
+<span class="font-headline-md text-headline-md text-on-surface">Total</span>
+<span class="font-headline-md text-headline-md text-primary-container">₹9,397</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Bottom CTA -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-background/95 backdrop-blur-xl px-margin pt-md pb-safe">
+<div class="flex items-center justify-between mb-md md:hidden">
+<div class="flex flex-col">
+<span class="text-caption text-on-surface-variant uppercase tracking-tighter">TO PAY</span>
+<span class="font-headline-sm text-headline-sm text-primary">₹9,397</span>
+</div>
+<button class="bg-primary-container text-on-primary-container px-xl py-md rounded-full font-headline-sm text-headline-sm active:scale-95 transition-all active-glow flex items-center gap-sm">
+<span>PROCEED</span>
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- BottomNavBar (Shared Component Template) -->
+<nav class="flex justify-around items-center h-20 px-4 md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary fill-current active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_bag" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</a>
+</nav>
+</div>
+<script>
+        // Simple micro-interaction for item quantity and delete simulation
+        document.querySelectorAll('.material-symbols-outlined').forEach(icon => {
+            icon.addEventListener('click', function(e) {
+                if (this.innerText === 'add') {
+                    const span = this.parentElement.previousElementSibling;
+                    span.innerText = parseInt(span.innerText) + 1;
+                }
+                if (this.innerText === 'remove') {
+                    const span = this.parentElement.nextElementSibling;
+                    const val = parseInt(span.innerText);
+                    if (val > 1) span.innerText = val - 1;
+                }
+                if (this.innerText === 'delete') {
+                    const card = this.closest('.glass-card');
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(100%)';
+                    setTimeout(() => card.remove(), 300);
+                }
+            });
+        });
+    </script>
+</body></html>

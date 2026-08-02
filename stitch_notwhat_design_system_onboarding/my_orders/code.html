@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Montserrat:ital,wght@0,700;0,900;1,700;1,900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        :root {
+            --ios-safe-top: env(safe-area-inset-top);
+            --ios-safe-bottom: env(safe-area-inset-bottom);
+        }
+        body {
+            background-color: #0A0A0A; /* Level 0 Base */
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Inter', sans-serif;
+        }
+        .order-card {
+            background: #1A1A1A; /* Level 1 Surface */
+            border: 1px solid #2A2A2A;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .order-card:active {
+            transform: scale(0.98);
+        }
+        .filter-tab.active {
+            color: #FF4D00;
+            position: relative;
+        }
+        .filter-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 9999px;
+            background-color: #FF4D00;
+            box-shadow: 0 0 8px #FF4D00;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .status-pill-confirmed { background-color: #2492ff; color: #001c3a; }
+        .status-pill-shipped { background-color: #ffb59e; color: #5e1700; }
+        .status-pill-delivered { background-color: #c6c6c7; color: #1a1c1c; }
+        .status-pill-cancelled { background-color: #93000a; color: #ffdad6; }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "inverse-surface": "#fcdcd3",
+                "on-background": "#fcdcd3",
+                "inverse-on-surface": "#3f2c26",
+                "tertiary-container": "#2492ff",
+                "surface-tint": "#ffb59e",
+                "surface-container-lowest": "#190a06",
+                "primary-container": "#ff571a",
+                "on-error": "#690005",
+                "primary-fixed": "#ffdbd0",
+                "error-container": "#93000a",
+                "secondary-container": "#454747",
+                "on-secondary-container": "#b4b5b5",
+                "on-surface": "#fcdcd3",
+                "surface": "#1f0f0b",
+                "surface-bright": "#49342e",
+                "outline-variant": "#5c4037",
+                "surface-dim": "#1f0f0b",
+                "tertiary": "#a5c8ff",
+                "on-tertiary-fixed": "#001c3a",
+                "tertiary-fixed": "#d4e3ff",
+                "on-primary-fixed": "#3a0b00",
+                "secondary-fixed-dim": "#c6c6c7",
+                "on-secondary-fixed-variant": "#454747",
+                "on-tertiary-container": "#002a53",
+                "surface-container-high": "#382620",
+                "on-secondary-fixed": "#1a1c1c",
+                "outline": "#ad897e",
+                "surface-container": "#2d1b16",
+                "tertiary-fixed-dim": "#a5c8ff",
+                "primary": "#ffb59e",
+                "background": "#1f0f0b",
+                "on-surface-variant": "#e6beb2",
+                "on-error-container": "#ffdad6",
+                "error": "#ffb4ab",
+                "surface-variant": "#44302a",
+                "on-primary-fixed-variant": "#852400",
+                "on-primary-container": "#521300",
+                "on-primary": "#5e1700",
+                "on-tertiary-fixed-variant": "#004785",
+                "secondary-fixed": "#e2e2e2",
+                "primary-fixed-dim": "#ffb59e",
+                "surface-container-highest": "#44302a",
+                "secondary": "#c6c6c7",
+                "inverse-primary": "#ae3200",
+                "on-secondary": "#2f3131",
+                "on-tertiary": "#00315e",
+                "surface-container-low": "#281712"
+            },
+            "borderRadius": {
+                "DEFAULT": "1rem",
+                "lg": "2rem",
+                "xl": "3rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "sm": "8px",
+                "base": "4px",
+                "xl": "32px",
+                "md": "16px",
+                "gutter": "12px",
+                "xs": "4px",
+                "lg": "24px",
+                "margin": "16px"
+            },
+            "fontFamily": {
+                "body-md": ["inter"],
+                "body-lg": ["inter"],
+                "headline-sm": ["montserrat"],
+                "display-lg": ["montserrat"],
+                "label-md": ["inter"],
+                "headline-md": ["montserrat"],
+                "display-lg-mobile": ["montserrat"],
+                "caption": ["inter"]
+            },
+            "fontSize": {
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface">
+<!-- Top AppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md flex justify-between items-center px-margin h-16">
+<div class="flex items-center gap-md">
+<button class="active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile italic font-black text-primary tracking-tighter">NOTWHAT</h1>
+</div>
+<button class="active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface" data-icon="notifications">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-20 pb-32 px-margin max-w-lg mx-auto">
+<header class="mb-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-md">My Orders</h2>
+<!-- Filter Tabs -->
+<div class="flex items-center gap-lg overflow-x-auto no-scrollbar py-sm">
+<button class="filter-tab active font-label-md text-label-md whitespace-nowrap transition-colors">All</button>
+<button class="filter-tab font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors">Active</button>
+<button class="filter-tab font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors">Delivered</button>
+<button class="filter-tab font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors">Cancelled</button>
+</div>
+</header>
+<!-- Orders List -->
+<div class="space-y-md">
+<!-- Order Card 1 (Active/Shipped) -->
+<div class="order-card p-md rounded-lg flex gap-md items-start">
+<div class="w-20 h-24 rounded bg-surface-variant overflow-hidden shrink-0">
+<img alt="Product" class="w-full h-full object-cover" data-alt="A high-quality studio photograph of a premium streetwear black hoodie with orange electric accents. The lighting is cinematic with sharp highlights and deep shadows, reflecting a gritty urban vibe. The background is a clean, dark grey concrete texture that complements the Gen-Z high-contrast void aesthetic of the brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQo81OwM5yt38IL5kKW3mF63mSPyDoFEyvqLfwv8ruJiJ1UnmhqSnjeth1SAekOIeKTOwUEB4wCLo13RkWH9_B98nzTrlkIua5hSrPN6HdsJXFwMcPrif7QdaQxJnU1lxVoxAXPokFAhgAqtRUo0-SIXidnAq1Qm0RvZwggoHkWyBzYNUEKhXankAEqYkweDP5K9Zwsk2F_ml2tqgNbLty2bXVcj4pe6e-Z3PK8rrzFgvnhstznbviAgUOcXoVL8m_yypL8YClTs0"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-md text-label-md text-on-surface-variant">#NW-78291</span>
+<span class="status-pill-shipped px-sm py-0.5 rounded-full font-label-md text-[10px] uppercase tracking-wider">Shipped</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface truncate">Vortex Urban Hoodie</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Ordered: 12 Oct 2023</p>
+<div class="mt-md flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">₹3,499</span>
+<button class="text-primary font-label-md text-label-md flex items-center gap-xs active:scale-95 transition-transform">
+                            Track <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Order Card 2 (Delivered) -->
+<div class="order-card p-md rounded-lg flex gap-md items-start">
+<div class="w-20 h-24 rounded bg-surface-variant overflow-hidden shrink-0">
+<img alt="Product" class="w-full h-full object-cover" data-alt="Vibrant orange athletic sneakers placed on a reflective black acrylic surface. Electric orange lighting hits the curves of the shoe, emphasizing its futuristic design and technical materials. The overall mood is high-energy and sleek, perfectly capturing the high-velocity social commerce brand identity with intense pops of color against a dark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaCHWalK1EncC3ZNh1MseY0js-LnOqFaDGEHUmS9u72stljpRRnXv1IgYS1Q8gRv4hiLXO7JTamN8HPNQBt4IwoHNbVuNW5I45wPJZ_IUvKXeWe9LwHJwrkq1DWNBUR1cOQ7V93O7zMw_xrV-vq_3Gq6HRqOpPbz11gTowHC9mtAhMTmdJ3679hFzZ1FJ8IzoxavhRouiCs_F1HWHiXBBK34xj7whP7IXpqn58Va6mv10QVJkjK45X4VgpHBP0ZSt0Auh-uF3Ye1o"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-md text-label-md text-on-surface-variant">#NW-78112</span>
+<span class="status-pill-delivered px-sm py-0.5 rounded-full font-label-md text-[10px] uppercase tracking-wider">Delivered</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface truncate">Hyper-Step Sneakers</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Ordered: 05 Oct 2023</p>
+<div class="mt-md flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-on-surface">₹5,999</span>
+<button class="text-on-surface-variant font-label-md text-label-md border border-outline-variant px-md py-1 rounded-full active:scale-95 transition-transform">
+                            Review
+                        </button>
+</div>
+</div>
+</div>
+<!-- Order Card 3 (Confirmed) -->
+<div class="order-card p-md rounded-lg flex gap-md items-start">
+<div class="w-20 h-24 rounded bg-surface-variant overflow-hidden shrink-0">
+<img alt="Product" class="w-full h-full object-cover" data-alt="A minimalist white smartwatch with an orange silicone strap floating in a dark, atmospheric void. Subtle lens flares and soft bokeh effects in the background create a premium, technological feel. The product is illuminated by a singular, dramatic overhead light source that casts long, elegant shadows, embodying a sophisticated yet high-contrast Gen-Z urban aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMrVXowlWlUwdTnkwWYYkcFvM6kjmRKoNLYWX1TtGOT63VvPJgAz_2Sj_mco5Fvhjf_s2Mnrfr6sDeCeXyKNLKSbu0URJU7gVE_P4o2fGO8rG9huJ3DLDDpadXcnL7V_zWQQN6qX8nPDAheYTbok_K3cTSvcKH8CyIYEhc_X-PjPdsX-6lX7kLKNidQ3OV-wVnUJCwzjVb0dsmjPQL4a0E3oG6y4HuaClnFOlVvogEc5EDft917acNaTKWBWA91esp2MGozKTrgS0"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-md text-label-md text-on-surface-variant">#NW-78344</span>
+<span class="status-pill-confirmed px-sm py-0.5 rounded-full font-label-md text-[10px] uppercase tracking-wider">Confirmed</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface truncate">Neo-Link Watch Pro</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Ordered: Yesterday</p>
+<div class="mt-md flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-primary">₹12,450</span>
+<button class="text-primary font-label-md text-label-md flex items-center gap-xs active:scale-95 transition-transform">
+                            Details <span class="material-symbols-outlined text-[16px]" data-icon="info">info</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Order Card 4 (Cancelled) -->
+<div class="order-card p-md rounded-lg flex gap-md items-start opacity-70">
+<div class="w-20 h-24 rounded bg-surface-variant overflow-hidden shrink-0 grayscale">
+<img alt="Product" class="w-full h-full object-cover" data-alt="An artistic shot of a graphic oversized t-shirt with bold typography draped over a chrome clothing rack. The setting is a dark, industrial loft with neon orange strip lighting reflecting off metallic surfaces. The styling is edgy and urban, capturing the essence of Indian street culture with a modern, high-contrast visual approach consistent with premium social commerce platforms." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDP4_goYLWvNZPaPI5H-2J2RYOJB6byWK0P8ByxmRL9C9WMuJAWN693fHn-WlIfQce_chQJr_mUmKuvEqIj4r4nH7PPKeCx3aDIEbt1MAmfLnq3gUmlSElUw2Qyn3BdRZi50fn727kJJO2pIqV9yjKgAfhv9F08h2-idemQ2OkeBiw5i8hoJbUNbukaPwrBNMvJ8Jk7VkPgWPhLBcMR5tVAFYZxrSOxYYJVanC0_uH_U_e-E3K8s6GuA41BZ_bJzaec5TTH5RRy5ho"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-md text-label-md text-on-surface-variant">#NW-77981</span>
+<span class="status-pill-cancelled px-sm py-0.5 rounded-full font-label-md text-[10px] uppercase tracking-wider">Cancelled</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface truncate">Cyber-Print Oversized Tee</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Ordered: 28 Sep 2023</p>
+<div class="mt-md flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-on-surface">₹1,899</span>
+<button class="text-on-surface-variant font-label-md text-label-md border border-outline-variant px-md py-1 rounded-full active:scale-95 transition-transform">
+                            Reorder
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full pb-safe z-50 bg-background/90 backdrop-blur-lg flex justify-around items-center h-20 px-4">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary fill-current active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="shopping_bag" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</nav>
+<script>
+        // Simple Interaction Logic for Filter Tabs
+        const tabs = document.querySelectorAll('.filter-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('active', 'text-primary');
+                    t.classList.add('text-on-surface-variant');
+                });
+                tab.classList.add('active', 'text-primary');
+                tab.classList.remove('text-on-surface-variant');
+                
+                // Add a haptic-like scaling effect
+                tab.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    tab.style.transform = 'scale(1)';
+                }, 100);
+            });
+        });
+
+        // Add glow effect on scroll to the bottom bar
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 10) {
+                nav.style.boxShadow = '0 -4px 20px rgba(0,0,0,0.4)';
+            } else {
+                nav.style.boxShadow = 'none';
+            }
+        });
+    </script>
+</body></html>

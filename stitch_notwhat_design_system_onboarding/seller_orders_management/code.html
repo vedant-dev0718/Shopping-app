@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#ffdad6",
+                    "inverse-surface": "#fcdcd3",
+                    "error-container": "#93000a",
+                    "surface-bright": "#49342e",
+                    "surface": "#1f0f0b",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "primary-fixed-dim": "#ffb59e",
+                    "inverse-primary": "#ae3200",
+                    "surface-container": "#2d1b16",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-primary-fixed-variant": "#852400",
+                    "on-tertiary": "#00315e",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface-container-low": "#281712",
+                    "tertiary-container": "#2492ff",
+                    "outline-variant": "#5c4037",
+                    "on-surface-variant": "#e6beb2",
+                    "primary-fixed": "#ffdbd0",
+                    "on-primary-container": "#521300",
+                    "on-tertiary-container": "#002a53",
+                    "error": "#ffb4ab",
+                    "on-background": "#fcdcd3",
+                    "surface-container-highest": "#44302a",
+                    "on-secondary": "#2f3131",
+                    "secondary-container": "#454747",
+                    "background": "#1f0f0b",
+                    "tertiary": "#a5c8ff",
+                    "outline": "#ad897e",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "inverse-on-surface": "#3f2c26",
+                    "surface-dim": "#1f0f0b",
+                    "secondary-fixed": "#e2e2e2",
+                    "secondary": "#c6c6c7",
+                    "surface-container-lowest": "#190a06",
+                    "on-primary": "#5e1700",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-surface": "#fcdcd3",
+                    "on-error": "#690005",
+                    "primary-container": "#ff571a",
+                    "primary": "#ffb59e",
+                    "surface-variant": "#44302a",
+                    "tertiary-fixed": "#d4e3ff",
+                    "surface-tint": "#ffb59e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin": "16px",
+                    "gutter": "12px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Montserrat"],
+                    "headline-md": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "caption": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Montserrat"],
+                    "display-lg-mobile": ["Montserrat"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #0A0A0A; color: #fcdcd3; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .order-card-gradient { background: linear-gradient(145deg, #1A1A1A, #121212); }
+        .electric-glow { box-shadow: 0px 0px 12px rgba(255, 77, 0, 0.4); }
+        .swipe-action { transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-background selection:bg-primary/30">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-50 bg-background/80 backdrop-blur-md border-b border-outline-variant flex items-center justify-between px-margin py-base max-w-[390px] mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary transition-transform duration-200 active:scale-95" data-icon="menu">menu</span>
+<h1 class="font-headline-md text-headline-md-mobile italic tracking-tighter text-primary">NOTWHAT SELLER</h1>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-primary overflow-hidden">
+<img alt="Seller" class="w-full h-full object-cover" data-alt="A professional close-up studio portrait of a stylish Gen-Z fashion entrepreneur with a vibrant urban aesthetic. The lighting is dramatic and high-contrast, utilizing deep blacks and electric orange highlights to match the brand identity. The background is a sleek, dark void that emphasizes the subject's modern streetwear and confident expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8JJGm9CFcXUAqyVPExUDzlGtimbdOBFTS_J4TEEfdkuyZul08UmtcQW53aAuG5GjCKJGU9hirKNjbH-ugwzcGqbkuajXhIKqj743ZoNnKK1MMScinZt3pjs2TfOuYYex365Z6xivmISY8LURlrMVgOLgyV13qhOkvzHx2ZTwPsp0MlfaH0Pe3WhA0BMZNcQHvA9nT_7U70HUwqu_1Ax6_yukhNGpHbmAvTcr-RZoXUV0mnPVyQQwtCYH1DrwyugPD_CfjJwjYPWM"/>
+</div>
+</header>
+<main class="max-w-[390px] mx-auto pb-32">
+<!-- Screen Title & Filters -->
+<section class="px-margin pt-lg pb-md">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface mb-md">Orders</h2>
+<div class="flex gap-sm overflow-x-auto no-scrollbar py-2 -mx-margin px-margin">
+<button class="bg-primary-container text-on-primary-container font-label-md text-label-md px-lg py-2 rounded-full whitespace-nowrap flex items-center gap-2 relative transition-all">
+                    New
+                    <span class="bg-[#FF4D00] text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full electric-glow">3</span>
+</button>
+<button class="bg-surface-container text-on-surface-variant font-label-md text-label-md px-lg py-2 rounded-full whitespace-nowrap transition-all">Processing</button>
+<button class="bg-surface-container text-on-surface-variant font-label-md text-label-md px-lg py-2 rounded-full whitespace-nowrap transition-all">Shipped</button>
+<button class="bg-surface-container text-on-surface-variant font-label-md text-label-md px-lg py-2 rounded-full whitespace-nowrap transition-all">Delivered</button>
+<button class="bg-surface-container text-on-surface-variant font-label-md text-label-md px-lg py-2 rounded-full whitespace-nowrap transition-all">Returns</button>
+</div>
+</section>
+<!-- Orders Feed -->
+<section class="px-margin space-y-md">
+<!-- New Order Card (Swipeable Example) -->
+<div class="relative overflow-hidden rounded-lg group">
+<div class="absolute inset-0 flex justify-between items-center px-lg">
+<div class="bg-error-container text-on-error-container w-14 h-14 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</div>
+<div class="bg-tertiary-container text-on-tertiary-container w-14 h-14 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="check">check</span>
+</div>
+</div>
+<div class="relative order-card-gradient border border-outline-variant p-md swipe-action z-10 hover:translate-x-2 transition-transform cursor-grab active:cursor-grabbing">
+<div class="flex gap-md">
+<div class="w-20 h-24 rounded-md overflow-hidden bg-surface-container-highest shrink-0">
+<img class="w-full h-full object-cover" data-alt="A high-quality portrait of a premium heavy-knit oversized hoodie in a washed charcoal black color. The garment is displayed in a professional studio setting with moody, directional lighting that highlights the thick texture of the cotton fabric. The overall vibe is luxury streetwear, fitting for a high-end Gen-Z commerce platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZZ7pK4v6ihBIl8n_iA1FUg2yJPnKgxyqg1dsDBfyy_-wshnECXuxMOIiWCuVmlFMUMBjS1lN26OENucGfgjhzaHcH2BlSfSxF9shmIL9lbjYYOWAzsapvWfStHqU5CgC0m6MriniECIHlAIi30L4uSFCQerE889Q8HQH_0AyTw5l4QLfCdsYpDjdBPOvuGClamVuUfd9f7SYRECjDz0BPxqHXBORWB-pt6CB7P96kZ20M-HvI3PjQjwmLaxhgaryYTocbXeN9iMI"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<p class="font-label-md text-label-md text-primary tracking-widest uppercase">ID: #OW-9210</p>
+<p class="font-label-md text-label-md text-on-surface-variant">2m ago</p>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold mt-1">Oversized 'Void' Hoodie</h3>
+<p class="font-caption text-caption text-on-surface-variant">Size: XL • Raven Black</p>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="font-caption text-caption text-outline">Buyer</p>
+<p class="font-label-md text-label-md text-on-surface">Arjun K****</p>
+</div>
+<p class="font-headline-sm text-headline-sm text-primary">₹3,499</p>
+</div>
+</div>
+</div>
+<div class="mt-md pt-md border-t border-outline-variant flex gap-gutter">
+<button class="flex-1 bg-primary-container text-on-primary-container font-label-md text-label-md py-3 rounded-full font-bold uppercase tracking-wider transition-transform active:scale-95">Confirm Order</button>
+</div>
+</div>
+</div>
+<!-- Processing Order Card -->
+<div class="order-card-gradient border border-outline-variant p-md rounded-lg">
+<div class="flex gap-md">
+<div class="w-20 h-24 rounded-md overflow-hidden bg-surface-container-highest shrink-0 opacity-80">
+<img class="w-full h-full object-cover" data-alt="A close-up shot of limited edition high-top sneakers featuring a bold orange and black color scheme. The shoes are set against a dark industrial background with neon light reflections. The lighting is sharp, emphasizing the premium materials and the aggressive, modern silhouette of the footwear." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPHbVmLIHDNT5gN_d-hutNCAaNXmZ-tzLeNgdcsVdviRjpL87c8Ro9xTQ7OMbP1Le0-GrMRV4SpwrYcCpAOEWuTFDGGKCFbYb2fIGmFVKnfF3G3It3gCM2RqOQtiVTfyqtEo9w3Mh17kyxrTMvX48T26TXSzQv6Fyt1pYMM05CWtHXljuVQbc8t5-Dl4aKisUjGSsL76vx6IfSAWPM0lkJ2KD4yl0l24ogJOs_NhRYkDeED1Til8bns7_QbihV7IC82ITLa9H1_eM"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<span class="bg-surface-variant text-primary font-label-md text-[10px] px-2 py-0.5 rounded-full uppercase">Processing</span>
+<p class="font-label-md text-label-md text-on-surface-variant">1h ago</p>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold mt-1">Acid-Wash Cargo Pants</h3>
+<p class="font-caption text-caption text-on-surface-variant">Size: 32 • Distressed Grey</p>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="font-caption text-caption text-outline">Buyer</p>
+<p class="font-label-md text-label-md text-on-surface">Sneha M****</p>
+</div>
+<p class="font-headline-sm text-headline-sm text-primary">₹2,850</p>
+</div>
+</div>
+</div>
+<div class="mt-md pt-md border-t border-outline-variant">
+<button class="w-full border-1.5 border-primary text-primary font-label-md text-label-md py-3 rounded-full font-bold uppercase tracking-wider transition-all hover:bg-primary/10 active:scale-95">Ship Now</button>
+</div>
+</div>
+<!-- Shipped Order Card -->
+<div class="order-card-gradient border border-outline-variant p-md rounded-lg opacity-90">
+<div class="flex gap-md">
+<div class="w-20 h-24 rounded-md overflow-hidden bg-surface-container-highest shrink-0 grayscale-[50%]">
+<img class="w-full h-full object-cover" data-alt="A creative product shot of a graphic tee with bold typography and abstract street art designs. The shirt is draped artfully on a concrete surface with dramatic shadow play. The scene is illuminated by a warm, localized light source that creates a premium, underground gallery aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyckGGt-BlTkyA4-4e7LjQdx7_2WtNs9OQ-NuwjzDTsLL6rJQF_ZD-Pm7gkMdwirt7_Y0mS8qn58bFiV2GOy4tzQJpzV4gPNoQ0efhYe02fR9nANfW2QtBEAi0mEi1FAcX5dlp4_6fRqgWvpy7m4N28b_oJqMrPkVED5-0pVGTq94g_CQaLuALt633YYZdeZCYLROrzpw-fZz8cWq3tLJTdGus5l0SxmB88O-vd6R8uLzxB-EHbw6m32euctZou40HHGBfrawy26A"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<span class="bg-tertiary/10 text-tertiary font-label-md text-[10px] px-2 py-0.5 rounded-full uppercase">In Transit</span>
+<p class="font-label-md text-label-md text-on-surface-variant">Yesterday</p>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold mt-1">Cyber-Pank Graphic Tee</h3>
+<p class="font-caption text-caption text-on-surface-variant">Size: L • Electric Lime</p>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="font-caption text-caption text-outline">Buyer</p>
+<p class="font-label-md text-label-md text-on-surface">Rohan S****</p>
+</div>
+<p class="font-headline-sm text-headline-sm text-primary">₹1,200</p>
+</div>
+</div>
+</div>
+<div class="mt-md pt-md border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="local_shipping">local_shipping</span>
+<span class="text-caption font-medium">ETA: Tomorrow</span>
+</div>
+<button class="text-primary font-label-md text-label-md py-2 rounded-full font-bold uppercase transition-all hover:underline active:scale-95">View Tracking</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface/90 backdrop-blur-md border-t border-outline-variant shadow-[0px_-4px_10px_rgba(0,0,0,0.5)] flex justify-around items-center px-lg h-20 pb-safe max-w-[390px] left-1/2 -translate-x-1/2">
+<!-- Dashboard Active State as requested -->
+<button class="flex items-center justify-center bg-primary-container text-on-primary-container rounded-full p-3 shadow-[0px_0px_8px_#FF4D00] scale-110 duration-150 ease-in-out">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+</button>
+<button class="flex items-center justify-center text-secondary p-3 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</button>
+<button class="flex items-center justify-center text-secondary p-3 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+</button>
+<button class="flex items-center justify-center text-secondary p-3 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</button>
+</nav>
+<script>
+        // Simple micro-interaction for horizontal swiping on the first card
+        document.addEventListener('DOMContentLoaded', () => {
+            const swipeCards = document.querySelectorAll('.swipe-action');
+            
+            swipeCards.forEach(card => {
+                let startX = 0;
+                let currentTranslate = 0;
+
+                card.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                });
+
+                card.addEventListener('touchmove', (e) => {
+                    const diff = e.touches[0].clientX - startX;
+                    if (Math.abs(diff) < 80) {
+                        currentTranslate = diff;
+                        card.style.transform = `translateX(${currentTranslate}px)`;
+                    }
+                });
+
+                card.addEventListener('touchend', () => {
+                    card.style.transform = `translateX(0px)`;
+                });
+            });
+
+            // Filter button selection state
+            const filters = document.querySelectorAll('button[class*="rounded-full"]');
+            filters.forEach(filter => {
+                filter.addEventListener('click', () => {
+                    if (filter.closest('section')) { // Only for the top filter tabs
+                        filters.forEach(f => {
+                            if (f.closest('section')) {
+                                f.classList.remove('bg-primary-container', 'text-on-primary-container');
+                                f.classList.add('bg-surface-container', 'text-on-surface-variant');
+                            }
+                        });
+                        filter.classList.add('bg-primary-container', 'text-on-primary-container');
+                        filter.classList.remove('bg-surface-container', 'text-on-surface-variant');
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>

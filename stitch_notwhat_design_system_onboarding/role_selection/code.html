@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>NotWhat | Select Your Role</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed-variant": "#852400",
+                      "on-primary-fixed": "#3a0b00",
+                      "on-tertiary-fixed": "#001c3a",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "tertiary-container": "#2492ff",
+                      "surface": "#1f0f0b",
+                      "surface-bright": "#49342e",
+                      "on-tertiary-fixed-variant": "#004785",
+                      "inverse-surface": "#fcdcd3",
+                      "on-secondary-container": "#b4b5b5",
+                      "surface-dim": "#1f0f0b",
+                      "on-tertiary": "#00315e",
+                      "inverse-on-surface": "#3f2c26",
+                      "surface-container-low": "#281712",
+                      "tertiary": "#a5c8ff",
+                      "primary-container": "#ff571a",
+                      "on-primary-container": "#521300",
+                      "tertiary-fixed": "#d4e3ff",
+                      "surface-tint": "#ffb59e",
+                      "surface-container": "#2d1b16",
+                      "on-secondary": "#2f3131",
+                      "surface-container-lowest": "#190a06",
+                      "primary-fixed-dim": "#ffb59e",
+                      "outline": "#ad897e",
+                      "on-secondary-fixed-variant": "#454747",
+                      "on-primary-container": "#521300",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "on-surface": "#fcdcd3",
+                      "on-error-container": "#ffdad6",
+                      "secondary-container": "#454747",
+                      "primary": "#ffb59e",
+                      "error": "#ffb4ab",
+                      "on-primary": "#5e1700",
+                      "error-container": "#93000a",
+                      "outline-variant": "#5c4037",
+                      "surface-container-highest": "#44302a",
+                      "surface-variant": "#44302a",
+                      "secondary": "#c6c6c7",
+                      "on-error": "#690005",
+                      "on-surface-variant": "#e6beb2",
+                      "primary-fixed": "#ffdbd0",
+                      "background": "#0A0A0A",
+                      "surface-container-high": "#382620",
+                      "tertiary-fixed-dim": "#a5c8ff",
+                      "on-background": "#fcdcd3",
+                      "inverse-primary": "#ae3200",
+                      "secondary-fixed": "#e2e2e2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "lg": "24px",
+                      "md": "16px",
+                      "gutter": "12px",
+                      "xl": "32px",
+                      "sm": "8px",
+                      "xs": "4px",
+                      "margin": "16px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Inter", "sans-serif"],
+                      "display-lg": ["Montserrat", "sans-serif"],
+                      "headline-md": ["Montserrat", "sans-serif"],
+                      "body-md": ["Inter", "sans-serif"],
+                      "label-md": ["Inter", "sans-serif"],
+                      "display-lg-mobile": ["Montserrat", "sans-serif"],
+                      "headline-sm": ["Montserrat", "sans-serif"],
+                      "caption": ["Inter", "sans-serif"]
+              },
+              "fontSize": {
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                      "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                      "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                      "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .role-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+        .role-card.selected {
+            border-color: #FF4D00;
+            background-color: rgba(255, 77, 0, 0.05);
+            box-shadow: 0 0 15px rgba(255, 77, 0, 0.2);
+            transform: scale(1.02);
+        }
+        .role-card.selected .check-circle {
+            background-color: #FF4D00;
+            color: white;
+            opacity: 1;
+        }
+        .check-circle {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .continue-btn:active {
+            transform: scale(0.97);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md antialiased selection:bg-primary-container/30">
+<!-- Top AppBar (Simplified for Onboarding) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin h-16 bg-background">
+<div class="font-display-lg-mobile text-display-lg-mobile text-primary tracking-tighter uppercase">NotWhat</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:opacity-80 transition-opacity">help_outline</button>
+</header>
+<main class="min-h-screen pt-24 pb-32 px-margin flex flex-col max-w-[450px] mx-auto">
+<!-- Heading Section -->
+<div class="mb-xl">
+<h1 class="font-headline-md text-white mb-2">Join NotWhat</h1>
+<p class="font-body-lg text-on-surface-variant">How do you want to use the app?</p>
+</div>
+<!-- Role Selection Grid -->
+<div class="flex flex-col gap-gutter">
+<!-- Buyer Role -->
+<div class="role-card group relative overflow-hidden rounded-lg bg-[#1A1A1A] p-lg cursor-pointer" id="role-buyer" onclick="selectRole('buyer')">
+<div class="flex justify-between items-start mb-md">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</div>
+<div class="check-circle material-symbols-outlined rounded-full p-1 text-sm">check</div>
+</div>
+<h3 class="font-headline-sm text-white mb-sm">Shop &amp; Discover</h3>
+<ul class="space-y-sm">
+<li class="flex items-center gap-2 font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-primary">bolt</span>
+                        Browse Reels
+                    </li>
+<li class="flex items-center gap-2 font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-primary">gavel</span>
+                        Bargain on Products
+                    </li>
+<li class="flex items-center gap-2 font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-primary">store</span>
+                        Buy from Local Stores
+                    </li>
+</ul>
+<!-- Background Illustration Overlay -->
+<div class="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[120px]">shopping_cart</span>
+</div>
+</div>
+<!-- Seller Role -->
+<div class="role-card group relative overflow-hidden rounded-lg bg-[#1A1A1A] p-lg cursor-pointer" id="role-seller" onclick="selectRole('seller')">
+<div class="flex justify-between items-start mb-md">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</div>
+<div class="check-circle material-symbols-outlined rounded-full p-1 text-sm">check</div>
+</div>
+<h3 class="font-headline-sm text-white mb-sm">Sell &amp; Grow</h3>
+<ul class="space-y-sm">
+<li class="flex items-center gap-2 font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-primary">add_business</span>
+                        Create Your Store
+                    </li>
+<li class="flex items-center gap-2 font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-primary">video_call</span>
+                        Upload Reels
+                    </li>
+<li class="flex items-center gap-2 font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-primary">monitoring</span>
+                        Manage Orders
+                    </li>
+</ul>
+<!-- Background Illustration Overlay -->
+<div class="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[120px]">sell</span>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-auto pt-xl space-y-lg">
+<button class="continue-btn w-full py-4 bg-[#FF4D00] text-white font-headline-sm rounded-full opacity-50 cursor-not-allowed transition-all duration-200" disabled="" id="continue-btn">
+                Continue
+            </button>
+<div class="text-center">
+<p class="font-body-md text-on-surface-variant">
+                    Already have an account? 
+                    <a class="text-primary font-label-md ml-1 hover:underline" href="#">Log in</a>
+</p>
+</div>
+</div>
+</main>
+<!-- Visual Polish: Decorative Ambient Glow -->
+<div class="fixed top-[-10%] right-[-10%] w-[300px] h-[300px] rounded-full bg-[#FF4D00]/5 blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-[-10%] left-[-10%] w-[300px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
+<script>
+        function selectRole(role) {
+            // Remove selection from all
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add to selected
+            const selectedCard = document.getElementById('role-' + role);
+            selectedCard.classList.add('selected');
+
+            // Enable CTA
+            const btn = document.getElementById('continue-btn');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.classList.add('hover:brightness-110', 'active:scale-[0.98]');
+
+            // Haptic feedback simulation
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate(10);
+            }
+        }
+
+        // Button action animation
+        document.getElementById('continue-btn').addEventListener('click', function() {
+            if (!this.disabled) {
+                this.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span>';
+                setTimeout(() => {
+                    this.innerText = 'Redirecting...';
+                }, 800);
+            }
+        });
+    </script>
+</body></html>

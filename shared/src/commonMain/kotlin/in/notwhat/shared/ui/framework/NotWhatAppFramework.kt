@@ -1,0 +1,156 @@
+package com.notwhat.shared.ui
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.font.FontWeight
+import com.notwhat.shared.session.UserRole
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+internal fun NotWhatAppFramework(
+    state: NotWhatAppState,
+    forcedRole: UserRole?,
+) {
+    val flow = remember { AppFlowState() }
+
+    LaunchedEffect(forcedRole, state.isAuthenticated) {
+        if (forcedRole != null && !state.isAuthenticated) {
+            state.configureRoleApp(forcedRole)
+        }
+    }
+
+    LaunchedEffect(state.isAuthenticated) {
+        if (state.isAuthenticated) {
+            state.content.load()
+            val token = state.authState.currentSession?.authToken ?: return@LaunchedEffect
+            state.transaction.load(token)
+            if (state.uiRole == UserRole.Seller) {
+                state.sellerContent.load(token)
+            }
+        }
+    }
+
+    val appRole = state.uiRole
+    val requiresSellerSetup = state.currentSession?.requiresSellerProfileSetup == true && appRole == UserRole.Seller
+
+    val homeCoordinator =
+        HomeFeatureCoordinator(
+            onSearchTap = { state.selectTab(NotWhatTab.Search) },
+            onOpenProduct = { flow.selectedProduct = it },
+            onOpenStore = { flow.selectedStore = it },
+        )
+    val searchCoordinator =
+        SearchFeatureCoordinator(
+            onOpenProduct = { flow.selectedProduct = it },
+            onOpenStore = { flow.selectedStore = it },
+        )
+    val reelsCoordinator =
+        ReelsFeatureCoordinator(
+            onOpenReel = { flow.selectedReel = it },
+            onOpenProduct = { flow.selectedProduct = it },
+            onOpenStore = { flow.selectedStore = it },
+        )
+    val productCoordinator = ProductFeatureCoordinator()
+    val sellerCoordinator = SellerFeatureCoordinator()
+    val adminCoordinator = AdminFeatureCoordinator()
+
+    NotWhatTheme {
+        Scaffold(
+            containerColor = NotWhatColors.background,
+            topBar = {
+                if (state.isAuthenticated && appRole != UserRole.Seller && !flow.isInSubScreen) {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = titleForTab(state.activeTab, appRole),
+                                color = NotWhatColors.primary,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        },
+                        actions = {
+                            TextButton(onClick = state::signOut) {
+                                Text("Sign out", color = NotWhatColors.primary)
+                            }
+                        },
+                    )
+                }
+            },
+            bottomBar = {
+                if (state.isAuthenticated && appRole == UserRole.Buyer && !flow.isInSubScreen) {
+                    NavigationBar(containerColor = NotWhatColors.surfaceContainerHigh) {
+                        NavigationBarItem(
+                            selected = state.activeTab == NotWhatTab.Home,
+                            onClick = { state.selectTab(NotWhatTab.Home) },
+                            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                            label = { Text("Home") },
+                        )
+                        NavigationBarItem(
+                            selected = state.activeTab == NotWhatTab.Search,
+                            onClick = { state.selectTab(NotWhatTab.Search) },
+                            icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                            label = { Text("Search") },
+                        )
+                        NavigationBarItem(
+                            selected = state.activeTab == NotWhatTab.Bargains,
+                            onClick = { state.selectTab(NotWhatTab.Bargains) },
+                            icon = { Icon(Icons.Default.Star, contentDescription = "Bargains") },
+                            label = { Text("Bargains") },
+                        )
+                        NavigationBarItem(
+                            selected = state.activeTab == NotWhatTab.Account,
+                            onClick = { state.selectTab(NotWhatTab.Account) },
+                            icon = { Icon(Icons.Default.Person, contentDescription = "Account") },
+                            label = { Text("Account") },
+                        )
+                    }
+                }
+            },
+        ) { padding ->
+            AppContentRouter(
+                padding = padding,
+                state = state,
+                appRole = appRole,
+                requiresSellerSetup = requiresSellerSetup,
+                flow = flow,
+                homeCoordinator = homeCoordinator,
+                searchCoordinator = searchCoordinator,
+                reelsCoordinator = reelsCoordinator,
+                productCoordinator = productCoordinator,
+                sellerCoordinator = sellerCoordinator,
+                adminCoordinator = adminCoordinator,
+            )
+        }
+    }
+}
+
+private fun titleForTab(
+    tab: NotWhatTab,
+    appRole: UserRole,
+): String =
+    when (tab) {
+        NotWhatTab.Home -> if (appRole == UserRole.Buyer) "NotWhat" else consoleTitle(appRole)
+        NotWhatTab.Search -> if (appRole == UserRole.Buyer) "Search" else consoleTitle(appRole)
+        NotWhatTab.Bargains -> if (appRole == UserRole.Buyer) "Bargains" else consoleTitle(appRole)
+        NotWhatTab.Account -> if (appRole == UserRole.Buyer) "Account" else consoleTitle(appRole)
+    }
+
+private fun consoleTitle(appRole: UserRole): String =
+    when (appRole) {
+        UserRole.Buyer -> "NotWhat"
+        UserRole.Seller -> "Seller Console"
+        UserRole.Admin -> "Admin Console"
+    }

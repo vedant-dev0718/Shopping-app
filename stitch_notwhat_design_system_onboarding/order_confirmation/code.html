@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+    :root {
+      --primary: #ff571a; /* Using Primary Container from config as the electric coral */
+      --background: #1f0f0b;
+    }
+    body {
+      background-color: var(--background);
+      color: #fcdcd3;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .success-checkmark {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto;
+    }
+    .check-icon {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      border-radius: 50%;
+      box-sizing: content-box;
+      border: 4px solid #ff571a;
+      box-shadow: 0 0 15px rgba(255, 87, 26, 0.4);
+    }
+    .check-icon::before {
+      top: 3px;
+      left: -2px;
+      width: 30px;
+      transform-origin: 100% 50%;
+      border-radius: 100px 0 0 100px;
+    }
+    .check-icon::after {
+      top: 0;
+      left: 30px;
+      width: 60px;
+      transform-origin: 0 50%;
+      border-radius: 0 100px 100px 0;
+      animation: rotate-circle 4.25s ease-in;
+    }
+    .check-icon .icon-line {
+      height: 5px;
+      background-color: #ff571a;
+      display: block;
+      border-radius: 2px;
+      position: absolute;
+      z-index: 10;
+    }
+    .check-icon .icon-line.line-tip {
+      top: 46px;
+      left: 14px;
+      width: 25px;
+      transform: rotate(45deg);
+      animation: icon-line-tip 0.75s;
+    }
+    .check-icon .icon-line.line-long {
+      top: 38px;
+      right: 8px;
+      width: 47px;
+      transform: rotate(-45deg);
+      animation: icon-line-long 0.75s;
+    }
+    .check-circle {
+      top: -4px;
+      left: -4px;
+      z-index: 10;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      position: absolute;
+      border: 4px solid rgba(255, 87, 26, 0.2);
+    }
+    @keyframes icon-line-tip {
+      0% { width: 0; left: 1px; top: 19px; }
+      54% { width: 0; left: 1px; top: 19px; }
+      70% { width: 50px; left: -8px; top: 37px; }
+      84% { width: 17px; left: 21px; top: 48px; }
+      100% { width: 25px; left: 14px; top: 46px; }
+    }
+    @keyframes icon-line-long {
+      0% { width: 0; right: 46px; top: 54px; }
+      65% { width: 0; right: 46px; top: 54px; }
+      84% { width: 55px; right: 0px; top: 35px; }
+      100% { width: 47px; right: 8px; top: 38px; }
+    }
+    .glass-card {
+      background: rgba(45, 27, 22, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(173, 137, 126, 0.2);
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-surface": "#fcdcd3",
+            "on-background": "#fcdcd3",
+            "inverse-on-surface": "#3f2c26",
+            "tertiary-container": "#2492ff",
+            "surface-tint": "#ffb59e",
+            "surface-container-lowest": "#190a06",
+            "primary-container": "#ff571a",
+            "on-error": "#690005",
+            "primary-fixed": "#ffdbd0",
+            "error-container": "#93000a",
+            "secondary-container": "#454747",
+            "on-secondary-container": "#b4b5b5",
+            "on-surface": "#fcdcd3",
+            "surface": "#1f0f0b",
+            "surface-bright": "#49342e",
+            "outline-variant": "#5c4037",
+            "surface-dim": "#1f0f0b",
+            "tertiary": "#a5c8ff",
+            "on-tertiary-fixed": "#001c3a",
+            "tertiary-fixed": "#d4e3ff",
+            "on-primary-fixed": "#3a0b00",
+            "secondary-fixed-dim": "#c6c6c7",
+            "on-secondary-fixed-variant": "#454747",
+            "on-tertiary-container": "#002a53",
+            "surface-container-high": "#382620",
+            "on-secondary-fixed": "#1a1c1c",
+            "outline": "#ad897e",
+            "surface-container": "#2d1b16",
+            "tertiary-fixed-dim": "#a5c8ff",
+            "primary": "#ffb59e",
+            "background": "#1f0f0b",
+            "on-surface-variant": "#e6beb2",
+            "on-error-container": "#ffdad6",
+            "error": "#ffb4ab",
+            "surface-variant": "#44302a",
+            "on-primary-fixed-variant": "#852400",
+            "on-primary-container": "#521300",
+            "on-primary": "#5e1700",
+            "on-tertiary-fixed-variant": "#004785",
+            "secondary-fixed": "#e2e2e2",
+            "primary-fixed-dim": "#ffb59e",
+            "surface-container-highest": "#44302a",
+            "secondary": "#c6c6c7",
+            "inverse-primary": "#ae3200",
+            "on-secondary": "#2f3131",
+            "on-tertiary": "#00315e",
+            "surface-container-low": "#281712"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "sm": "8px",
+            "base": "4px",
+            "xl": "32px",
+            "md": "16px",
+            "gutter": "12px",
+            "xs": "4px",
+            "lg": "24px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "body-md": ["inter"],
+            "body-lg": ["inter"],
+            "headline-sm": ["montserrat"],
+            "display-lg": ["montserrat"],
+            "label-md": ["inter"],
+            "headline-md": ["montserrat"],
+            "display-lg-mobile": ["montserrat"],
+            "caption": ["inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+            "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+            "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+            "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+            "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen flex flex-col items-center justify-start pb-20 overflow-x-hidden">
+<!-- Top Navigation Shell Suppressed for Success Screen Logic -->
+<header class="w-full fixed top-0 z-50 bg-background/90 backdrop-blur-md px-margin h-16 flex items-center justify-center">
+<h1 class="font-display-lg-mobile text-display-lg-mobile italic font-black text-primary tracking-tighter">NOTWHAT</h1>
+</header>
+<main class="mt-24 w-full max-w-[390px] px-margin flex flex-col items-center text-center">
+<!-- Animated Success Checkmark -->
+<div class="success-checkmark my-lg">
+<div class="check-icon">
+<span class="icon-line line-tip"></span>
+<span class="icon-line line-long"></span>
+<div class="check-circle"></div>
+</div>
+</div>
+<!-- Confirmation Header -->
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-background font-black mb-xs">Order Placed!</h2>
+<p class="font-body-md text-on-surface-variant mb-lg">Your drip is on the way to you.</p>
+<!-- Order Info Bento -->
+<div class="w-full grid grid-cols-2 gap-gutter mb-lg">
+<div class="glass-card p-md rounded-lg flex flex-col items-start justify-center text-left">
+<span class="font-caption text-on-surface-variant uppercase tracking-widest mb-xs">Order ID</span>
+<span class="font-body-lg text-on-surface font-bold">#NW-78921</span>
+</div>
+<div class="glass-card p-md rounded-lg flex flex-col items-start justify-center text-left">
+<span class="font-caption text-on-surface-variant uppercase tracking-widest mb-xs">Delivery Date</span>
+<span class="font-body-lg text-primary font-bold">Oct 24, 2023</span>
+</div>
+</div>
+<!-- Order Summary Card -->
+<div class="w-full glass-card rounded-lg p-md mb-xl text-left border-l-4 border-l-primary">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-on-surface">Summary</h3>
+<span class="material-symbols-outlined text-primary">shopping_bag</span>
+</div>
+<div class="space-y-md">
+<!-- Item 1 -->
+<div class="flex items-center gap-md">
+<div class="w-16 h-16 bg-surface-container-highest rounded overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A high-fashion urban streetwear bomber jacket with intricate neon embroidery, displayed in a dark studio setting. The lighting is dramatic and moody, featuring sharp orange highlights that match a dark gen-z aesthetic. The jacket has a premium heavy texture against a deep black background, conveying exclusive street culture style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtQORDtqSSltecKeiXIf4MXnulsWUYcJMDJ1IKD1BxACU-q6r-pUdaSt5Bq0ZBJOeS41vpbuiEFrZjiyeSEJ1beBt6D2RG9tXnjWx8QbzpJIqI0IrpOOcnm5-lUFFiZ2FHMI33g-YEPkrTHwP3c5L5DtzaAUiWd83BvzSzGOqqMLQmR06_ciwHagztbpFWiiNkgeQMbgD6jPeYeh75_0Kr7nngTV9eSgmpEGPPNTaOhdCHZQ4b8Hhh6h6raChtruF071Ye0wfb_CE"/>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-on-surface font-bold">Cyber-Edge Bomber Jkt</p>
+<p class="font-caption text-on-surface-variant">Size: L • Qty: 1</p>
+</div>
+<p class="font-body-md text-on-surface font-bold">₹4,999</p>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-md">
+<div class="w-16 h-16 bg-surface-container-highest rounded overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A pair of vibrant, electric orange performance sneakers featuring futuristic silhouettes and translucent sole detailing. The sneakers are set against a dark, tech-inspired background with subtle glowing red light streaks. The visual style is high-contrast and kinetic, emphasizing the fast-paced energy of urban Indian sneaker culture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBs4zu4gruymKucVgWxaEOWd2zwjlqgVMteR9MMOufEC9p7CRjmD0iVsdiAIkyOT4t4IOrVg0G17BIywvca3Dfmn5hAVFqZFilofauZ6-MtG4Rb7gy3R3lies4QmbLMSif2aG4TK1NqgMU260qaSSWwOcBKWZeF7h-rtcNfmO5n5kBLW-jyegN7DbO6oQBMRPweySRcuGVwXP8XM6LqNcSuacBknn64a7Q9EVvbJMkmU6VRMeCZVNek7it6C5zGd0k285o84IdKdcs"/>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-on-surface font-bold">Volt-Run V2 Sneakers</p>
+<p class="font-caption text-on-surface-variant">Size: 10 • Qty: 1</p>
+</div>
+<p class="font-body-md text-on-surface font-bold">₹8,499</p>
+</div>
+<div class="pt-md border-t border-outline-variant flex justify-between items-center">
+<span class="font-body-md text-on-surface-variant">Total Amount</span>
+<span class="font-headline-md text-primary">₹13,498</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="w-full flex flex-col gap-md">
+<button class="w-full h-14 bg-primary-container text-on-primary-fixed font-montserrat font-extrabold rounded-full active:scale-95 transition-transform flex items-center justify-center gap-sm">
+<span>CONTINUE SHOPPING</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<button class="w-full h-14 border-[1.5px] border-primary-container text-primary font-montserrat font-extrabold rounded-full active:scale-95 transition-transform">
+        TRACK ORDER
+      </button>
+</div>
+</main>
+<!-- Share & Social Incentive -->
+<footer class="mt-xl px-margin w-full max-w-[390px]">
+<div class="bg-surface-container-high rounded-xl p-md flex items-center gap-md relative overflow-hidden">
+<!-- Glow effect -->
+<div class="absolute -right-4 -top-4 w-20 h-20 bg-primary/20 blur-2xl rounded-full"></div>
+<div class="material-symbols-outlined text-primary text-display-lg" data-weight="fill">celebration</div>
+<div class="text-left flex-1">
+<p class="font-body-md font-bold text-on-surface">Brag about your haul!</p>
+<p class="font-caption text-on-surface-variant">Share your order on IG for ₹200 off your next drop.</p>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">share</button>
+</div>
+</footer>
+<!-- Confetti Canvas Interaction -->
+<canvas class="fixed inset-0 pointer-events-none z-40" id="confetti-canvas"></canvas>
+<script>
+    // Confetti effect on load
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    const colors = ['#ff571a', '#ffb59e', '#fcdcd3', '#2492ff'];
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height - canvas.height;
+        this.size = Math.random() * 8 + 4;
+        this.speed = Math.random() * 3 + 2;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.angle = Math.random() * 360;
+        this.rotationSpeed = Math.random() * 5 - 2.5;
+      }
+
+      update() {
+        this.y += this.speed;
+        this.angle += this.rotationSpeed;
+        if (this.y > canvas.height) {
+          this.y = -20;
+          this.x = Math.random() * canvas.width;
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle * Math.PI / 180);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+        ctx.restore();
+      }
+    }
+
+    function init() {
+      for (let i = 0; i < 80; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+
+    init();
+    animate();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // Auto-stop confetti after a while to save performance
+    setTimeout(() => {
+      particles = [];
+    }, 5000);
+  </script>
+</body></html>

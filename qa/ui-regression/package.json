@@ -1,0 +1,36 @@
+{
+    "name": "notwhat-ui-regression",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "capture:stitch": "node scripts/capture-stitch.mjs",
+        "capture:stitch:seller": "node scripts/capture-seller-stitch.mjs",
+        "capture:stitch:seller:e2e": "node scripts/capture-seller-e2e-stitch.mjs",
+        "capture:app:current": "bash scripts/run-maestro-regression.sh current",
+        "capture:app:baseline": "bash scripts/run-maestro-regression.sh baseline",
+        "capture:seller:current": "bash scripts/run-seller-checkpoints.sh current",
+        "capture:seller:baseline": "bash scripts/run-seller-checkpoints.sh baseline",
+        "capture:seller:e2e:current": "bash scripts/run-seller-e2e-flow.sh current",
+        "capture:seller:e2e:baseline": "bash scripts/run-seller-e2e-flow.sh baseline",
+        "capture:buyer:e2e:current": "bash scripts/run-buyer-e2e-flow.sh current",
+        "capture:buyer:e2e:baseline": "bash scripts/run-buyer-e2e-flow.sh baseline",
+        "capture:admin:e2e:current": "bash scripts/run-admin-e2e-flow.sh current",
+        "capture:admin:e2e:baseline": "bash scripts/run-admin-e2e-flow.sh baseline",
+        "compare": "node scripts/compare-images.mjs",
+        "compare:seller": "node scripts/compare-seller-checkpoints.mjs",
+        "compare:seller:e2e": "node scripts/compare-seller-e2e.mjs",
+        "compare:buyer:e2e": "node scripts/compare-buyer-e2e.mjs",
+        "compare:admin:e2e": "node scripts/compare-admin-e2e.mjs",
+        "regress": "npm run capture:app:current && npm run capture:stitch && npm run compare",
+        "regress:seller": "bash scripts/regress-seller.sh",
+        "regress:seller:e2e": "bash scripts/regress-seller-e2e.sh",
+        "regress:buyer:e2e": "bash scripts/regress-buyer-e2e.sh",
+        "regress:admin:e2e": "bash scripts/regress-admin-e2e.sh"
+    },
+    "dependencies": {
+        "pixelmatch": "^5.3.0",
+        "playwright": "^1.54.2",
+        "pngjs": "^7.0.0",
+        "sharp": "^0.34.3"
+    }
+}

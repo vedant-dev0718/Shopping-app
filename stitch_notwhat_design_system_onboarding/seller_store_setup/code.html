@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#fcdcd3",
+                    "surface": "#1f0f0b",
+                    "surface-bright": "#49342e",
+                    "surface-dim": "#1f0f0b",
+                    "outline-variant": "#5c4037",
+                    "tertiary": "#a5c8ff",
+                    "on-tertiary-fixed": "#001c3a",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-background": "#fcdcd3",
+                    "inverse-surface": "#fcdcd3",
+                    "tertiary-container": "#2492ff",
+                    "surface-tint": "#ffb59e",
+                    "inverse-on-surface": "#3f2c26",
+                    "primary-container": "#ff571a",
+                    "surface-container-lowest": "#190a06",
+                    "primary-fixed": "#ffdbd0",
+                    "error-container": "#93000a",
+                    "on-error": "#690005",
+                    "secondary-container": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-primary-container": "#521300",
+                    "on-primary": "#5e1700",
+                    "surface-variant": "#44302a",
+                    "on-primary-fixed-variant": "#852400",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-container-highest": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "primary-fixed-dim": "#ffb59e",
+                    "inverse-primary": "#ae3200",
+                    "on-secondary": "#2f3131",
+                    "surface-container-low": "#281712",
+                    "on-tertiary": "#00315e",
+                    "on-tertiary-container": "#002a53",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-secondary-fixed-variant": "#454747",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "surface-container": "#2d1b16",
+                    "outline": "#ad897e",
+                    "primary": "#ffb59e",
+                    "background": "#1f0f0b",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "on-surface-variant": "#e6beb2",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "lg": "24px",
+                    "margin": "16px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "gutter": "12px",
+                    "sm": "8px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "headline-md": ["montserrat"],
+                    "display-lg-mobile": ["montserrat"],
+                    "caption": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"],
+                    "label-md": ["inter"],
+                    "body-md": ["inter"],
+                    "body-lg": ["inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .step-transition {
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        .electric-glow:focus-within {
+            box-shadow: 0px 0px 8px #FF4D00;
+            border-color: #FF4D00 !important;
+        }
+        input:focus {
+            outline: none;
+        }
+        .dashed-border {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%23AD897EFF' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+        .dashed-border-circle {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='50%25' cy='50%25' r='48%25' fill='none' stroke='%23AD897EFF' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md selection:bg-primary/30">
+<!-- Header (Suppressed BottomNav as this is Transactional/Linear) -->
+<header class="fixed top-0 w-full z-50 bg-background flex justify-between items-center px-margin h-16 w-full">
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined text-primary active:scale-95 transition-transform" onclick="prevStep()">arrow_back</button>
+<span class="font-headline-md text-headline-md font-bold tracking-tighter text-primary">NOTWHAT</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-md text-label-md text-primary">STEP <span id="current-step-label">2</span> OF 4</span>
+<div class="w-24 h-1.5 bg-surface-variant rounded-full mt-1 overflow-hidden">
+<div class="h-full bg-primary-container transition-all duration-500 w-[50%]" id="progress-bar"></div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-margin max-w-[390px] mx-auto min-h-screen relative overflow-hidden">
+<!-- Step 2: Media Setup -->
+<section class="step-transition" id="step-2">
+<div class="mb-xl">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-xs">Brand Identity</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Your store's visual vibe is everything. Let's make it pop.</p>
+</div>
+<div class="space-y-lg">
+<!-- Banner Upload -->
+<div>
+<label class="font-label-md text-label-md text-outline mb-sm block">STORE BANNER (16:9 RECOMMENDED)</label>
+<div class="dashed-border w-full h-44 rounded-lg flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-outline text-4xl group-hover:scale-110 transition-transform mb-sm">add_a_photo</span>
+<span class="font-label-md text-label-md text-outline">TAP TO UPLOAD BANNER</span>
+</div>
+</div>
+<!-- Logo Upload -->
+<div class="flex flex-col items-center py-md">
+<label class="font-label-md text-label-md text-outline mb-sm block self-start">STORE LOGO</label>
+<div class="dashed-border-circle w-32 h-32 rounded-full flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group relative">
+<span class="material-symbols-outlined text-outline text-3xl group-hover:scale-110 transition-transform">camera</span>
+<div class="absolute -bottom-1 -right-1 bg-primary-container rounded-full p-2 border-2 border-background">
+<span class="material-symbols-outlined text-on-primary-container text-lg" style="font-variation-settings: 'FILL' 1;">add</span>
+</div>
+</div>
+<p class="font-caption text-caption text-outline mt-md text-center">Transparent PNG or high-contrast JPG works best for the Gen-Z aesthetic.</p>
+</div>
+</div>
+</section>
+<!-- Step 3: Business Details (Hidden by Default) -->
+<section class="step-transition absolute inset-x-margin translate-x-full opacity-0 pointer-events-none" id="step-3">
+<div class="mb-xl">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-xs">Business Profile</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">The boring legal bits, made quick. Level up to professional seller status.</p>
+</div>
+<div class="space-y-lg">
+<!-- Business Type Selector -->
+<div>
+<label class="font-label-md text-label-md text-outline mb-sm block">BUSINESS TYPE</label>
+<div class="grid grid-cols-2 gap-gutter">
+<button class="type-btn flex flex-col items-center justify-center p-md bg-surface-container rounded-lg border-2 border-outline-variant transition-all hover:border-primary active:scale-95" id="btn-individual" onclick="selectType('individual')">
+<span class="material-symbols-outlined mb-sm text-outline">person</span>
+<span class="font-label-md text-label-md">Individual</span>
+</button>
+<button class="type-btn flex flex-col items-center justify-center p-md bg-surface-container rounded-lg border-2 border-outline-variant transition-all hover:border-primary active:scale-95" id="btn-business" onclick="selectType('business')">
+<span class="material-symbols-outlined mb-sm text-outline">domain</span>
+<span class="font-label-md text-label-md">Business</span>
+</button>
+</div>
+</div>
+<!-- GST Number -->
+<div class="electric-glow bg-surface-container rounded-lg border-2 border-outline-variant p-md">
+<label class="font-label-md text-label-md text-outline mb-xs block">GST NUMBER (OPTIONAL)</label>
+<div class="flex items-center">
+<input class="bg-transparent border-none p-0 w-full font-body-lg text-on-surface placeholder:text-outline/50 uppercase tracking-widest" placeholder="22AAAAA0000A1Z5" type="text"/>
+<span class="material-symbols-outlined text-outline/50">verified_user</span>
+</div>
+</div>
+<!-- Pickup Address -->
+<div class="electric-glow bg-surface-container rounded-lg border-2 border-outline-variant p-md">
+<label class="font-label-md text-label-md text-outline mb-xs block">PICKUP ADDRESS</label>
+<div class="flex items-start">
+<span class="material-symbols-outlined text-primary mr-sm mt-1">location_on</span>
+<textarea class="bg-transparent border-none p-0 w-full font-body-md text-on-surface placeholder:text-outline/50 resize-none" placeholder="Shop No, Street Name, Landmark, City, State - PIN" rows="3"></textarea>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Fixed Action Bar -->
+<footer class="fixed bottom-0 w-full px-margin pb-xl pt-lg bg-gradient-to-t from-background via-background/95 to-transparent z-50">
+<div class="max-w-[358px] mx-auto">
+<button class="w-full h-14 bg-primary-container text-on-primary-container font-headline-sm rounded-lg flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-[0_4px_20px_rgba(255,87,26,0.3)]" id="next-btn" onclick="nextStep()">
+                CONTINUE
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<p class="font-caption text-caption text-center text-outline/60 mt-md px-lg">
+                By continuing, you agree to NOTWHAT's Seller Terms and lightning-fast shipping policies.
+            </p>
+</div>
+</footer>
+<script>
+        let currentStep = 2;
+
+        function nextStep() {
+            if (currentStep === 2) {
+                const s2 = document.getElementById('step-2');
+                const s3 = document.getElementById('step-3');
+                const progress = document.getElementById('progress-bar');
+                const label = document.getElementById('current-step-label');
+
+                s2.classList.add('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                s2.classList.remove('relative');
+                s2.classList.add('absolute');
+
+                s3.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none', 'absolute');
+                s3.classList.add('translate-x-0', 'opacity-100', 'relative');
+                
+                progress.style.width = '75%';
+                label.innerText = '3';
+                currentStep = 3;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (currentStep === 3) {
+                // Handle final transition or submission
+                const btn = document.getElementById('next-btn');
+                btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> PROCESSING...';
+                setTimeout(() => {
+                    alert('Store configuration saved! Redirecting to dashboard.');
+                }, 1500);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep === 3) {
+                const s2 = document.getElementById('step-2');
+                const s3 = document.getElementById('step-3');
+                const progress = document.getElementById('progress-bar');
+                const label = document.getElementById('current-step-label');
+
+                s3.classList.add('translate-x-full', 'opacity-0', 'pointer-events-none');
+                s3.classList.remove('relative');
+                s3.classList.add('absolute');
+
+                s2.classList.remove('-translate-x-full', 'opacity-0', 'pointer-events-none', 'absolute');
+                s2.classList.add('translate-x-0', 'opacity-100', 'relative');
+                
+                progress.style.width = '50%';
+                label.innerText = '2';
+                currentStep = 2;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.history.back();
+            }
+        }
+
+        function selectType(type) {
+            const btns = document.querySelectorAll('.type-btn');
+            btns.forEach(b => {
+                b.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
+                b.classList.add('border-outline-variant', 'bg-surface-container', 'text-on-surface');
+                b.querySelector('span:first-child').classList.remove('text-primary');
+                b.querySelector('span:first-child').classList.add('text-outline');
+            });
+
+            const activeBtn = document.getElementById('btn-' + type);
+            activeBtn.classList.remove('border-outline-variant', 'bg-surface-container');
+            activeBtn.classList.add('border-primary', 'bg-primary/10', 'text-primary');
+            activeBtn.querySelector('span:first-child').classList.remove('text-outline');
+            activeBtn.querySelector('span:first-child').classList.add('text-primary');
+        }
+
+        // Initialize state
+        selectType('individual');
+    </script>
+</body></html>

@@ -1,0 +1,17 @@
+DerivedData/
+ios/DerivedData/
+build/
+.gradle/
+.kotlin/
+shared/.gradle/
+*.xcuserstate
+*.xcuserdata/
+.DS_Store
+node_modules/
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode/
+.github/
+.maestro/

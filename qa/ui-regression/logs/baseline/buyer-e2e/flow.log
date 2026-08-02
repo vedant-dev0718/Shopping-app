@@ -1,0 +1,93 @@
+Running on emulator-5554
+ > Flow buyer_e2e_visual_flow
+Run buyer_checkpoint_home.yaml...
+  Launch app "com.notwhat.app.buyer" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Take screenshot buyer_01_auth_login... COMPLETED
+  Tap on "Mock"... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text buyer@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "Trending Reels" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot buyer_02_home... COMPLETED
+Run buyer_checkpoint_home.yaml... COMPLETED
+Run buyer_checkpoint_search.yaml...
+  Launch app "com.notwhat.app.buyer" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Mock"... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text buyer@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "Trending Reels" is visible... COMPLETED
+  Tap on "Search"... COMPLETED
+  Assert that "Trending Searches" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot buyer_03_search... COMPLETED
+Run buyer_checkpoint_search.yaml... COMPLETED
+Run buyer_checkpoint_bargains.yaml...
+  Launch app "com.notwhat.app.buyer" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Mock"... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text buyer@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "Trending Reels" is visible... COMPLETED
+  Tap on "Bargains"... COMPLETED
+  Assert that "REELS" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot buyer_04_bargains... COMPLETED
+Run buyer_checkpoint_bargains.yaml... COMPLETED
+Run buyer_checkpoint_cart.yaml...
+  Launch app "com.notwhat.app.buyer" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Mock"... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text buyer@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "Trending Reels" is visible... COMPLETED
+  Tap on "Account"... COMPLETED
+  Assert that "Cart & Saved Payments" is visible... COMPLETED
+  Tap on "Cart & Saved Payments"... COMPLETED
+  Assert that "Saved Payments" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot buyer_05_cart... COMPLETED
+Run buyer_checkpoint_cart.yaml... COMPLETED
+Run buyer_checkpoint_store_profile.yaml...
+  Launch app "com.notwhat.app.buyer" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Mock"... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text buyer@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "Trending Reels" is visible... COMPLETED
+  Tap on "HypeBeast"... COMPLETED
+  Assert that "Koramangala, Bengaluru" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot buyer_06_store_profile... COMPLETED
+Run buyer_checkpoint_store_profile.yaml... COMPLETED

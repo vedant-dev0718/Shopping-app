@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>NotWhat | Urban Street Commerce</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#001c3a",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-surface": "#fcdcd3",
+                    "on-error-container": "#ffdad6",
+                    "tertiary": "#a5c8ff",
+                    "background": "#1f0f0b",
+                    "surface-variant": "#44302a",
+                    "surface-container": "#2d1b16",
+                    "surface-tint": "#ffb59e",
+                    "error": "#ffb4ab",
+                    "secondary-container": "#454747",
+                    "on-primary": "#5e1700",
+                    "on-background": "#fcdcd3",
+                    "on-primary-container": "#521300",
+                    "surface-container-low": "#281712",
+                    "tertiary-container": "#2492ff",
+                    "inverse-on-surface": "#3f2c26",
+                    "outline": "#ad897e",
+                    "primary-fixed": "#ffdbd0",
+                    "on-surface-variant": "#e6beb2",
+                    "inverse-primary": "#ae3200",
+                    "surface-container-lowest": "#190a06",
+                    "primary-container": "#ff571a",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "secondary-fixed": "#e2e2e2",
+                    "on-error": "#690005",
+                    "outline-variant": "#5c4037",
+                    "on-secondary-fixed-variant": "#454747",
+                    "surface-dim": "#1f0f0b",
+                    "surface-container-highest": "#44302a",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-tertiary": "#00315e",
+                    "on-secondary": "#2f3131",
+                    "inverse-surface": "#fcdcd3",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "on-primary-fixed-variant": "#852400",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-tertiary-container": "#002a53",
+                    "secondary": "#c6c6c7",
+                    "surface-container-high": "#382620",
+                    "primary-fixed-dim": "#ffb59e",
+                    "on-primary-fixed": "#3a0b00",
+                    "surface": "#1f0f0b",
+                    "error-container": "#93000a",
+                    "surface-bright": "#49342e",
+                    "primary": "#ffb59e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "md": "16px",
+                    "margin": "16px",
+                    "xs": "4px",
+                    "base": "4px",
+                    "lg": "24px",
+                    "gutter": "12px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "label-md": ["inter"],
+                    "headline-md": ["montserrat"],
+                    "caption": ["inter"],
+                    "display-lg-mobile": ["montserrat"],
+                    "body-lg": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"],
+                    "body-md": ["inter"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card {
+            background: rgba(45, 27, 22, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(173, 137, 126, 0.2);
+        }
+        .coral-glow {
+            box-shadow: 0 0 15px rgba(255, 77, 0, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md overflow-x-hidden selection:bg-primary-container selection:text-white">
+<!-- Top AppBar -->
+<header class="fixed top-0 w-full z-50 bg-background flex justify-between items-center px-margin h-16">
+<h1 class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tighter">NotWhat</h1>
+<div class="flex items-center gap-lg">
+<button class="relative active:scale-90 transition-all text-on-surface">
+<span class="material-symbols-outlined text-[28px]">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary-container rounded-full border-2 border-background"></span>
+</button>
+<button class="active:scale-90 transition-all text-on-surface">
+<span class="material-symbols-outlined text-[28px]">chat_bubble_outline</span>
+</button>
+</div>
+</header>
+<main class="pt-16 pb-32">
+<!-- Stories Bar -->
+<section class="py-md overflow-x-auto no-scrollbar flex items-center gap-md px-margin">
+<div class="flex flex-col items-center gap-xs">
+<div class="relative w-[72px] h-[72px] rounded-full p-[3px] bg-gradient-to-tr from-primary-container to-primary-fixed">
+<div class="w-full h-full rounded-full border-4 border-background overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a stylish Gen-Z individual with edgy urban fashion and cool lighting. The subject has a confident expression against a dark atmospheric street background. Neon coral light reflections dance across the skin and hair, maintaining the high-contrast void aesthetic of the brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuClhculg7S8-79wXbTU3d4Fd2xhhcrP2iBT-vQupjDeZwDu9EaT64QPj7SfVg27UxY6woe53awwerr60zL4vUmPUqG0lG_-PRh_nyyVYuUEnXx1FI-3lWxYW5zpiMVmf-v7E-shBx8U27qZ_DewVVL6UKDplLtqRIvs9E3m915VTMZZYyVCU6G1L9IDZP9UnuSzjsTyDM-4Y7qrdKO7JMcexln6Ny8WxxF0LMrsA_Po8U5iaKtelsstii2HWJpxCvADkq5oVpxnjHQ"/>
+</div>
+<div class="absolute bottom-0 right-0 bg-primary-container text-white rounded-full p-[2px] border-2 border-background">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</div>
+</div>
+<span class="font-label-md text-label-md opacity-80">Your Story</span>
+</div>
+<!-- Store Avatars -->
+<div class="flex flex-col items-center gap-xs">
+<div class="w-[72px] h-[72px] rounded-full p-[3px] bg-gradient-to-tr from-primary-container to-primary-fixed animate-pulse">
+<div class="w-full h-full rounded-full border-4 border-background overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A trendy retail store logo icon featuring sleek minimalist typography. The store represents urban streetwear culture with vibrant neon accents and a dark charcoal background. The composition is circular, centered, and reflects a premium street fashion brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMyTziPJfRPxyqiYsdHRv531L2s4lI5g28u_j8671Rfj6iqk90o5mTcK0ajLUHgnPvunhzYaZpRI3jAIwPT89qLyX4_OlBv-rC0Xjewg3OrVmJPV2OAriONLKmFNGMTOzYSPKYMxcZ9rGbhPvkqIRU1vLMF0tNRXgNfq4VY3EuVjooZHOhmqNfTxkTYDAP4oShHNArn4GuZgx2hvyu9zAxjZFm_SV9xLUJ79CUmR4rFGb7MH1574hT5jALNDajpMnaGbEKEtS3OO4"/>
+</div>
+</div>
+<span class="font-label-md text-label-md">HypeBeast</span>
+</div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-[72px] h-[72px] rounded-full p-[3px] bg-gradient-to-tr from-primary-container to-primary-fixed">
+<div class="w-full h-full rounded-full border-4 border-background overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional apparel store branding with a high-fashion aesthetic. The image shows a modern boutique logo displayed on a textured dark wall with soft coral backlighting. It feels exclusive and high-end, targeting a young demographic interested in limited edition drops." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAsbhqCuSFJKsZ6Sbeq2WS49VcOIhdb9M0KQdzKREVhTuV3WqhrSWc4zR2USLhQw37LFG1MjZC0mNpUrui1GksGs3Do9IOWlAFVKFy39aTbRvbVF-ed5z1FvfJ3G1pCbm30oh4_HpxiJ--9JUoJBeyhfbyDhygTuFn1BGU-70DdQObol3bMqM222XAzyxvswSvLw7VlRH8uJKLFTNfjjfYHIZS7O4FukIU_P8QI5JyHVROVU8JniFn4hKxAabDbO_xFj6HXzSml0E"/>
+</div>
+</div>
+<span class="font-label-md text-label-md">VibeCheck</span>
+</div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-[72px] h-[72px] rounded-full p-[3px] bg-gradient-to-tr from-primary-container to-primary-fixed">
+<div class="w-full h-full rounded-full border-4 border-background overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Sleek branding for an urban accessories shop. The visual elements include bold geometric shapes and a vibrant orange-red color palette. The background is a deep obsidian black, emphasizing the luminous electric energy of the street commerce design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbtfzkJq39gx6BtA4ujWQkwIGA1x4TLK0xt_ANGDKKU9AfPj6RsefC68W2gwKUEFo94dE7Q0I_b81rwlOhnCrrLzzXAAs65X1GVWvDuVDkNZZG2SToc0GXoVHT1rDOfadxI6BWmI1Q3khg1GEu4nscn9tcMCkbo5wja5uJAzew5WEtOv6qabC2a6fcgzsRNGSTgdw3111kyHStB6DaFTSEQBi8ptpsqcOSwyOvCwphMl-M4Fv6qTUrae_ggmSXgUOmJKZDtkK3Mro"/>
+</div>
+</div>
+<span class="font-label-md text-label-md">DropZone</span>
+</div>
+</section>
+<!-- Bargain Days Active Banner -->
+<section class="px-margin mb-lg">
+<div class="relative overflow-hidden rounded-lg bg-gradient-to-br from-primary-container via-primary to-[#ff8c00] p-lg flex items-center justify-between coral-glow">
+<div class="z-10">
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined font-variation-settings: 'FILL' 1; text-white text-[24px]" style="font-variation-settings: 'FILL' 1;">gavel</span>
+<span class="font-headline-sm-mobile text-headline-sm-mobile text-white uppercase tracking-wider">Bargain Days Active</span>
+</div>
+<p class="font-body-md text-white/90 mb-md max-w-[200px]">Unlock exclusive street prices by bidding now.</p>
+<button class="bg-white text-primary-container px-lg py-sm rounded-full font-headline-sm-mobile text-[14px] active:scale-95 transition-transform">
+                        Bid Now
+                    </button>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-20 scale-150 rotate-12">
+<span class="material-symbols-outlined text-[160px] text-white">gavel</span>
+</div>
+</div>
+</section>
+<!-- Trending Reels -->
+<section class="mb-lg">
+<div class="px-margin flex justify-between items-center mb-md">
+<h2 class="font-headline-sm-mobile text-headline-sm-mobile text-on-surface">Trending Reels</h2>
+<button class="text-primary font-label-md">View All</button>
+</div>
+<div class="flex gap-md overflow-x-auto no-scrollbar px-margin">
+<!-- Reel Card 1 -->
+<div class="flex-shrink-0 w-44 aspect-[9/16] relative rounded-lg overflow-hidden group">
+<img class="w-full h-full object-cover" data-alt="A cinematic vertical shot of a stylish model walking through an urban alleyway at night, showcasing a new limited edition bomber jacket. Neon signs cast a deep red and orange glow. The lighting is dramatic and moody, capturing the high-energy street commerce vibe with rich blacks and vibrant highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUGrfE3ZTFVAijO8pIBb_fMWQv2bsN78orFysTVnggYBvxJ2A15w215UA0cLtySKtr6ZBrZAT01SFcdOCF0Xj8pZGF6mhSDAUY_rsl3QuLKymSlr4vJvbZBmjKq1-ouPP5I-hIcax3KPowC-0MUx0CT6zFersKBSwZ_RQRovDma2nJwO8T14CeHKME5hBB5FvWJr6pkmNWYi5FT3oYsA90XIiZYAqJFsXfuIfXiZTkHoqeCYZXdmtAAwJiy-Rqsb-WBiBLL1E-Teg"/>
+<div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80"></div>
+<div class="absolute top-md left-md flex items-center gap-xs">
+<span class="bg-primary-container text-white text-[10px] px-sm py-[2px] rounded-full font-bold uppercase">Live</span>
+</div>
+<div class="absolute bottom-md left-md right-md">
+<div class="flex items-center gap-xs mb-xs">
+<div class="w-6 h-6 rounded-full border border-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-rh-VwXOZhm2VPOPUf5oTNBx_mc2xi4b2IOeOfUX_7D18nQjf7XSZcwE6QSUBo3kOwn8Hzzi-lNPe0F_AF-CIgxhZ3rJZ3k10l7IyO_o2HUFMc1gC7baSGyHam9QXuuWx-xEvS-fhUbOLMNZtt0mjNuw3HeoY4UYJqp24px-BiREftKHcPnhJ5Bqkr8wnQ2XbAzYZgOh7-52K3Tky-KHy7azq9cIvsTLaFyVMcDF8E9htFkk5gUHwncnwhZWjSNHI5He2YCSN5V8"/>
+</div>
+<span class="font-label-md text-white text-[10px]">UrbanKing</span>
+</div>
+<div class="bg-white/10 backdrop-blur-sm rounded px-sm py-[2px] inline-block border border-white/20">
+<span class="font-headline-md text-primary text-[14px]">₹2,499</span>
+</div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-active:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-[48px] opacity-70">play_circle</span>
+</div>
+</div>
+<!-- Reel Card 2 -->
+<div class="flex-shrink-0 w-44 aspect-[9/16] relative rounded-lg overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Vibrant short-form video thumbnail featuring bright sneakers suspended in the air with dynamic motion blur. The setting is a minimalist industrial space with dark grey walls and an electric orange spotlight hitting the product. The composition is modern, punchy, and designed for fast-paced scrolling engagement." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0HNciFIR0ZtHCDmEH4wk95wGJobgYwtE45B-PwzPqvWmZFkXXPf5Cw5giwQDEE8PrMHuH_R8bk5Y1EkrNI5Si3WNryE1Qq8C8nB5wbodk2QERlNqnrurbnK1ZaLJBQHczaydGps0ZDaeCFlU4gcY9h74ELYxImJirjPyS0anrLQZaU1mxujMcrnbLtjFiuDCyms2JZko5__xa0DXsNwRILD_myfmCH5yj_9zY6_p7qWNiOowBRczOEXoy71_bzcHbmdiPB6AFIIk"/>
+<div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80"></div>
+<div class="absolute bottom-md left-md right-md">
+<div class="flex items-center gap-xs mb-xs">
+<div class="w-6 h-6 rounded-full border border-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARkQI3jPTw6uIPVZbvvSUkJDINltu6XE6ejhLnqjyDquT4dB4o_pfbkVHbmi_dwzNu_NlTU5e1Vw-ZXA5RL2nWWr7ReDC-iPPfxzCAPehtq5XLCCdmRWiuylWalOx5CB7in-UmBVjy4lM37Ozgt8rZNJuIR1MvZPVzdUZYNjrEDAkVdYG-0f8UnxFBGmty5rDqcQ6eAFW4S0ow0mBFLFB-ANe3x3lFkHGUe80KkM1-98Op3-B2j3HF57qYtrjiRFa34OkvZMEbobo"/>
+</div>
+<span class="font-label-md text-white text-[10px]">SoleSearch</span>
+</div>
+<div class="bg-white/10 backdrop-blur-sm rounded px-sm py-[2px] inline-block border border-white/20">
+<span class="font-headline-md text-primary text-[14px]">₹8,999</span>
+</div>
+</div>
+</div>
+<!-- Reel Card 3 -->
+<div class="flex-shrink-0 w-44 aspect-[9/16] relative rounded-lg overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A high-fashion reel thumbnail showing a close-up of a designer bag with high-contrast studio lighting. Deep shadows frame the product while a warm coral rim light defines its edges. The style is premium, edgy, and evokes a sense of urban luxury typical of Gen-Z social commerce platforms." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0bncxL7oNYVqM7nkXB2JcU3A1cGYAQxbMNMi7d97d2JSOF5i4OlTSnfa-dOn0xnXLkvGgIdb1hRMS3pi2oSzUw0ZMTk7OLOCY8YOE4YPW5KMI4aoHyrNhwVXNzPcJTmBemAisGiWd-9F0Hp9sDqRB-CR0ZnDh0gTptvuyHHFOPwtr07Y1OJNl0Yp_5t7VsV_xlsvt2SaZVBeSaJJUOeEZ9wEHdLzNCCbHERULwoPFH6z48GNaiGGgazUTejrQOtFWld6KoCGqMuw"/>
+<div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80"></div>
+<div class="absolute bottom-md left-md right-md">
+<div class="flex items-center gap-xs mb-xs">
+<div class="w-6 h-6 rounded-full border border-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0qUAjEgd1bAKaLdN8K5ee5Rc7I78G7NTzjIpmqtFC-yN2YObvz0RqsEDuQNota8eWva_gvAsZ0DvA03fqpxtP4jfywQQtr_AVGwQbvWw06T7H_YA0ACtEqa0rsnKtYQbS3GxsOeOep3ZCnrI6CNOUNM9cxn9BFxDwAYPz4_qA57FB9XIoPXrfXAEwEJQ_8LAauGIz4tDmAfHPgg02CINv__ezNc3x2JHEv2eyJLnkGhVjyzS-p7Wpw4xtaWTVfSlDcRCi_oOshnU"/>
+</div>
+<span class="font-label-md text-white text-[10px]">LuxeStreet</span>
+</div>
+<div class="bg-white/10 backdrop-blur-sm rounded px-sm py-[2px] inline-block border border-white/20">
+<span class="font-headline-md text-primary text-[14px]">₹4,200</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Deals Near You -->
+<section class="mb-lg">
+<div class="px-margin flex justify-between items-center mb-md">
+<h2 class="font-headline-sm-mobile text-headline-sm-mobile text-on-surface">Deals Near You</h2>
+<button class="text-primary font-label-md">See More</button>
+</div>
+<div class="grid grid-cols-2 gap-gutter px-margin">
+<!-- Product Card 1 -->
+<div class="bg-surface-container rounded overflow-hidden relative">
+<div class="aspect-square relative">
+<img class="w-full h-full object-cover" data-alt="Product shot of sleek black designer sneakers placed on a reflective dark surface. The lighting features a strong coral neon glow from the side, creating sharp highlights and deep shadows. The product is the center of attention in a minimalist, high-contrast urban fashion setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtA0CcgsOsvIbMYh_qB1wXcK5IXqy8-6VegvlQi-TNS_ex6Kq3YWj12tn-30YipbQbuZA3DvXVJh99JPYFRKM3qHqgM81cmmhhNfeWFX4q-_0RD9vpHxFrAANpbs6V8ASveRENwNg6D7DYx1Yq8yYYxy3s1kRwOL9k-Vw2L-yGlX54BxS6yAG2iD8_65zzNbbGy5bXKzmHJMpy3dGCWPNWiAD6arCT3wNtyDMx4VcqZpkv_dC0IFesvEAn_3tMXnfLgeJl8hOleX0"/>
+<button class="absolute top-sm right-sm w-8 h-8 rounded-full glass-card flex items-center justify-center active:scale-75 transition-transform">
+<span class="material-symbols-outlined text-[18px] text-white">favorite</span>
+</button>
+<div class="absolute bottom-sm left-sm bg-primary-container text-white px-sm py-[2px] rounded text-[10px] font-bold">
+                            40% OFF
+                        </div>
+</div>
+<div class="p-md">
+<h3 class="font-label-md text-on-surface line-clamp-1">Stealth Runners X1</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="font-headline-md text-primary text-[16px]">₹3,299</span>
+<span class="font-caption text-on-surface/50 line-through">₹5,499</span>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="bg-surface-container rounded overflow-hidden relative">
+<div class="aspect-square relative">
+<img class="w-full h-full object-cover" data-alt="High-contrast product photo of a premium oversized graphic t-shirt displayed on a dark grey concrete background. The lighting is dramatic and moody, focusing on the fabric texture and the bold street-style print. Neon coral accents in the environment tie into the brand's electric urban aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEUvLKyB9CWyVZHMrZ4O9IdBqQd5Q4bOent07yjrV5Xw5lg91UZYbuZn834Kjqdne0IPFHN2XnaNc2eYlx9SP97bhwmNDQ6MX4ROh14TMUJDB1pFFg3vbYlj4MYhyvomy_JFSwg8gy6qocUN6PxQkIx7yLNpJYUZfLEDz7C2RrOvTjmELsfMp-rysmtRbzJ2EUm8yNj63TIGLeQ1L5iaVRJrvdnhefKzRIFtvhMY-4SL011QLedysLfw2QSON31Vs6x95fEhhugAw"/>
+<button class="absolute top-sm right-sm w-8 h-8 rounded-full glass-card flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-white">favorite</span>
+</button>
+<div class="absolute bottom-sm left-sm bg-primary-container text-white px-sm py-[2px] rounded text-[10px] font-bold">
+                            25% OFF
+                        </div>
+</div>
+<div class="p-md">
+<h3 class="font-label-md text-on-surface line-clamp-1">Cyber Oversized Tee</h3>
+<div class="flex items-center gap-sm mt-xs">
+<span class="font-headline-md text-primary text-[16px]">₹1,199</span>
+<span class="font-caption text-on-surface/50 line-through">₹1,599</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Featured Stores -->
+<section class="mb-lg">
+<div class="px-margin flex justify-between items-center mb-md">
+<h2 class="font-headline-sm-mobile text-headline-sm-mobile text-on-surface">Featured Stores</h2>
+</div>
+<div class="flex gap-md overflow-x-auto no-scrollbar px-margin">
+<!-- Store Card 1 -->
+<div class="flex-shrink-0 w-72 bg-surface-container rounded-lg overflow-hidden">
+<div class="h-24 relative">
+<img class="w-full h-full object-cover" data-alt="A wide cinematic banner showing a blurred urban landscape at dusk with glowing neon store signs in coral and orange. The atmosphere is energetic and representative of a bustling city commerce environment. The design is sleek, modern, and high-contrast." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkY5ASDItVjTqpUJi8wLeZqs1HwmSk-BYJ9gx02KZOo0IIHkVcxcV63cM8XeRFR5Cf_mBpXpQLymFMIk8KLjzYqfa9n_jahd7zIlnam_EzzEKWeTKA5s5qAgwMnEHEVAi02pMydErvkrkpbB4HLwJ4Y41ZuL_VLwz86n0h19JXB31JK01Nds9P6KOFZP02b5pBqBERgTZt-Xj3d5d91-BxA_zmI725vcjiEQHsm-DA6xI-g36zSHhNIaZnHeQDJVFX-FZiW2BrZEg"/>
+<div class="absolute inset-0 bg-black/30"></div>
+</div>
+<div class="p-md pt-0 relative">
+<div class="flex items-end gap-md -mt-8 mb-md">
+<div class="w-16 h-16 rounded bg-background border-2 border-primary p-xs overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Store Logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxniIVX5FzBMNB8fypcSo7Y9Jnau2F-QfXI3jauYDkz1jhsHVg4Oxp-AX6-Xklmiyu3nOoBBInQuYSUCjRS6XlMsd9iEsa70kpiYdu0DbxxiR_gYDD0Y2MrdhSegslt1IHDZu1nSFnmDYHbEqkGWzc1yK9My_n4hemh8DzsCFjqzUL7Wnog7yCEQgVduWu_gd3Ucaw9Jktg89oCzaIPE4umgSmx14mtySym-d8ky3DiDmBQ_rC8cdJSQCwhRUEvzFbKdfmEWxBgoY"/>
+</div>
+<div class="flex-1 pb-xs">
+<div class="flex items-center gap-xs">
+<h3 class="font-headline-sm-mobile text-[16px] text-white">Drip Station</h3>
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-caption text-on-surface/60">12.4k Followers</span>
+</div>
+<button class="bg-primary text-on-primary px-md py-xs rounded font-label-md active:scale-95 transition-all">Follow</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Shop by Category -->
+<section class="mb-lg">
+<div class="px-margin mb-md">
+<h2 class="font-headline-sm-mobile text-headline-sm-mobile text-on-surface">Shop by Category</h2>
+</div>
+<div class="grid grid-cols-2 gap-md px-margin">
+<div class="h-24 glass-card rounded flex flex-col items-center justify-center gap-xs active:bg-primary-container/20 transition-all">
+<span class="material-symbols-outlined text-primary text-[32px]">checkroom</span>
+<span class="font-label-md">Apparel</span>
+</div>
+<div class="h-24 glass-card rounded flex flex-col items-center justify-center gap-xs active:bg-primary-container/20 transition-all">
+<span class="material-symbols-outlined text-primary text-[32px]">ice_skating</span>
+<span class="font-label-md">Footwear</span>
+</div>
+<div class="h-24 glass-card rounded flex flex-col items-center justify-center gap-xs active:bg-primary-container/20 transition-all">
+<span class="material-symbols-outlined text-primary text-[32px]">watch</span>
+<span class="font-label-md">Accessories</span>
+</div>
+<div class="h-24 glass-card rounded flex flex-col items-center justify-center gap-xs active:bg-primary-container/20 transition-all">
+<span class="material-symbols-outlined text-primary text-[32px]">bolt</span>
+<span class="font-label-md">Exclusives</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface/90 backdrop-blur-md dark:bg-surface/90 flex justify-around items-center px-margin pb-8 pt-xs">
+<button class="flex flex-col items-center justify-center text-primary active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container active:scale-95 transition-transform duration-150 hover:opacity-80">
+<span class="material-symbols-outlined text-[28px]">search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container active:scale-95 transition-transform duration-150 hover:opacity-80">
+<span class="material-symbols-outlined text-[28px]">movie</span>
+</button>
+<button class="relative flex flex-col items-center justify-center text-on-secondary-container active:scale-95 transition-transform duration-150 hover:opacity-80">
+<span class="material-symbols-outlined text-[28px]">shopping_bag</span>
+<span class="absolute -top-1 -right-1 bg-primary-container text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">2</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container active:scale-95 transition-transform duration-150 hover:opacity-80">
+<span class="material-symbols-outlined text-[28px]">person</span>
+</button>
+</nav>
+<script>
+        // Micro-interactions and subtle effects
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('touchstart', () => {
+                btn.style.opacity = '0.7';
+            });
+            btn.addEventListener('touchend', () => {
+                btn.style.opacity = '1';
+            });
+        });
+
+        // Sticky header behavior
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            const header = document.querySelector('header');
+            if (currentScroll > lastScroll && currentScroll > 100) {
+                header.style.transform = 'translateY(-100%)';
+            } else {
+                header.style.transform = 'translateY(0)';
+            }
+            header.style.transition = 'transform 0.3s ease';
+            lastScroll = currentScroll;
+        });
+    </script>
+</body></html>
