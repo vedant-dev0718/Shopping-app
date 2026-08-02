@@ -65,8 +65,9 @@ internal fun SellerReelListScreen(
 
     var reels by remember(state.sellerContent.reels) {
         mutableStateOf(
-            state.sellerContent.reels.map { it.toDemoSellerReel() }
-                .ifEmpty { PreviewContent.sellerReels }
+            state.sellerContent.reels
+                .map { it.toDemoSellerReel() }
+                .ifEmpty { PreviewContent.sellerReels },
         )
     }
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
@@ -78,7 +79,11 @@ internal fun SellerReelListScreen(
         ReelProductTagSheet(
             modifier = modifier,
             reel = reel,
-            allProducts = state.sellerContent.products.ifEmpty { com.notwhat.shared.catalog.seedProducts() },
+            allProducts =
+                state.sellerContent.products.ifEmpty {
+                    com.notwhat.shared.catalog
+                        .seedProducts()
+                },
             bg = bg,
             surface = surface,
             surfaceHigh = surfaceHigh,
@@ -104,9 +109,10 @@ internal fun SellerReelListScreen(
             Surface(
                 color = surface,
                 shape = RoundedCornerShape(20.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp),
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -170,7 +176,12 @@ internal fun SellerReelListScreen(
                     }
                     Column {
                         Text("MY REELS", color = muted, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Text("${reels.size} reels", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                        Text(
+                            "${reels.size} reels",
+                            color = text,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                        )
                     }
                 }
                 Button(
@@ -191,9 +202,10 @@ internal fun SellerReelListScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(40.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(40.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
@@ -256,7 +268,10 @@ private fun SellerReelCard(
         shape = SellerUiTokens.radiusCard,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
+        Column(
+            modifier = Modifier.padding(SellerUiTokens.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+        ) {
             // Thumbnail + meta row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -264,11 +279,12 @@ private fun SellerReelCard(
                 verticalAlignment = Alignment.Top,
             ) {
                 Box(
-                    modifier = Modifier
-                        .width(80.dp)
-                        .aspectRatio(9f / 16f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(surfaceHigh),
+                    modifier =
+                        Modifier
+                            .width(80.dp)
+                            .aspectRatio(9f / 16f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(surfaceHigh),
                 ) {
                     AsyncImage(
                         model = reel.thumbnailUrl,
@@ -280,9 +296,10 @@ private fun SellerReelCard(
                     Surface(
                         color = Color.Black.copy(alpha = 0.62f),
                         shape = RoundedCornerShape(6.dp),
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(4.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(4.dp),
                     ) {
                         Text(
                             reel.duration,
@@ -350,20 +367,24 @@ private fun SellerReelCard(
                     modifier = Modifier.fillMaxWidth().height(90.dp),
                     placeholder = { Text("Edit caption…", style = MaterialTheme.typography.bodySmall) },
                     textStyle = MaterialTheme.typography.bodySmall.copy(color = text),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = accent,
-                        unfocusedBorderColor = border,
-                        focusedContainerColor = surfaceHigh,
-                        unfocusedContainerColor = surfaceHigh,
-                        focusedTextColor = text,
-                        unfocusedTextColor = text,
-                        focusedPlaceholderColor = muted,
-                        unfocusedPlaceholderColor = muted,
-                    ),
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = accent,
+                            unfocusedBorderColor = border,
+                            focusedContainerColor = surfaceHigh,
+                            unfocusedContainerColor = surfaceHigh,
+                            focusedTextColor = text,
+                            unfocusedTextColor = text,
+                            focusedPlaceholderColor = muted,
+                            unfocusedPlaceholderColor = muted,
+                        ),
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
-                        onClick = { isEditingCaption = false; draftCaption = reel.caption },
+                        onClick = {
+                            isEditingCaption = false
+                            draftCaption = reel.caption
+                        },
                         modifier = Modifier.weight(1f),
                         shape = SellerUiTokens.radiusButton,
                         border = BorderStroke(1.dp, border),
@@ -371,7 +392,10 @@ private fun SellerReelCard(
                         Text("Cancel", color = muted, style = MaterialTheme.typography.labelMedium)
                     }
                     Button(
-                        onClick = { onEditCaption(draftCaption); isEditingCaption = false },
+                        onClick = {
+                            onEditCaption(draftCaption)
+                            isEditingCaption = false
+                        },
                         modifier = Modifier.weight(1f),
                         shape = SellerUiTokens.radiusButton,
                         colors = ButtonDefaults.buttonColors(containerColor = accent),
@@ -388,7 +412,10 @@ private fun SellerReelCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 OutlinedButton(
-                    onClick = { isEditingCaption = !isEditingCaption; draftCaption = reel.caption },
+                    onClick = {
+                        isEditingCaption = !isEditingCaption
+                        draftCaption = reel.caption
+                    },
                     modifier = Modifier.weight(1f),
                     shape = SellerUiTokens.radiusButton,
                     border = BorderStroke(1.dp, if (isEditingCaption) accent else border),
@@ -446,21 +473,24 @@ internal fun ReelProductTagSheet(
     onDismiss: () -> Unit,
     onSave: (List<com.notwhat.shared.catalog.ProductDto>) -> Unit,
 ) {
-    val selectedIds = remember {
-        mutableStateListOf<String>()
-    }
+    val selectedIds =
+        remember {
+            mutableStateListOf<String>()
+        }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(bg),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(bg),
     ) {
         // Header
         Surface(color = surface, modifier = Modifier.fillMaxWidth()) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -491,7 +521,12 @@ internal fun ReelProductTagSheet(
                     colors = ButtonDefaults.buttonColors(containerColor = accent),
                     enabled = selectedIds.size <= 5,
                 ) {
-                    Text("Save (${selectedIds.size}/5)", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        "Save (${selectedIds.size}/5)",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
                 }
             }
         }
@@ -523,30 +558,37 @@ internal fun ReelProductTagSheet(
                 Surface(
                     color = if (isSelected) Color(0xFF2C1F0A) else surface,
                     shape = SellerUiTokens.radiusInnerCard,
-                    border = BorderStroke(
-                        1.dp,
-                        if (isSelected) accent else border.copy(alpha = 0.5f),
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = !atLimit) {
-                            if (isSelected) selectedIds.remove(product.id)
-                            else selectedIds.add(product.id)
-                        },
+                    border =
+                        BorderStroke(
+                            1.dp,
+                            if (isSelected) accent else border.copy(alpha = 0.5f),
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !atLimit) {
+                                if (isSelected) {
+                                    selectedIds.remove(product.id)
+                                } else {
+                                    selectedIds.add(product.id)
+                                }
+                            },
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         AsyncImage(
                             model = product.displayImageUrl,
                             contentDescription = product.displayTitle,
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(RoundedCornerShape(10.dp)),
+                            modifier =
+                                Modifier
+                                    .size(52.dp)
+                                    .clip(RoundedCornerShape(10.dp)),
                             contentScale = ContentScale.Crop,
                         )
                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -585,7 +627,12 @@ internal fun ReelProductTagSheet(
                         ) {
                             if (isSelected) {
                                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                    Text("✓", color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Black)
+                                    Text(
+                                        "✓",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Black,
+                                    )
                                 }
                             }
                         }

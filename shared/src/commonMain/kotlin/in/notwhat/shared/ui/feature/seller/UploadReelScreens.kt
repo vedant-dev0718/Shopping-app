@@ -1,15 +1,15 @@
 package com.notwhat.shared.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,8 +31,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
@@ -75,11 +75,14 @@ internal fun UploadReelScreen(
     var tagQuery by remember { mutableStateOf("") }
     var taggedProducts by remember { mutableStateOf(emptyList<String>()) }
 
-    val suggestions = state.sellerContent.products
-        .ifEmpty { com.notwhat.shared.catalog.seedProducts() }
-        .map { it.displayTitle }
-        .filter { it.contains(tagQuery, ignoreCase = true) && !taggedProducts.contains(it) }
-        .take(5)
+    val suggestions =
+        state.sellerContent.products
+            .ifEmpty {
+                com.notwhat.shared.catalog
+                    .seedProducts()
+            }.map { it.displayTitle }
+            .filter { it.contains(tagQuery, ignoreCase = true) && !taggedProducts.contains(it) }
+            .take(5)
 
     LaunchedEffect(isSharing) {
         if (isSharing) {
@@ -120,7 +123,16 @@ internal fun UploadReelScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(message, color = Color(0xFF6FCF97), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                        Text("✓ Done", color = accent, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { shareStatus = null; onBack() })
+                        Text(
+                            "✓ Done",
+                            color = accent,
+                            fontWeight = FontWeight.Bold,
+                            modifier =
+                                Modifier.clickable {
+                                    shareStatus = null
+                                    onBack()
+                                },
+                        )
                     }
                 }
             }
@@ -183,16 +195,17 @@ internal fun UploadReelScreen(
                         modifier = Modifier.fillMaxWidth().height(110.dp),
                         placeholder = { Text("Write a catchy bargain caption...") },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = text),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = border,
-                            unfocusedBorderColor = border,
-                            focusedContainerColor = field,
-                            unfocusedContainerColor = field,
-                            focusedTextColor = text,
-                            unfocusedTextColor = text,
-                            focusedPlaceholderColor = muted,
-                            unfocusedPlaceholderColor = muted,
-                        ),
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = border,
+                                unfocusedBorderColor = border,
+                                focusedContainerColor = field,
+                                unfocusedContainerColor = field,
+                                focusedTextColor = text,
+                                unfocusedTextColor = text,
+                                focusedPlaceholderColor = muted,
+                                unfocusedPlaceholderColor = muted,
+                            ),
                     )
                 }
             }
@@ -250,11 +263,12 @@ private fun VideoPickerCard(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(9f / 16f)
-                .clip(RoundedCornerShape(24.dp))
-                .background(panel),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(9f / 16f)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(panel),
             contentAlignment = Alignment.Center,
         ) {
             if (videoUri != null) {
@@ -398,8 +412,15 @@ private fun TagProductsCard(
     onRemoveProduct: (String) -> Unit,
 ) {
     Surface(color = panel, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            modifier = Modifier.padding(SellerUiTokens.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text("TAG PRODUCTS", color = text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 Text("${taggedProducts.size}/5", color = accentSoft, style = MaterialTheme.typography.labelSmall)
             }
@@ -431,16 +452,17 @@ private fun TagProductsCard(
                 onValueChange = onTagQueryChange,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Search products to tag…", style = MaterialTheme.typography.bodySmall) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = border,
-                    unfocusedBorderColor = border,
-                    focusedContainerColor = field,
-                    unfocusedContainerColor = field,
-                    focusedTextColor = text,
-                    unfocusedTextColor = text,
-                    focusedPlaceholderColor = muted,
-                    unfocusedPlaceholderColor = muted,
-                ),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = border,
+                        unfocusedBorderColor = border,
+                        focusedContainerColor = field,
+                        unfocusedContainerColor = field,
+                        focusedTextColor = text,
+                        unfocusedTextColor = text,
+                        focusedPlaceholderColor = muted,
+                        unfocusedPlaceholderColor = muted,
+                    ),
                 shape = RoundedCornerShape(24.dp),
                 singleLine = true,
             )
@@ -453,7 +475,12 @@ private fun TagProductsCard(
                             shape = SellerUiTokens.radiusChip,
                             modifier = Modifier.clickable { onAddProduct(option) },
                         ) {
-                            Text(option, color = text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                option,
+                                color = text,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
                         }
                     }
                 }
@@ -503,11 +530,12 @@ private fun ThumbnailPickerCard(
 
             if (thumbnailUri != null) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(panelSoft),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(panelSoft),
                 ) {
                     AsyncImage(
                         model = thumbnailUri,
@@ -519,12 +547,13 @@ private fun ThumbnailPickerCard(
             } else {
                 // Empty-state CTA
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(panelSoft)
-                        .clickable(enabled = !isPicking && !isSharing, onClick = onPick),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(panelSoft)
+                            .clickable(enabled = !isPicking && !isSharing, onClick = onPick),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -540,5 +569,3 @@ private fun ThumbnailPickerCard(
         }
     }
 }
-
-
