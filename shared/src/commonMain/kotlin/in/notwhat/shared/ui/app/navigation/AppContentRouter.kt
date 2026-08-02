@@ -25,12 +25,12 @@ internal fun AppContentRouter(
     appRole: UserRole,
     requiresSellerSetup: Boolean,
     flow: AppFlowState,
-    homeCoordinator: HomeFeatureCoordinator,
-    searchCoordinator: SearchFeatureCoordinator,
-    reelsCoordinator: ReelsFeatureCoordinator,
-    productCoordinator: ProductFeatureCoordinator,
-    sellerCoordinator: SellerFeatureCoordinator,
-    adminCoordinator: AdminFeatureCoordinator,
+    homeCoordinator: HomeNavigationCoordinator,
+    searchCoordinator: SearchNavigationCoordinator,
+    reelsCoordinator: ReelsNavigationCoordinator,
+    productCoordinator: ProductNavigationCoordinator,
+    sellerCoordinator: SellerNavigationCoordinator,
+    adminCoordinator: AdminNavigationCoordinator,
 ) {
     if (!state.isAuthenticated) {
         when (state.entryStage) {
@@ -62,18 +62,19 @@ internal fun AppContentRouter(
     }
 
     if (appRole == UserRole.Seller) {
-        if (flow.selectedProduct != null) {
+        if (flow.route is AppRoute.ProductDetail) {
+            val route = flow.route as AppRoute.ProductDetail
             productCoordinator.DetailScreen(
                 modifier = Modifier.padding(padding),
-                product = flow.selectedProduct!!,
-                onBack = { flow.selectedProduct = null },
+                product = route.product,
+                onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
             )
         } else {
             sellerCoordinator.ShellScreen(
                 modifier = Modifier.padding(padding),
                 state = state,
                 route = flow.sellerRoute,
-                onRouteChange = { flow.sellerRoute = it },
+                onRouteChange = { sellerRoute -> flow.onEvent(AppNavEvent.ChangeSellerRoute(sellerRoute)) },
                 onBackToAccount = state::signOut,
             )
         }
@@ -88,91 +89,90 @@ internal fun AppContentRouter(
         return
     }
 
-    if (flow.isSellerDashboardOpen) {
+    if (flow.route is AppRoute.SellerShellRouteEntry) {
         sellerCoordinator.ShellScreen(
             modifier = Modifier.padding(padding),
             state = state,
             route = flow.sellerRoute,
-            onRouteChange = { flow.sellerRoute = it },
-            onBackToAccount = flow::closeSellerDashboard,
+            onRouteChange = { sellerRoute -> flow.onEvent(AppNavEvent.ChangeSellerRoute(sellerRoute)) },
+            onBackToAccount = { flow.onEvent(AppNavEvent.CloseCurrent) },
         )
         return
     }
 
-    if (flow.isProfileOpen) {
+    if (flow.route is AppRoute.ProfileShellRouteEntry) {
         ProfileShellScreen(
             modifier = Modifier.padding(padding),
             state = state,
             route = flow.profileRoute,
-            onBackToAccount = flow::closeProfile,
-            onRouteChange = { flow.profileRoute = it },
+            onBackToAccount = { flow.onEvent(AppNavEvent.CloseCurrent) },
+            onRouteChange = { profileRoute -> flow.onEvent(AppNavEvent.ChangeProfileRoute(profileRoute)) },
         )
         return
     }
 
-    if (flow.checkoutSummary != null) {
+    if (flow.route is AppRoute.CheckoutSummaryRoute) {
+        val route = flow.route as AppRoute.CheckoutSummaryRoute
         CheckoutSummaryHandoffScreen(
             modifier = Modifier.padding(padding),
-            summary = flow.checkoutSummary!!,
-            onDone = {
-                flow.checkoutSummary = null
-                flow.isCartOpen = false
-            },
-            onOpenProduct = { flow.selectedProduct = it },
+            summary = route.summary,
+            onDone = { flow.onEvent(AppNavEvent.ResetToTabs) },
+            onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
         )
         return
     }
 
-    if (flow.checkoutDraft != null) {
+    if (flow.route is AppRoute.CheckoutDraftRoute) {
+        val route = flow.route as AppRoute.CheckoutDraftRoute
         CheckoutConfirmationScreen(
             modifier = Modifier.padding(padding),
-            draft = flow.checkoutDraft!!,
-            onBack = { flow.checkoutDraft = null },
-            onPlaceOrder = { summary ->
-                flow.checkoutSummary = summary
-                flow.checkoutDraft = null
-            },
+            draft = route.draft,
+            onBack = { flow.onEvent(AppNavEvent.OpenCart) },
+            onPlaceOrder = { summary -> flow.onEvent(AppNavEvent.PlaceOrder(summary)) },
         )
         return
     }
 
-    if (flow.isCartOpen) {
+    if (flow.route is AppRoute.Cart) {
         CartSavedPaymentsScreen(
             modifier = Modifier.padding(padding),
             state = state,
-            onBack = { flow.isCartOpen = false },
-            onOpenProduct = { flow.selectedProduct = it },
-            onProceedToCheckout = { draft -> flow.checkoutDraft = draft },
+            onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
+            onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+            onProceedToCheckout = { draft -> flow.onEvent(AppNavEvent.ProceedToCheckout(draft)) },
         )
         return
     }
 
-    if (flow.selectedProduct != null) {
+    if (flow.route is AppRoute.ProductDetail) {
+        val route = flow.route as AppRoute.ProductDetail
         productCoordinator.DetailScreen(
             modifier = Modifier.padding(padding),
-            product = flow.selectedProduct!!,
-            onBack = { flow.selectedProduct = null },
+            product = route.product,
+            onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
         )
         return
     }
 
-    if (flow.selectedReel != null) {
+    if (flow.route is AppRoute.ReelDetail) {
+        val route = flow.route as AppRoute.ReelDetail
         reelsCoordinator.DetailScreen(
             modifier = Modifier.padding(padding),
             state = state,
-            reel = flow.selectedReel!!,
-            onBack = { flow.selectedReel = null },
+            reel = route.reel,
+            onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
         )
         return
     }
 
-    if (flow.selectedStore != null) {
+    if (flow.route is AppRoute.StoreProfile) {
+        val route = flow.route as AppRoute.StoreProfile
         StoreProfileScreen(
             modifier = Modifier.padding(padding),
             state = state,
-            store = flow.selectedStore!!,
-            onBack = { flow.selectedStore = null },
-            onOpenProduct = { flow.selectedProduct = it },
+            store = route.store,
+            onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
+            onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
         )
         return
     }
@@ -203,10 +203,10 @@ internal fun AppContentRouter(
             AccountScreen(
                 modifier = Modifier.padding(padding),
                 state = state,
-                onOpenProduct = { flow.selectedProduct = it },
-                onOpenSellerDashboard = flow::openSellerDashboard,
-                onOpenProfile = flow::openProfile,
-                onOpenCart = flow::openCart,
+                onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+                onOpenSellerDashboard = { flow.onEvent(AppNavEvent.OpenSellerDashboard) },
+                onOpenProfile = { flow.onEvent(AppNavEvent.OpenProfile) },
+                onOpenCart = { flow.onEvent(AppNavEvent.OpenCart) },
             )
         }
     }

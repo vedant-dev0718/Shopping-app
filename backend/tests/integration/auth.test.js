@@ -164,6 +164,25 @@ describe('auth API', () => {
       .expect(429);
   });
 
+  test('verify-reset-otp endpoint is rate-limited after repeated invalid attempts', async () => {
+    const email = 'buyer-verify-reset-limit@example.com';
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await api()
+        .post('/api/auth/verify-reset-otp')
+        .send({ email, otp: 'abc123' })
+        .expect(400);
+    }
+
+    const limited = await api()
+      .post('/api/auth/verify-reset-otp')
+      .send({ email, otp: 'abc123' })
+      .expect(429);
+
+    expect(limited.body.success).toBe(false);
+    expect(limited.body.message).toContain('Too many reset code verification attempts');
+  });
+
   test('authenticated users can change password and Google-only accounts are blocked', async () => {
     const buyer = await createBuyer({ email: 'buyer-change-password@example.com', password });
     const login = await api()

@@ -1,6 +1,7 @@
 const Order = require('../../src/modules/orders/order.model');
 const { runAutoDelivery } = require('../../src/jobs/autoDelivery.job');
 const sellerOrderService = require('../../src/modules/sellerOrders/sellerOrder.service');
+const env = require('../../src/config/env');
 const { createBuyer, createSeller } = require('../helpers/auth.helper');
 const { createProduct } = require('../helpers/mockData.helper');
 const { createOrder } = require('../helpers/order.helper');
@@ -161,5 +162,27 @@ describe('Shiprocket integration with mocked HTTP calls', () => {
     expect(updated.deliveryInfo.deliveryConfirmationStatus).toBe('review_required');
     expect(updated.deliveryInfo.deliveryReviewRequired).toBe(true);
     expect(updated.trackingStatus).toBe('Delivery confirmation pending - review required');
+  });
+
+  test('Shiprocket webhook returns 503 in production when webhook secret is missing', async () => {
+    const previousNodeEnv = env.nodeEnv;
+    const previousWebhookSecret = env.shiprocketWebhookSecret;
+
+    env.nodeEnv = 'production';
+    env.shiprocketWebhookSecret = '';
+
+    try {
+      const response = await require('../helpers/testServer.helper').api()
+        .post('/webhooks/shiprocket')
+        .set('Content-Type', 'application/json')
+        .send({ shipment_id: 123, current_status: 'DELIVERED' })
+        .expect(503);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('not configured');
+    } finally {
+      env.nodeEnv = previousNodeEnv;
+      env.shiprocketWebhookSecret = previousWebhookSecret;
+    }
   });
 });

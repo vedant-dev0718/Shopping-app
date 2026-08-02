@@ -25,6 +25,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -225,6 +227,9 @@ internal fun SellerReelListScreen(
                 border = border,
                 onDelete = { pendingDeleteId = reel.id },
                 onTagProducts = { tagPickerReelId = reel.id },
+                onEditCaption = { newCaption ->
+                    reels = reels.map { if (it.id == reel.id) it.copy(caption = newCaption) else it }
+                },
             )
         }
     }
@@ -242,7 +247,10 @@ private fun SellerReelCard(
     border: Color,
     onDelete: () -> Unit,
     onTagProducts: () -> Unit,
+    onEditCaption: (String) -> Unit,
 ) {
+    var isEditingCaption by remember { mutableStateOf(false) }
+    var draftCaption by remember(reel.caption) { mutableStateOf(reel.caption) }
     Surface(
         color = surface,
         shape = SellerUiTokens.radiusCard,
@@ -301,8 +309,10 @@ private fun SellerReelCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        // Shared / draft badge
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Surface(
                             color = if (reel.isShared) Color(0xFF1A3A28) else surfaceHigh,
                             shape = RoundedCornerShape(8.dp),
@@ -332,11 +342,64 @@ private fun SellerReelCard(
 
             HorizontalDivider(color = border.copy(alpha = 0.4f))
 
-            // Action buttons
+            // Inline caption editor – shown when Edit Caption is active
+            if (isEditingCaption) {
+                OutlinedTextField(
+                    value = draftCaption,
+                    onValueChange = { if (it.length <= 2000) draftCaption = it },
+                    modifier = Modifier.fillMaxWidth().height(90.dp),
+                    placeholder = { Text("Edit caption…", style = MaterialTheme.typography.bodySmall) },
+                    textStyle = MaterialTheme.typography.bodySmall.copy(color = text),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accent,
+                        unfocusedBorderColor = border,
+                        focusedContainerColor = surfaceHigh,
+                        unfocusedContainerColor = surfaceHigh,
+                        focusedTextColor = text,
+                        unfocusedTextColor = text,
+                        focusedPlaceholderColor = muted,
+                        unfocusedPlaceholderColor = muted,
+                    ),
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { isEditingCaption = false; draftCaption = reel.caption },
+                        modifier = Modifier.weight(1f),
+                        shape = SellerUiTokens.radiusButton,
+                        border = BorderStroke(1.dp, border),
+                    ) {
+                        Text("Cancel", color = muted, style = MaterialTheme.typography.labelMedium)
+                    }
+                    Button(
+                        onClick = { onEditCaption(draftCaption); isEditingCaption = false },
+                        modifier = Modifier.weight(1f),
+                        shape = SellerUiTokens.radiusButton,
+                        colors = ButtonDefaults.buttonColors(containerColor = accent),
+                    ) {
+                        Text("Save", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                HorizontalDivider(color = border.copy(alpha = 0.4f))
+            }
+
+            // Action row: Edit Caption | Edit/Tag Products
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                OutlinedButton(
+                    onClick = { isEditingCaption = !isEditingCaption; draftCaption = reel.caption },
+                    modifier = Modifier.weight(1f),
+                    shape = SellerUiTokens.radiusButton,
+                    border = BorderStroke(1.dp, if (isEditingCaption) accent else border),
+                ) {
+                    Text(
+                        "Edit Caption",
+                        color = if (isEditingCaption) accent else text,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
                 OutlinedButton(
                     onClick = onTagProducts,
                     modifier = Modifier.weight(1f),
@@ -350,19 +413,19 @@ private fun SellerReelCard(
                         style = MaterialTheme.typography.labelMedium,
                     )
                 }
-                OutlinedButton(
-                    onClick = onDelete,
-                    modifier = Modifier.weight(1f),
-                    shape = SellerUiTokens.radiusButton,
-                    border = BorderStroke(1.dp, danger.copy(alpha = 0.5f)),
-                ) {
-                    Text(
-                        "Delete",
-                        color = danger,
-                        fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                }
+            }
+            OutlinedButton(
+                onClick = onDelete,
+                modifier = Modifier.fillMaxWidth(),
+                shape = SellerUiTokens.radiusButton,
+                border = BorderStroke(1.dp, danger.copy(alpha = 0.5f)),
+            ) {
+                Text(
+                    "Delete",
+                    color = danger,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelMedium,
+                )
             }
         }
     }

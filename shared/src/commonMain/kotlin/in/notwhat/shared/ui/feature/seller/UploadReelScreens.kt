@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -40,9 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 
 @Composable
@@ -63,6 +66,8 @@ internal fun UploadReelScreen(
 
     var videoUri by remember { mutableStateOf<String?>(null) }
     var isPickingVideo by remember { mutableStateOf(false) }
+    var thumbnailUri by remember { mutableStateOf<String?>(null) }
+    var isPickingThumbnail by remember { mutableStateOf(false) }
     var caption by remember { mutableStateOf("") }
     var allowBargaining by remember { mutableStateOf(true) }
     var isSharing by remember { mutableStateOf(false) }
@@ -140,6 +145,28 @@ internal fun UploadReelScreen(
                     }
                 },
                 onShareReel = { if (!isSharing) isSharing = true },
+            )
+        }
+
+        // Cover image / thumbnail picker
+        item {
+            ThumbnailPickerCard(
+                thumbnailUri = thumbnailUri,
+                isPicking = isPickingThumbnail,
+                isSharing = isSharing,
+                text = text,
+                muted = muted,
+                accent = accent,
+                panel = panel,
+                panelSoft = panelSoft,
+                border = border,
+                onPick = {
+                    isPickingThumbnail = true
+                    PlatformImagePicker.launch { uri ->
+                        isPickingThumbnail = false
+                        if (uri != null) thumbnailUri = uri
+                    }
+                },
             )
         }
 
@@ -434,4 +461,84 @@ private fun TagProductsCard(
         }
     }
 }
+
+@Composable
+private fun ThumbnailPickerCard(
+    thumbnailUri: String?,
+    isPicking: Boolean,
+    isSharing: Boolean,
+    text: Color,
+    muted: Color,
+    accent: Color,
+    panel: Color,
+    panelSoft: Color,
+    border: Color,
+    onPick: () -> Unit,
+) {
+    Surface(color = panel, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text("COVER IMAGE", color = text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    Text("Optional – auto-generated if skipped", color = muted, style = MaterialTheme.typography.labelSmall)
+                }
+                if (thumbnailUri != null) {
+                    OutlinedButton(
+                        onClick = onPick,
+                        enabled = !isPicking && !isSharing,
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, border),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Text("Change", color = accent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
+            HorizontalDivider(color = border.copy(alpha = 0.4f))
+
+            if (thumbnailUri != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(panelSoft),
+                ) {
+                    AsyncImage(
+                        model = thumbnailUri,
+                        contentDescription = "Cover image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+            } else {
+                // Empty-state CTA
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(panelSoft)
+                        .clickable(enabled = !isPicking && !isSharing, onClick = onPick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (isPicking) {
+                            CircularProgressIndicator(color = accent, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("🖼", style = MaterialTheme.typography.headlineMedium)
+                            Text("Tap to choose cover photo", color = muted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 

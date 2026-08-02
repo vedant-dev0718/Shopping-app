@@ -48,25 +48,25 @@ internal fun NotWhatAppFramework(
     val requiresSellerSetup = state.currentSession?.requiresSellerProfileSetup == true && appRole == UserRole.Seller
 
     val homeCoordinator =
-        HomeFeatureCoordinator(
+        HomeNavigationCoordinator(
             onSearchTap = { state.selectTab(NotWhatTab.Search) },
-            onOpenProduct = { flow.selectedProduct = it },
-            onOpenStore = { flow.selectedStore = it },
+            onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+            onOpenStore = { flow.onEvent(AppNavEvent.OpenStore(it)) },
         )
     val searchCoordinator =
-        SearchFeatureCoordinator(
-            onOpenProduct = { flow.selectedProduct = it },
-            onOpenStore = { flow.selectedStore = it },
+        SearchNavigationCoordinator(
+            onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+            onOpenStore = { flow.onEvent(AppNavEvent.OpenStore(it)) },
         )
     val reelsCoordinator =
-        ReelsFeatureCoordinator(
-            onOpenReel = { flow.selectedReel = it },
-            onOpenProduct = { flow.selectedProduct = it },
-            onOpenStore = { flow.selectedStore = it },
+        ReelsNavigationCoordinator(
+            onOpenReel = { flow.onEvent(AppNavEvent.OpenReel(it)) },
+            onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+            onOpenStore = { flow.onEvent(AppNavEvent.OpenStore(it)) },
         )
-    val productCoordinator = ProductFeatureCoordinator()
-    val sellerCoordinator = SellerFeatureCoordinator()
-    val adminCoordinator = AdminFeatureCoordinator()
+    val productCoordinator = ProductNavigationCoordinator()
+    val sellerCoordinator = SellerNavigationCoordinator()
+    val adminCoordinator = AdminNavigationCoordinator()
 
     NotWhatTheme {
         Scaffold(

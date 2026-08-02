@@ -17,6 +17,7 @@ struct SharedRootHostView: View {
             .ignoresSafeArea()
             .task {
                 SharedSocialAuthInstaller.installIfNeeded()
+                SharedMediaPickerInstaller.installIfNeeded()
             }
         #else
         VStack(spacing: 12) {
@@ -134,6 +135,36 @@ private final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerD
             continuation?.resume(throwing: error)
         }
         continuation = nil
+    }
+}
+
+@MainActor
+private enum SharedMediaPickerInstaller {
+    private static var installed = false
+
+    static func installIfNeeded() {
+        guard !installed else { return }
+        installed = true
+
+        let videoPicker = VideoPickerCoordinator()
+        IosMediaPickerBridgeRegistry.shared.registerVideoPicker { callback in
+            guard let root = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap(\.windows)
+                .first(where: \.isKeyWindow)?
+                .rootViewController else { callback(nil); return }
+            videoPicker.pick(from: root) { uri in callback(uri) }
+        }
+
+        let thumbPicker = ThumbnailPickerCoordinator()
+        IosImagePickerBridgeRegistry.shared.registerImagePicker { callback in
+            guard let root = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap(\.windows)
+                .first(where: \.isKeyWindow)?
+                .rootViewController else { callback(nil); return }
+            thumbPicker.pick(from: root) { uri in callback(uri) }
+        }
     }
 }
 

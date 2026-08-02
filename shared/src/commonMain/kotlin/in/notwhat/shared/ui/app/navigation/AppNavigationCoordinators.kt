@@ -6,8 +6,8 @@ import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.ReelDto
 import com.notwhat.shared.catalog.StoreDto
 
-/** Coordinates Home feature routing and actions. */
-internal class HomeFeatureCoordinator(
+/** Coordinates home navigation and actions. */
+internal class HomeNavigationCoordinator(
     private val onSearchTap: () -> Unit,
     private val onOpenProduct: (ProductDto) -> Unit,
     private val onOpenStore: (StoreDto) -> Unit,
@@ -30,8 +30,8 @@ internal class HomeFeatureCoordinator(
     }
 }
 
-/** Coordinates Search feature routing and actions. */
-internal class SearchFeatureCoordinator(
+/** Coordinates search navigation and actions. */
+internal class SearchNavigationCoordinator(
     private val onOpenProduct: (ProductDto) -> Unit,
     private val onOpenStore: (StoreDto) -> Unit,
 ) {
@@ -52,8 +52,8 @@ internal class SearchFeatureCoordinator(
     }
 }
 
-/** Coordinates Reels list/detail routing and actions. */
-internal class ReelsFeatureCoordinator(
+/** Coordinates reels navigation and actions. */
+internal class ReelsNavigationCoordinator(
     private val onOpenReel: (ReelDto) -> Unit,
     private val onOpenProduct: (ProductDto) -> Unit,
     private val onOpenStore: (StoreDto) -> Unit,
@@ -89,8 +89,8 @@ internal class ReelsFeatureCoordinator(
     }
 }
 
-/** Coordinates Product detail routing. */
-internal class ProductFeatureCoordinator {
+/** Coordinates product navigation. */
+internal class ProductNavigationCoordinator {
     @Composable
     fun DetailScreen(
         modifier: Modifier,
@@ -105,8 +105,8 @@ internal class ProductFeatureCoordinator {
     }
 }
 
-/** Coordinates Seller shell routing. */
-internal class SellerFeatureCoordinator {
+/** Coordinates seller shell navigation. */
+internal class SellerNavigationCoordinator {
     @Composable
     fun ShellScreen(
         modifier: Modifier,
@@ -125,8 +125,8 @@ internal class SellerFeatureCoordinator {
     }
 }
 
-/** Coordinates Admin console routing. */
-internal class AdminFeatureCoordinator {
+/** Coordinates admin navigation. */
+internal class AdminNavigationCoordinator {
     @Composable
     fun ConsoleScreen(
         modifier: Modifier,
