@@ -1,9 +1,14 @@
 package com.notwhat.shared.ui
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
+import platform.Foundation.NSFileHandle
 import platform.Foundation.NSURL
+import platform.Foundation.dataWithContentsOfURL
+import platform.Foundation.fileHandleForReadingAtPath
+import platform.Foundation.lastPathComponent
 import platform.Foundation.pathExtension
 import platform.posix.memcpy
 
@@ -42,6 +47,7 @@ actual object PlatformMediaFileReader {
     }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 private fun NSData.toByteArray(): ByteArray {
     val length = this.length.toInt()
     if (length == 0) {

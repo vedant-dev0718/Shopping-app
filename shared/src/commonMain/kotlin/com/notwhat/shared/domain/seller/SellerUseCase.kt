@@ -1,5 +1,6 @@
 package com.notwhat.shared.domain.seller
 
+import com.notwhat.shared.catalog.CreateProductRequestDto
 import com.notwhat.shared.catalog.CreateReelRequestDto
 import com.notwhat.shared.catalog.DeleteResponseDto
 import com.notwhat.shared.catalog.ProductDto
@@ -24,6 +25,14 @@ class SellerUseCase(
     suspend fun listProducts(bearerToken: String): NetworkResult<List<ProductDto>> {
         if (config.isMock) return NetworkResult.Success(seedProducts())
         return catalogUseCase.listSellerProducts(bearerToken)
+    }
+
+    suspend fun createProduct(
+        request: CreateProductRequestDto,
+        bearerToken: String,
+    ): NetworkResult<ProductDto> {
+        if (config.isMock) return NetworkResult.Success(seedProducts().first().copy(title = request.title, price = request.price))
+        return catalogUseCase.createProduct(request, bearerToken)
     }
 
     suspend fun updateProduct(

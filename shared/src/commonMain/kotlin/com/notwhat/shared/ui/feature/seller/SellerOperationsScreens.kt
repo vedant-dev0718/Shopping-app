@@ -46,6 +46,7 @@ internal fun ProductLifecycleScreen(
     modifier: Modifier,
     state: NotWhatAppState,
     onBack: () -> Unit,
+    onAddProduct: () -> Unit = {},
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -137,6 +138,17 @@ internal fun ProductLifecycleScreen(
                     Text("Live items: 2 · Draft items: 1 · Needs attention: 1", color = muted)
                     Text("Tap a product row to jump into product editing context.", color = accent, style = MaterialTheme.typography.bodySmall)
                 }
+            }
+        }
+
+        item {
+            Button(
+                onClick = onAddProduct,
+                modifier = Modifier.fillMaxWidth(),
+                shape = SellerUiTokens.radiusButton,
+                colors = ButtonDefaults.buttonColors(containerColor = accent)
+            ) {
+                Text("+ Add New Product", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
 

@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 internal enum class SellerShellRoute {
     Dashboard,
     Insights,
+    ProductOnboarding,
     ProductLifecycleStub,
     OrderOperationsStub,
     ReturnsRefunds,
@@ -99,11 +100,22 @@ internal fun SellerShellScreen(
             ),
         )
 
+    if (route == SellerShellRoute.ProductOnboarding) {
+        ProductOnboardingScreen(
+            modifier = modifier,
+            state = state,
+            onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+            onProductCreated = { onRouteChange(SellerShellRoute.ProductLifecycleStub) },
+        )
+        return
+    }
+
     if (route == SellerShellRoute.ProductLifecycleStub) {
         ProductLifecycleScreen(
             modifier = modifier,
             state = state,
             onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+            onAddProduct = { onRouteChange(SellerShellRoute.ProductOnboarding) },
         )
         return
     }
