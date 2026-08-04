@@ -3,6 +3,10 @@ package com.notwhat.shared.returns
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.core.runCatchingNetwork
 import com.notwhat.shared.network.ApiClient
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.random.Random
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -18,8 +22,43 @@ private data class AnalyticsEventIngestResponseDto(
 
 class ReturnsAnalyticsTransport(
     private val client: ApiClient,
+    private val retryPolicy: RetryPolicy = RetryPolicy(),
 ) {
+    data class RetryPolicy(
+        val maxAttempts: Int = 3,
+        val initialDelayMs: Long = 400,
+        val maxDelayMs: Long = 4_000,
+        val multiplier: Double = 2.0,
+        val jitterRatio: Double = 0.2,
+    )
+
     suspend fun send(
+        event: ReturnsAnalyticsEvent,
+        bearerToken: String?,
+    ): NetworkResult<Unit> {
+        val attempts = max(1, retryPolicy.maxAttempts)
+        var currentDelayMs = max(0, retryPolicy.initialDelayMs)
+        var lastFailure: NetworkResult.Failure? = null
+
+        repeat(attempts) { index ->
+            when (val result = sendOnce(event, bearerToken)) {
+                is NetworkResult.Success -> return result
+                is NetworkResult.Failure -> {
+                    lastFailure = result
+                    val isLastAttempt = index == attempts - 1
+                    if (isLastAttempt || !isRetryable(result.error)) return result
+
+                    val sleepMs = withJitter(currentDelayMs, retryPolicy.jitterRatio)
+                    delay(sleepMs)
+                    currentDelayMs = nextDelay(currentDelayMs)
+                }
+            }
+        }
+
+        return lastFailure ?: NetworkResult.Failure(com.notwhat.shared.core.AppError.Unknown(IllegalStateException("Analytics send failed without explicit error.")))
+    }
+
+    private suspend fun sendOnce(
         event: ReturnsAnalyticsEvent,
         bearerToken: String?,
     ): NetworkResult<Unit> =
@@ -32,6 +71,37 @@ class ReturnsAnalyticsTransport(
                 bearerToken = bearerToken,
             )
             Unit
+        }
+
+    private fun nextDelay(currentDelayMs: Long): Long {
+        if (currentDelayMs <= 0L) return min(100L, retryPolicy.maxDelayMs)
+        val expanded = (currentDelayMs.toDouble() * retryPolicy.multiplier).toLong()
+        return min(max(0L, expanded), retryPolicy.maxDelayMs)
+    }
+
+    private fun withJitter(delayMs: Long, jitterRatio: Double): Long {
+        if (delayMs <= 0L) return 0L
+        val boundedRatio = jitterRatio.coerceIn(0.0, 0.5)
+        if (boundedRatio == 0.0) return delayMs
+
+        val jitterWindow = (delayMs * boundedRatio).toLong().coerceAtLeast(1L)
+        val randomOffset = Random.nextLong(-jitterWindow, jitterWindow + 1)
+        return (delayMs + randomOffset).coerceAtLeast(0L)
+    }
+
+    private fun isRetryable(error: com.notwhat.shared.core.AppError): Boolean =
+        when (error) {
+            is com.notwhat.shared.core.AppError.NoNetwork,
+            is com.notwhat.shared.core.AppError.Timeout,
+            -> true
+
+            is com.notwhat.shared.core.AppError.Server -> true
+
+            is com.notwhat.shared.core.AppError.Api -> error.statusCode == 429 || error.statusCode >= 500
+
+            is com.notwhat.shared.core.AppError.Deserialization,
+            is com.notwhat.shared.core.AppError.Unknown,
+            -> false
         }
 
     private fun mapEventType(event: ReturnsAnalyticsEvent): String =
