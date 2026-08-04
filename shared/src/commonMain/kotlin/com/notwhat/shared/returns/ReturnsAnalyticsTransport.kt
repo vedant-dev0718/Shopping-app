@@ -3,11 +3,11 @@ package com.notwhat.shared.returns
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.core.runCatchingNetwork
 import com.notwhat.shared.network.ApiClient
+import kotlinx.coroutines.delay
+import kotlinx.serialization.Serializable
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
-import kotlinx.coroutines.delay
-import kotlinx.serialization.Serializable
 
 @Serializable
 private data class AnalyticsEventIngestRequestDto(
@@ -42,7 +42,10 @@ class ReturnsAnalyticsTransport(
 
         repeat(attempts) { index ->
             when (val result = sendOnce(event, bearerToken)) {
-                is NetworkResult.Success -> return result
+                is NetworkResult.Success -> {
+                    return result
+                }
+
                 is NetworkResult.Failure -> {
                     lastFailure = result
                     val isLastAttempt = index == attempts - 1
@@ -55,7 +58,11 @@ class ReturnsAnalyticsTransport(
             }
         }
 
-        return lastFailure ?: NetworkResult.Failure(com.notwhat.shared.core.AppError.Unknown(IllegalStateException("Analytics send failed without explicit error.")))
+        return lastFailure
+            ?: NetworkResult.Failure(
+                com.notwhat.shared.core.AppError
+                    .Unknown(IllegalStateException("Analytics send failed without explicit error.")),
+            )
     }
 
     private suspend fun sendOnce(
@@ -79,7 +86,10 @@ class ReturnsAnalyticsTransport(
         return min(max(0L, expanded), retryPolicy.maxDelayMs)
     }
 
-    private fun withJitter(delayMs: Long, jitterRatio: Double): Long {
+    private fun withJitter(
+        delayMs: Long,
+        jitterRatio: Double,
+    ): Long {
         if (delayMs <= 0L) return 0L
         val boundedRatio = jitterRatio.coerceIn(0.0, 0.5)
         if (boundedRatio == 0.0) return delayMs
