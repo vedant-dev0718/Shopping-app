@@ -18,6 +18,8 @@ enum class ReturnsEventName {
     returns_status_transition_rendered,
     returns_status_unmapped,
     returns_action_retry_tapped,
+    returns_payment_methods_fetch_failed,
+    returns_payment_methods_retry_tapped,
 }
 
 data class ReturnsAnalyticsContext(
@@ -191,6 +193,26 @@ class ReturnsAnalyticsTracker(
         errorCode = errorCode,
     )
 
+    fun returnsPaymentMethodsFetchFailed(
+        context: ReturnsAnalyticsContext,
+        errorCode: String,
+        errorMessage: String? = null,
+    ) = emit(
+        context = context,
+        eventName = ReturnsEventName.returns_payment_methods_fetch_failed,
+        errorCode = errorCode,
+        errorMessage = errorMessage,
+    )
+
+    fun returnsPaymentMethodsRetryTapped(
+        context: ReturnsAnalyticsContext,
+        errorCode: String = "PAYMENT_METHODS_RETRY_TAPPED",
+    ) = emit(
+        context = context,
+        eventName = ReturnsEventName.returns_payment_methods_retry_tapped,
+        errorCode = errorCode,
+    )
+
     private fun emit(
         context: ReturnsAnalyticsContext,
         eventName: ReturnsEventName,
@@ -284,6 +306,10 @@ class ReturnsAnalyticsTracker(
             -> event.orderId.isRequiredField() && event.returnId.isRequiredField()
 
             ReturnsEventName.returns_action_retry_tapped -> event.errorCode.isRequiredField()
+
+            ReturnsEventName.returns_payment_methods_fetch_failed,
+            ReturnsEventName.returns_payment_methods_retry_tapped,
+            -> event.errorCode.isRequiredField()
 
             ReturnsEventName.returns_seller_request_opened,
             ReturnsEventName.returns_seller_approved,

@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { v2: cloudinary } = require('cloudinary');
 const streamifier = require('streamifier');
 
@@ -71,6 +71,20 @@ const toPublicS3Url = (objectKey) => {
   return `https://${env.awsS3Bucket}.s3.${env.awsRegion}.amazonaws.com/${objectKey}`;
 };
 
+/*
+  S3 folder layout
+  ─────────────────────────────────────────────────────────
+  notwhat/
+    sellers/{sellerId}/
+      products/     ← product images (up to 5 per product)
+      reels/        ← reel video files
+      avatars/      ← seller profile photo
+      banners/      ← store banner / cover image
+    buyers/{userId}/
+      avatars/      ← buyer profile photo
+  ─────────────────────────────────────────────────────────
+*/
+
 const uploadToS3 = async ({ file, sellerId, folder, contentType }) => {
   const extension = path.extname(file.originalname || file.filename || '');
   const objectKey = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}${extension}`;
@@ -91,6 +105,48 @@ const uploadToS3 = async ({ file, sellerId, folder, contentType }) => {
     objectKey,
     url: toPublicS3Url(objectKey)
   };
+};
+
+const getMediaObjectStream = async ({ objectKey }) => {
+  ensureUploadProviderConfigured();
+
+  if (!isS3Configured()) {
+    throw new AppError('S3 is not configured for media proxying.', 500);
+  }
+
+  if (!objectKey || typeof objectKey !== 'string') {
+    throw new AppError('A valid media object key is required.', 400);
+  }
+
+  const normalizedKey = decodeURIComponent(objectKey).trim();
+
+  if (!normalizedKey.startsWith('notwhat/') || normalizedKey.includes('..')) {
+    throw new AppError('Invalid media object key.', 400);
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: env.awsS3Bucket,
+    Key: normalizedKey
+  });
+
+  const client = getS3Client();
+
+  try {
+    const result = await client.send(command);
+    return {
+      stream: result.Body,
+      contentType: result.ContentType || 'application/octet-stream',
+      cacheControl: result.CacheControl || 'public, max-age=31536000',
+      contentLength: result.ContentLength,
+      etag: result.ETag
+    };
+  } catch (error) {
+    if (error && (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404)) {
+      throw new AppError('Media not found.', 404);
+    }
+
+    throw error;
+  }
 };
 
 const uploadVideoBufferToCloudinary = (file, sellerId) => {
@@ -191,6 +247,8 @@ const uploadVideo = async ({ file, sellerId }) => {
         videoUrl: result.url,
         thumbnailUrl: result.url,
         publicId: result.objectKey,
+        objectKey: result.objectKey,
+        storageProvider: 's3',
         duration: 0,
         fileSize: file.size,
         mimeType: file.mimetype
@@ -204,6 +262,7 @@ const uploadVideo = async ({ file, sellerId }) => {
       videoUrl: result.secure_url,
       thumbnailUrl: eagerThumbnail || result.secure_url.replace(/\.[^.]+$/, '.jpg'),
       publicId: result.public_id,
+      storageProvider: 'cloudinary',
       duration: result.duration || 0,
       fileSize: file.size,
       mimeType: file.mimetype
@@ -232,6 +291,8 @@ const uploadImage = async ({ file, sellerId }) => {
       return {
         imageUrl: result.url,
         publicId: result.objectKey,
+        objectKey: result.objectKey,
+        storageProvider: 's3',
         fileSize: file.size,
         mimeType: file.mimetype
       };
@@ -242,6 +303,7 @@ const uploadImage = async ({ file, sellerId }) => {
     return {
       imageUrl: result.secure_url,
       publicId: result.public_id,
+      storageProvider: 'cloudinary',
       fileSize: file.size,
       mimeType: file.mimetype
     };
@@ -250,7 +312,96 @@ const uploadImage = async ({ file, sellerId }) => {
   }
 };
 
+const uploadProductImages = async ({ files, sellerId }) => {
+  ensureUploadProviderConfigured();
+
+  if (!files || files.length === 0) {
+    throw new AppError('At least one image is required', 400);
+  }
+
+  try {
+    const results = await Promise.all(
+      files.map(async (file) => {
+        if (isS3Configured()) {
+          const result = await uploadToS3({
+            file,
+            sellerId,
+            folder: `notwhat/sellers/${sellerId}/products`,
+            contentType: file.mimetype
+          });
+          return result;
+        }
+
+        const result = await uploadImageBufferToCloudinary(file, sellerId);
+        return { url: result.secure_url, objectKey: null };
+      })
+    );
+
+    return {
+      imageUrls: results.map((item) => item.url),
+      objectKeys: results.map((item) => item.objectKey).filter(Boolean),
+      storageProvider: isS3Configured() ? 's3' : 'cloudinary',
+      fileCount: results.length
+    };
+  } finally {
+    await Promise.all(files.map(cleanupTempFile));
+  }
+};
+
+const uploadAvatar = async ({ file, userId, role }) => {
+  ensureUploadProviderConfigured();
+
+  if (!file) {
+    throw new AppError('Avatar image is required', 400);
+  }
+
+  const folder = role === 'seller'
+    ? `notwhat/sellers/${userId}/avatars`
+    : `notwhat/buyers/${userId}/avatars`;
+
+  try {
+    if (isS3Configured()) {
+      const result = await uploadToS3({ file, sellerId: userId, folder, contentType: file.mimetype });
+      return { avatarUrl: result.url, publicId: result.objectKey, objectKey: result.objectKey, storageProvider: 's3' };
+    }
+
+    const result = await uploadImageBufferToCloudinary(file, userId);
+    return { avatarUrl: result.secure_url, publicId: result.public_id, storageProvider: 'cloudinary' };
+  } finally {
+    await cleanupTempFile(file);
+  }
+};
+
+const uploadStoreBanner = async ({ file, sellerId }) => {
+  ensureUploadProviderConfigured();
+
+  if (!file) {
+    throw new AppError('Banner image is required', 400);
+  }
+
+  try {
+    if (isS3Configured()) {
+      const result = await uploadToS3({
+        file,
+        sellerId,
+        folder: `notwhat/sellers/${sellerId}/banners`,
+        contentType: file.mimetype
+      });
+      return { bannerUrl: result.url, publicId: result.objectKey, objectKey: result.objectKey, storageProvider: 's3' };
+    }
+
+    const result = await uploadImageBufferToCloudinary(file, sellerId);
+    return { bannerUrl: result.secure_url, publicId: result.public_id, storageProvider: 'cloudinary' };
+  } finally {
+    await cleanupTempFile(file);
+  }
+};
+
 module.exports = {
   uploadVideo,
-  uploadImage
+  uploadImage,
+  uploadProductImages,
+  uploadAvatar,
+  uploadStoreBanner,
+  getMediaObjectStream
 };

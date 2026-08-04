@@ -131,6 +131,8 @@ class ReturnsAnalyticsTransport(
             ReturnsEventName.returns_timeline_viewed,
             ReturnsEventName.returns_status_unmapped,
             ReturnsEventName.returns_action_retry_tapped,
+            ReturnsEventName.returns_payment_methods_fetch_failed,
+            ReturnsEventName.returns_payment_methods_retry_tapped,
             ReturnsEventName.returns_seller_request_opened,
             ReturnsEventName.returns_seller_queue_viewed,
             -> {

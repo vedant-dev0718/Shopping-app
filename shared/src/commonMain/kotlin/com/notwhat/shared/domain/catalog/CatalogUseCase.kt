@@ -15,9 +15,6 @@ import com.notwhat.shared.catalog.StoreRepository
 import com.notwhat.shared.catalog.UpdateProductRequestDto
 import com.notwhat.shared.catalog.UpdateReelRequestDto
 import com.notwhat.shared.catalog.UpdateSellerStoreRequestDto
-import com.notwhat.shared.catalog.seedProducts
-import com.notwhat.shared.catalog.seedReels
-import com.notwhat.shared.catalog.seedStores
 import com.notwhat.shared.core.AppConfig
 import com.notwhat.shared.core.NetworkResult
 
@@ -32,175 +29,103 @@ class CatalogUseCase(
         category: String? = null,
         region: String? = null,
         query: String? = null,
-    ): NetworkResult<List<ProductDto>> {
-        if (config.isMock) return NetworkResult.Success(seedProducts())
-        return productRepository.listProducts(category, region, query)
-    }
+    ): NetworkResult<List<ProductDto>> = productRepository.listProducts(category, region, query)
 
     suspend fun getProduct(
         id: String,
         bearerToken: String? = null,
-    ): NetworkResult<ProductDto> {
-        if (config.isMock) return NetworkResult.Success(seedProducts().firstOrNull { it.id == id } ?: seedProducts().first())
-        return productRepository.getProduct(id, bearerToken)
-    }
+    ): NetworkResult<ProductDto> = productRepository.getProduct(id, bearerToken)
 
-    suspend fun getRelatedProducts(id: String): NetworkResult<List<ProductDto>> {
-        if (config.isMock) return NetworkResult.Success(seedProducts().filter { it.id != id })
-        return productRepository.getRelatedProducts(id)
-    }
+    suspend fun getRelatedProducts(id: String): NetworkResult<List<ProductDto>> = productRepository.getRelatedProducts(id)
 
     suspend fun saveProduct(
         id: String,
         bearerToken: String,
-    ): NetworkResult<SaveProductResponseDto> {
-        if (config.isMock) return NetworkResult.Success(SaveProductResponseDto(isSaved = true))
-        return productRepository.saveProduct(id, bearerToken)
-    }
+    ): NetworkResult<SaveProductResponseDto> = productRepository.saveProduct(id, bearerToken)
 
     suspend fun unsaveProduct(
         id: String,
         bearerToken: String,
-    ): NetworkResult<SaveProductResponseDto> {
-        if (config.isMock) return NetworkResult.Success(SaveProductResponseDto(isSaved = false))
-        return productRepository.unsaveProduct(id, bearerToken)
-    }
+    ): NetworkResult<SaveProductResponseDto> = productRepository.unsaveProduct(id, bearerToken)
 
     suspend fun recordProductClick(
         id: String,
         bearerToken: String? = null,
-    ): NetworkResult<ProductClickResponseDto> {
-        if (config.isMock) return NetworkResult.Success(ProductClickResponseDto(productId = id, clickCount = 1))
-        return productRepository.recordProductClick(id, bearerToken)
-    }
+    ): NetworkResult<ProductClickResponseDto> = productRepository.recordProductClick(id, bearerToken)
 
-    suspend fun listSellerProducts(bearerToken: String): NetworkResult<List<ProductDto>> {
-        if (config.isMock) return NetworkResult.Success(seedProducts())
-        return productRepository.listSellerProducts(bearerToken)
-    }
+    suspend fun listSellerProducts(bearerToken: String): NetworkResult<List<ProductDto>> = productRepository.listSellerProducts(bearerToken)
 
     suspend fun createProduct(
         request: CreateProductRequestDto,
         bearerToken: String,
-    ): NetworkResult<ProductDto> {
-        if (config.isMock) return NetworkResult.Success(seedProducts().first().copy(title = request.title, price = request.price))
-        return productRepository.createProduct(request, bearerToken)
-    }
+    ): NetworkResult<ProductDto> = productRepository.createProduct(request, bearerToken)
 
     suspend fun updateProduct(
         id: String,
         request: UpdateProductRequestDto,
         bearerToken: String,
-    ): NetworkResult<ProductDto> {
-        if (config.isMock) return NetworkResult.Success(seedProducts().first().copy(id = id))
-        return productRepository.updateProduct(id, request, bearerToken)
-    }
+    ): NetworkResult<ProductDto> = productRepository.updateProduct(id, request, bearerToken)
 
     suspend fun deleteProduct(
         id: String,
         bearerToken: String,
-    ): NetworkResult<DeleteResponseDto> {
-        if (config.isMock) return NetworkResult.Success(DeleteResponseDto(deleted = true))
-        return productRepository.deleteProduct(id, bearerToken)
-    }
+    ): NetworkResult<DeleteResponseDto> = productRepository.deleteProduct(id, bearerToken)
 
     // Reels
     suspend fun listReels(
         category: String? = null,
         region: String? = null,
-    ): NetworkResult<List<ReelDto>> {
-        if (config.isMock) return NetworkResult.Success(seedReels())
-        return reelRepository.listReels(category, region)
-    }
+    ): NetworkResult<List<ReelDto>> = reelRepository.listReels(category, region)
 
     suspend fun getReel(
         id: String,
         bearerToken: String? = null,
-    ): NetworkResult<ReelDto> {
-        if (config.isMock) return NetworkResult.Success(seedReels().firstOrNull { it.id == id } ?: seedReels().first())
-        return reelRepository.getReel(id, bearerToken)
-    }
+    ): NetworkResult<ReelDto> = reelRepository.getReel(id, bearerToken)
 
-    suspend fun getTaggedProducts(reelId: String): NetworkResult<List<ProductDto>> {
-        if (config.isMock) return NetworkResult.Success(seedProducts().take(1))
-        return reelRepository.getTaggedProducts(reelId)
-    }
+    suspend fun getTaggedProducts(reelId: String): NetworkResult<List<ProductDto>> = reelRepository.getTaggedProducts(reelId)
 
     suspend fun recordReelView(
         id: String,
         bearerToken: String? = null,
-    ): NetworkResult<ReelViewResponseDto> {
-        if (config.isMock) return NetworkResult.Success(ReelViewResponseDto(reelId = id, viewCount = 1))
-        return reelRepository.recordView(id, bearerToken)
-    }
+    ): NetworkResult<ReelViewResponseDto> = reelRepository.recordView(id, bearerToken)
 
-    suspend fun listSellerReels(bearerToken: String): NetworkResult<List<ReelDto>> {
-        if (config.isMock) return NetworkResult.Success(seedReels())
-        return reelRepository.listSellerReels(bearerToken)
-    }
+    suspend fun listSellerReels(bearerToken: String): NetworkResult<List<ReelDto>> = reelRepository.listSellerReels(bearerToken)
 
     suspend fun createReel(
         request: CreateReelRequestDto,
         bearerToken: String,
-    ): NetworkResult<ReelDto> {
-        if (config.isMock) return NetworkResult.Success(seedReels().first().copy(videoUrl = request.videoUrl))
-        return reelRepository.createReel(request, bearerToken)
-    }
+    ): NetworkResult<ReelDto> = reelRepository.createReel(request, bearerToken)
 
     suspend fun updateReel(
         id: String,
         request: UpdateReelRequestDto,
         bearerToken: String,
-    ): NetworkResult<ReelDto> {
-        if (config.isMock) return NetworkResult.Success(seedReels().first().copy(id = id))
-        return reelRepository.updateReel(id, request, bearerToken)
-    }
+    ): NetworkResult<ReelDto> = reelRepository.updateReel(id, request, bearerToken)
 
     suspend fun deleteReel(
         id: String,
         bearerToken: String,
-    ): NetworkResult<DeleteResponseDto> {
-        if (config.isMock) return NetworkResult.Success(DeleteResponseDto(deleted = true))
-        return reelRepository.deleteReel(id, bearerToken)
-    }
+    ): NetworkResult<DeleteResponseDto> = reelRepository.deleteReel(id, bearerToken)
 
     // Stores
     suspend fun listStores(
         category: String? = null,
         region: String? = null,
-    ): NetworkResult<List<StoreDto>> {
-        if (config.isMock) return NetworkResult.Success(seedStores())
-        return storeRepository.listStores(category, region)
-    }
+    ): NetworkResult<List<StoreDto>> = storeRepository.listStores(category, region)
 
     suspend fun getStore(
         id: String,
         bearerToken: String? = null,
-    ): NetworkResult<StoreDto> {
-        if (config.isMock) return NetworkResult.Success(seedStores().firstOrNull { it.id == id } ?: seedStores().first())
-        return storeRepository.getStore(id, bearerToken)
-    }
+    ): NetworkResult<StoreDto> = storeRepository.getStore(id, bearerToken)
 
-    suspend fun getStoreProducts(storeId: String): NetworkResult<List<ProductDto>> {
-        if (config.isMock) return NetworkResult.Success(seedProducts().filter { it.storeId?.id == storeId })
-        return storeRepository.getStoreProducts(storeId)
-    }
+    suspend fun getStoreProducts(storeId: String): NetworkResult<List<ProductDto>> = storeRepository.getStoreProducts(storeId)
 
-    suspend fun getStoreReels(storeId: String): NetworkResult<List<ReelDto>> {
-        if (config.isMock) return NetworkResult.Success(seedReels().filter { it.storeId?.id == storeId })
-        return storeRepository.getStoreReels(storeId)
-    }
+    suspend fun getStoreReels(storeId: String): NetworkResult<List<ReelDto>> = storeRepository.getStoreReels(storeId)
 
-    suspend fun getSellerStore(bearerToken: String): NetworkResult<StoreDto> {
-        if (config.isMock) return NetworkResult.Success(seedStores().first())
-        return storeRepository.getSellerStore(bearerToken)
-    }
+    suspend fun getSellerStore(bearerToken: String): NetworkResult<StoreDto> = storeRepository.getSellerStore(bearerToken)
 
     suspend fun updateSellerStore(
         request: UpdateSellerStoreRequestDto,
         bearerToken: String,
-    ): NetworkResult<StoreDto> {
-        if (config.isMock) return NetworkResult.Success(seedStores().first())
-        return storeRepository.updateSellerStore(request, bearerToken)
-    }
+    ): NetworkResult<StoreDto> = storeRepository.updateSellerStore(request, bearerToken)
 }

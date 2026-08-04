@@ -130,11 +130,9 @@ fun CheckoutPaymentMethod.defaultMaskedText(): String =
         CheckoutPaymentMethod.UNKNOWN -> ""
     }
 
-fun CheckoutVerifyResponseDto.trackingOrderStatus(): String =
-    if (orderStatus.isNotBlank()) orderStatus else "placed"
+fun CheckoutVerifyResponseDto.trackingOrderStatus(): String = if (orderStatus.isNotBlank()) orderStatus else "placed"
 
-fun CheckoutVerifyResponseDto.trackingPaymentStatus(): String =
-    if (paymentStatus.isNotBlank()) paymentStatus else "pending"
+fun CheckoutVerifyResponseDto.trackingPaymentStatus(): String = if (paymentStatus.isNotBlank()) paymentStatus else "pending"
 
 @Deprecated("Use finalTotal", ReplaceWith("finalTotal"))
 val CheckoutVerifyResponseDto.totalAmount: Double
@@ -151,5 +149,3 @@ val CheckoutStartResponseDto.amount: Int
 @Deprecated("Use razorpayKeyId", ReplaceWith("razorpayKeyId"))
 val CheckoutStartResponseDto.keyId: String
     get() = razorpayKeyId
-    val totalAmount: Double = 0.0,
-)

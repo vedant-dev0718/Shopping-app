@@ -41,33 +41,64 @@ final class ThumbnailPickerCoordinator: NSObject, PHPickerViewControllerDelegate
 
         let imageType = UTType.image.identifier
         var copiedURLs: [String] = []
+        let copiedUrlsLock = NSLock()
         let group = DispatchGroup()
-        
+
         for result in results {
-            guard result.itemProvider.hasItemConformingToTypeIdentifier(imageType) else {
+            let provider = result.itemProvider
+            guard provider.hasItemConformingToTypeIdentifier(imageType) else {
                 continue
             }
 
             group.enter()
-            result.itemProvider.loadFileRepresentation(forTypeIdentifier: imageType) { [weak self] url, error in
+            if provider.canLoadObject(ofClass: UIImage.self) {
+                provider.loadObject(ofClass: UIImage.self) { imageObject, error in
+                    defer { group.leave() }
+                    guard error == nil, let image = imageObject as? UIImage else {
+                        return
+                    }
+
+                    guard let jpegData = image.jpegData(compressionQuality: 0.92) else {
+                        return
+                    }
+
+                    let destination = FileManager.default.temporaryDirectory
+                        .appendingPathComponent("notwhat_thumb_\(UUID().uuidString)")
+                        .appendingPathExtension("jpg")
+
+                    do {
+                        try jpegData.write(to: destination, options: .atomic)
+                        copiedUrlsLock.lock()
+                        copiedURLs.append(destination.absoluteString)
+                        copiedUrlsLock.unlock()
+                    } catch {
+                        // Skip this image on error
+                    }
+                }
+                continue
+            }
+
+            provider.loadFileRepresentation(forTypeIdentifier: imageType) { url, error in
                 defer { group.leave() }
                 guard let sourceURL = url, error == nil else {
                     return
                 }
 
-                let dest = FileManager.default.temporaryDirectory
+                let destination = FileManager.default.temporaryDirectory
                     .appendingPathComponent("notwhat_thumb_\(UUID().uuidString)")
                     .appendingPathExtension(sourceURL.pathExtension)
 
                 do {
-                    try FileManager.default.copyItem(at: sourceURL, to: dest)
-                    copiedURLs.append(dest.absoluteString)
+                    try FileManager.default.copyItem(at: sourceURL, to: destination)
+                    copiedUrlsLock.lock()
+                    copiedURLs.append(destination.absoluteString)
+                    copiedUrlsLock.unlock()
                 } catch {
                     // Skip this image on error
                 }
             }
         }
-        
+
         group.notify(queue: .main) { [weak self] in
             Task { @MainActor in
                 if copiedURLs.isEmpty {

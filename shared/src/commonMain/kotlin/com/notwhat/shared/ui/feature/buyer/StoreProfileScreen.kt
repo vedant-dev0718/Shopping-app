@@ -37,9 +37,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.StoreDto
-import com.notwhat.shared.catalog.seedProducts
-import com.notwhat.shared.catalog.seedReels
-import com.notwhat.shared.catalog.seedStores
 
 @Composable
 internal fun StoreProfileScreen(
@@ -65,7 +62,7 @@ internal fun StoreProfileScreen(
         item {
             Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
                 DemoImage(
-                    url = store.bannerImageUrl ?: store.displayImageUrl.ifBlank { seedStores().first().displayImageUrl },
+                    url = store.bannerImageUrl ?: store.displayImageUrl,
                     contentDescription = "Store hero",
                     modifier = Modifier.fillMaxSize(),
                     shape = RoundedCornerShape(0.dp),
@@ -135,7 +132,6 @@ internal fun StoreProfileScreen(
                         .filter { it.storeId?.id == store.id }
                         .ifEmpty { state.content.products }
                         .take(6)
-                        .ifEmpty { seedProducts().take(6) }
                 val rows = storeProducts.chunked(2)
                 Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     rows.forEach { rowProducts ->
@@ -174,7 +170,6 @@ internal fun StoreProfileScreen(
                     state.content.reels
                         .filter { it.displayCreator == store.storeName }
                         .ifEmpty { state.content.reels }
-                        .ifEmpty { seedReels() }
                 val rows = storeReels.chunked(3)
                 Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     rows.forEach { rowReels ->

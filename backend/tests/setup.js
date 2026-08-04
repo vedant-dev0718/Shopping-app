@@ -17,6 +17,7 @@ process.env.EMAIL_FROM = 'NotWhat <verify@notwhat.test>';
 process.env.SIGNUP_OTP_TEST_CODE = '123456';
 process.env.SIGNUP_OTP_RESEND_SECONDS = '0';
 process.env.PASSWORD_RESET_OTP_TEST_CODE = '654321';
+process.env.UPLOADS_MEDIA_READ_RATE_LIMIT_PER_MINUTE = '3';
 
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');

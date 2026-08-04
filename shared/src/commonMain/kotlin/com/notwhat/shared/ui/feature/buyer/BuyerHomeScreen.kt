@@ -33,9 +33,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.StoreDto
-import com.notwhat.shared.catalog.seedProducts
-import com.notwhat.shared.catalog.seedReels
-import com.notwhat.shared.catalog.seedStores
 
 /** Navigation callbacks for HomeScreen — ISP: callers provide only what the screen needs. */
 internal data class HomeScreenActions(
@@ -70,7 +67,8 @@ internal fun HomeScreen(
                                 url =
                                     state.content.stores
                                         .firstOrNull()
-                                        ?.displayImageUrl ?: seedStores().first().displayImageUrl,
+                                        ?.displayImageUrl
+                                        .orEmpty(),
                                 contentDescription = "Your Story",
                                 modifier = Modifier.size(68.dp),
                                 shape = RoundedCornerShape(34.dp),
@@ -85,7 +83,7 @@ internal fun HomeScreen(
                         Text("Your Story", color = homeMuted, style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                items(state.content.stores.ifEmpty { seedStores() }) { story ->
+                items(state.content.stores) { story ->
                     Column(
                         modifier =
                             Modifier.clickable {
@@ -150,7 +148,7 @@ internal fun HomeScreen(
                 TextButton(onClick = { state.selectTab(NotWhatTab.Bargains) }) { Text("View All", color = homeAccent) }
             }
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(state.content.reels.ifEmpty { seedReels() }) { reel ->
+                items(state.content.reels) { reel ->
                     ElevatedCard(
                         modifier =
                             Modifier
@@ -203,7 +201,7 @@ internal fun HomeScreen(
                 TextButton(onClick = actions.onSearchTap) { Text("See More", color = homeAccent) }
             }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                state.content.products.ifEmpty { seedProducts() }.chunked(2).forEach { rowProducts ->
+                state.content.products.chunked(2).forEach { rowProducts ->
                     Row(horizontalArrangement = Arrangement.spacedBy(BuyerUiTokens.cardGap), modifier = Modifier.fillMaxWidth()) {
                         rowProducts.forEach { product ->
                             ElevatedCard(
@@ -244,7 +242,7 @@ internal fun HomeScreen(
         item {
             Text("Shop by Category", style = MaterialTheme.typography.titleMedium, color = homeText)
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                state.content.categories.ifEmpty { PreviewContent.categories }.chunked(2).forEach { rowCategories ->
+                state.content.categories.chunked(2).forEach { rowCategories ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                         rowCategories.forEach { category ->
                             Surface(

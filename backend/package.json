@@ -9,6 +9,7 @@
     "start": "node src/server.js",
     "seed": "node src/database/seed.js",
     "seed:pickup-addresses": "node scripts/backfill-pickup-addresses.js",
+    "migrate:media-proxy": "node scripts/backfill-media-proxy-urls.js",
     "seed:admin": "node scripts/seed-admin.js",
     "smoke:product-reel-contract": "node scripts/product-reel-contract-smoke.js",
     "checklist:staging": "bash scripts/staging-checklist-smoke.sh",
@@ -26,7 +27,9 @@
   ],
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-mediaconvert": "^3.1102.0",
     "@aws-sdk/client-s3": "^3.893.0",
+    "@aws-sdk/s3-request-presigner": "^3.1102.0",
     "axios": "^1.17.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
@@ -44,6 +47,7 @@
     "multer": "^2.1.1",
     "nodemailer": "^8.0.10",
     "razorpay": "^2.9.6",
+    "sharp": "^0.35.3",
     "streamifier": "^0.1.1"
   },
   "devDependencies": {

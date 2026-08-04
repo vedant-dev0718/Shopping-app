@@ -70,6 +70,7 @@ fun BuyerReturnsContentScreen(
 
     val analytics = state.returnsAnalyticsTracker
     val analyticsContext = state.returnsAnalyticsContext(screenName = "BuyerReturns", sourceSurface = "returns_list")
+    val ordersErrorMessage = state.transaction.ordersErrorMessage
 
     val eligibleOrders = state.transaction.orders.filter { it.status.lowercase() in setOf("delivered", "completed") }
     val selectedReturn = state.buyerReturns.firstOrNull { it.id == selectedReturnId } ?: state.buyerReturns.firstOrNull()
@@ -139,6 +140,25 @@ fun BuyerReturnsContentScreen(
                                     scope.launch { state.loadBuyerReturns() }
                                 },
                         )
+                    }
+                }
+            }
+        }
+
+        if (!ordersErrorMessage.isNullOrBlank()) {
+            item {
+                Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Orders unavailable", color = text, fontWeight = FontWeight.Bold)
+                        Text(ordersErrorMessage, color = muted, style = MaterialTheme.typography.bodySmall)
+                        TextButton(
+                            onClick = {
+                                val token = state.currentSession?.authToken ?: return@TextButton
+                                scope.launch { state.transaction.loadOrders(token) }
+                            },
+                        ) {
+                            Text("Retry orders fetch", color = accent)
+                        }
                     }
                 }
             }

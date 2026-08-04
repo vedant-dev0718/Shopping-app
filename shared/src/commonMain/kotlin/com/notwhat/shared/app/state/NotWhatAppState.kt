@@ -160,8 +160,8 @@ class NotWhatAppState(
     }
 
     fun continueWithSelectedRole() {
-        authState.signInMockRole(selectedRole)
-        routeAuthenticatedUser(selectedRole)
+        authState.selectedMockRole = selectedRole
+        entryStage = AppEntryStage.Auth
     }
 
     fun routeAuthenticatedUser(role: UserRole) {

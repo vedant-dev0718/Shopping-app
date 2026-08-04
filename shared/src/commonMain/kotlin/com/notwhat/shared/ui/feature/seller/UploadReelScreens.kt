@@ -81,10 +81,6 @@ internal fun UploadReelScreen(
 
     val sellerProducts =
         state.sellerContent.products
-            .ifEmpty {
-                com.notwhat.shared.catalog
-                    .seedProducts()
-            }
 
     val selectedProducts = sellerProducts.filter { selectedProductIds.contains(it.id) }
 

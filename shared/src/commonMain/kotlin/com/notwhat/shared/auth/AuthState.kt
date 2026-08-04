@@ -11,7 +11,6 @@ import com.notwhat.shared.di.ServiceLocator
 import com.notwhat.shared.domain.auth.AuthUseCase
 import com.notwhat.shared.session.UserRole
 import com.notwhat.shared.session.UserSession
-import com.notwhat.shared.session.seedSessionForRole
 import com.notwhat.shared.util.QaClockFormatter
 
 enum class AuthDestination {
@@ -109,56 +108,72 @@ class AuthState(
     val isBuyerPasswordValid: Boolean get() = isPasswordValid(buyerPassword)
 
     val canSubmitBuyerSignup: Boolean
-        get() = buyerName.trim().isNotEmpty() && buyerEmail.trim().isNotEmpty() &&
-            buyerPhone.trim().isNotEmpty() && buyerAddress.trim().isNotEmpty() &&
-            isBuyerPasswordValid && !isLoading
+        get() =
+            buyerName.trim().isNotEmpty() && buyerEmail.trim().isNotEmpty() &&
+                buyerPhone.trim().isNotEmpty() && buyerAddress.trim().isNotEmpty() &&
+                isBuyerPasswordValid && !isLoading
 
     val isSellerPasswordValid: Boolean get() = isPasswordValid(sellerPassword)
 
     val canSubmitSellerSignup: Boolean
-        get() = sellerName.trim().isNotEmpty() && sellerEmail.trim().isNotEmpty() &&
-            sellerPhone.trim().isNotEmpty() && sellerStoreName.trim().isNotEmpty() &&
-            sellerStoreCategory.trim().isNotEmpty() && sellerLocality.trim().isNotEmpty() &&
-            sellerCity.trim().isNotEmpty() && sellerState.trim().isNotEmpty() &&
-            sellerPincode.trim().isNotEmpty() && sellerSpecialtyRegion.trim().isNotEmpty() &&
-            sellerStoreDescription.trim().isNotEmpty() && isSellerPasswordValid && !isLoading
+        get() =
+            sellerName.trim().isNotEmpty() && sellerEmail.trim().isNotEmpty() &&
+                sellerPhone.trim().isNotEmpty() && sellerStoreName.trim().isNotEmpty() &&
+                sellerStoreCategory.trim().isNotEmpty() && sellerLocality.trim().isNotEmpty() &&
+                sellerCity.trim().isNotEmpty() && sellerState.trim().isNotEmpty() &&
+                sellerPincode.trim().isNotEmpty() && sellerSpecialtyRegion.trim().isNotEmpty() &&
+                sellerStoreDescription.trim().isNotEmpty() && isSellerPasswordValid && !isLoading
 
     val requiresSellerProfileSetup: Boolean
         get() = currentSession?.requiresSellerProfileSetup == true
 
     val canCompleteSellerProfileSetup: Boolean
-        get() = sellerStoreName.trim().isNotEmpty() &&
-            sellerStoreCategory.trim().isNotEmpty() &&
-            sellerCity.trim().isNotEmpty() &&
-            sellerState.trim().isNotEmpty() &&
-            sellerSpecialtyRegion.trim().isNotEmpty() &&
-            sellerStoreDescription.trim().isNotEmpty() && !isLoading
+        get() =
+            sellerStoreName.trim().isNotEmpty() &&
+                sellerStoreCategory.trim().isNotEmpty() &&
+                sellerCity.trim().isNotEmpty() &&
+                sellerState.trim().isNotEmpty() &&
+                sellerSpecialtyRegion.trim().isNotEmpty() &&
+                sellerStoreDescription.trim().isNotEmpty() && !isLoading
 
     val canVerifySignup: Boolean get() = verificationCode.trim().length == 6 && !isLoading
     val canSendResetCode: Boolean get() = forgotEmail.trim().isNotEmpty() && !isLoading
     val canResetPassword: Boolean
-        get() = resetOtp.trim().length == 6 && resetNewPassword.isNotEmpty() &&
-            resetConfirmPassword.isNotEmpty() && !isLoading
+        get() =
+            resetOtp.trim().length == 6 && resetNewPassword.isNotEmpty() &&
+                resetConfirmPassword.isNotEmpty() && !isLoading
     val canChangePassword: Boolean
-        get() = changePasswordCurrent.isNotEmpty() && isPasswordValid(changePasswordNew) &&
-            changePasswordNew == changePasswordConfirm && !isLoading
+        get() =
+            changePasswordCurrent.isNotEmpty() && isPasswordValid(changePasswordNew) &&
+                changePasswordNew == changePasswordConfirm && !isLoading
 
     init {
-        val savedMode = persistence.loadBackendMode()
-        config.setBackendMode(savedMode)
-        backendMode = savedMode
+        config.setBackendMode(BackendFlowMode.LIVE)
+        backendMode = BackendFlowMode.LIVE
+        persistence.saveBackendMode(BackendFlowMode.LIVE)
         currentSession = persistence.loadSession()
     }
 
     fun updateBackendMode(mode: BackendFlowMode) {
-        config.setBackendMode(mode)
-        backendMode = mode
-        persistence.saveBackendMode(mode)
+        config.setBackendMode(BackendFlowMode.LIVE)
+        backendMode = BackendFlowMode.LIVE
+        persistence.saveBackendMode(BackendFlowMode.LIVE)
     }
 
-    fun openBuyerSignup() { clearMessages(); destination = AuthDestination.BuyerSignup }
-    fun openSellerSignup() { clearMessages(); destination = AuthDestination.SellerSignup }
-    fun openForgotPassword() { clearMessages(); destination = AuthDestination.ForgotPassword }
+    fun openBuyerSignup() {
+        clearMessages()
+        destination = AuthDestination.BuyerSignup
+    }
+
+    fun openSellerSignup() {
+        clearMessages()
+        destination = AuthDestination.SellerSignup
+    }
+
+    fun openForgotPassword() {
+        clearMessages()
+        destination = AuthDestination.ForgotPassword
+    }
 
     fun backToLogin() {
         clearMessages()
@@ -177,12 +192,14 @@ class AuthState(
         destination = AuthDestination.Login
     }
 
-    fun clearSocialAuthDebugStatus() { socialAuthDebugStatus = null }
+    fun clearSocialAuthDebugStatus() {
+        socialAuthDebugStatus = null
+    }
 
     fun signInMockRole(role: UserRole) {
         selectedMockRole = role
-        persistSession(seedSessionForRole(role))
-        clearMessages()
+        destination = AuthDestination.Login
+        errorMessage = "Demo sign-in has been removed. Please sign in with your account."
     }
 
     // ------------------------------------------------------------------
@@ -190,14 +207,18 @@ class AuthState(
     // ------------------------------------------------------------------
 
     suspend fun submitLogin() {
-        if (!canLogin) { errorMessage = "Enter your email and password to continue."; return }
+        if (!canLogin) {
+            errorMessage = "Enter your email and password to continue."
+            return
+        }
         runLoading {
-            useCase.login(
-                email = loginEmail.trim(),
-                password = loginPassword,
-                isAdmin = loginAsAdmin,
-                selectedRole = if (loginAsAdmin) UserRole.Admin else selectedMockRole,
-            ).foldIntoState()
+            useCase
+                .login(
+                    email = loginEmail.trim(),
+                    password = loginPassword,
+                    isAdmin = loginAsAdmin,
+                    selectedRole = if (loginAsAdmin) UserRole.Admin else selectedMockRole,
+                ).foldIntoState()
         }
     }
 
@@ -205,8 +226,11 @@ class AuthState(
         val role = currentSocialRole()
         runSocialLoading("Google", role) {
             val payload = PlatformSocialAuthBridge.signInWithGoogle(role)
-            updateSocialAuthDebugStatus("Google", SocialAuthOutcome.CredentialReturned,
-                "Platform credential returned (token chars: ${payload.idToken.length}).")
+            updateSocialAuthDebugStatus(
+                "Google",
+                SocialAuthOutcome.CredentialReturned,
+                "Platform credential returned (token chars: ${payload.idToken.length}).",
+            )
             useCase.continueWithGoogle(payload.idToken, role).foldIntoState()
         }
     }
@@ -215,8 +239,11 @@ class AuthState(
         val role = currentSocialRole()
         runSocialLoading("Apple", role) {
             val payload = PlatformSocialAuthBridge.signInWithApple(role)
-            updateSocialAuthDebugStatus("Apple", SocialAuthOutcome.CredentialReturned,
-                "Platform credential returned (token chars: ${payload.idToken.length}).")
+            updateSocialAuthDebugStatus(
+                "Apple",
+                SocialAuthOutcome.CredentialReturned,
+                "Platform credential returned (token chars: ${payload.idToken.length}).",
+            )
             useCase.continueWithApple(payload.idToken, payload.fullName, role).foldIntoState()
         }
     }
@@ -227,19 +254,26 @@ class AuthState(
             return
         }
         runLoading {
-            val result = useCase.startBuyerSignup(
-                BuyerSignupRequestDto(
-                    name = buyerName.trim(), email = buyerEmail.trim(), password = buyerPassword,
-                    phone = buyerPhone.trim(), address = buyerAddress.trim(),
-                ),
-            )
+            val result =
+                useCase.startBuyerSignup(
+                    BuyerSignupRequestDto(
+                        name = buyerName.trim(),
+                        email = buyerEmail.trim(),
+                        password = buyerPassword,
+                        phone = buyerPhone.trim(),
+                        address = buyerAddress.trim(),
+                    ),
+                )
             when (result) {
                 is NetworkResult.Success -> {
                     pendingVerification = result.data
                     infoMessage = "Verification code sent to ${buyerEmail.trim()}."
                     destination = AuthDestination.VerifySignup
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
@@ -250,32 +284,48 @@ class AuthState(
             return
         }
         runLoading {
-            val result = useCase.startSellerSignup(
-                SellerSignupRequestDto(
-                    name = sellerName.trim(), email = sellerEmail.trim(), password = sellerPassword,
-                    phone = sellerPhone.trim(), storeName = sellerStoreName.trim(),
-                    storeCategory = sellerStoreCategory.trim(), locality = sellerLocality.trim(),
-                    city = sellerCity.trim(), state = sellerState.trim(), pincode = sellerPincode.trim(),
-                    country = sellerCountry.trim().ifEmpty { "India" },
-                    specialtyRegion = sellerSpecialtyRegion.trim(),
-                    storeDescription = sellerStoreDescription.trim(),
-                ),
-            )
+            val result =
+                useCase.startSellerSignup(
+                    SellerSignupRequestDto(
+                        name = sellerName.trim(),
+                        email = sellerEmail.trim(),
+                        password = sellerPassword,
+                        phone = sellerPhone.trim(),
+                        storeName = sellerStoreName.trim(),
+                        storeCategory = sellerStoreCategory.trim(),
+                        locality = sellerLocality.trim(),
+                        city = sellerCity.trim(),
+                        state = sellerState.trim(),
+                        pincode = sellerPincode.trim(),
+                        country = sellerCountry.trim().ifEmpty { "India" },
+                        specialtyRegion = sellerSpecialtyRegion.trim(),
+                        storeDescription = sellerStoreDescription.trim(),
+                    ),
+                )
             when (result) {
                 is NetworkResult.Success -> {
                     pendingVerification = result.data
                     infoMessage = "Verification code sent to ${sellerEmail.trim()}."
                     destination = AuthDestination.VerifySignup
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
 
     suspend fun verifySignup() {
         val verification = pendingVerification
-        if (verification == null) { errorMessage = "Start signup again to get a verification code."; return }
-        if (!canVerifySignup) { errorMessage = "Enter the 6-digit code from your email."; return }
+        if (verification == null) {
+            errorMessage = "Start signup again to get a verification code."
+            return
+        }
+        if (!canVerifySignup) {
+            errorMessage = "Enter the 6-digit code from your email."
+            return
+        }
         runLoading {
             when (val result = useCase.verifySignupEmail(verification, verificationCode.trim())) {
                 is NetworkResult.Success -> {
@@ -284,7 +334,10 @@ class AuthState(
                     verificationCode = ""
                     destination = AuthDestination.Login
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
@@ -298,7 +351,10 @@ class AuthState(
                     verificationCode = ""
                     infoMessage = "A new verification code was sent."
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
@@ -307,45 +363,69 @@ class AuthState(
         clearMessages()
         pendingVerification = null
         verificationCode = ""
-        destination = if (sellerEmail.trim().isNotEmpty() && sellerStoreName.trim().isNotEmpty()) {
-            AuthDestination.SellerSignup
-        } else {
-            AuthDestination.BuyerSignup
-        }
+        destination =
+            if (sellerEmail.trim().isNotEmpty() && sellerStoreName.trim().isNotEmpty()) {
+                AuthDestination.SellerSignup
+            } else {
+                AuthDestination.BuyerSignup
+            }
     }
 
     suspend fun sendResetCode() {
-        if (!canSendResetCode) { errorMessage = "Enter your email to receive a reset code."; return }
+        if (!canSendResetCode) {
+            errorMessage = "Enter your email to receive a reset code."
+            return
+        }
         runLoading {
             when (val result = useCase.sendResetCode(forgotEmail.trim())) {
                 is NetworkResult.Success -> {
                     infoMessage = "We sent a 6-digit reset code to ${result.data.email}."
                     destination = AuthDestination.ResetPassword
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
 
     suspend fun resetPassword() {
-        if (!canResetPassword) { errorMessage = "Enter the 6-digit code and your new password."; return }
-        if (resetNewPassword != resetConfirmPassword) { errorMessage = "Passwords do not match."; return }
+        if (!canResetPassword) {
+            errorMessage = "Enter the 6-digit code and your new password."
+            return
+        }
+        if (resetNewPassword != resetConfirmPassword) {
+            errorMessage = "Passwords do not match."
+            return
+        }
         runLoading {
             when (val result = useCase.resetPassword(forgotEmail.trim(), resetOtp.trim(), resetNewPassword)) {
                 is NetworkResult.Success -> {
                     infoMessage = "Password reset successfully. Log in with your new password."
-                    resetOtp = ""; resetNewPassword = ""; resetConfirmPassword = ""
+                    resetOtp = ""
+                    resetNewPassword = ""
+                    resetConfirmPassword = ""
                     destination = AuthDestination.Login
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
 
     suspend fun submitChangePassword() {
         val token = currentSession?.authToken
-        if (token.isNullOrBlank()) { errorMessage = "You must be signed in to change your password."; return }
-        if (!canChangePassword) { errorMessage = "Enter your current password and a matching new password (min 8 chars)."; return }
+        if (token.isNullOrBlank()) {
+            errorMessage = "You must be signed in to change your password."
+            return
+        }
+        if (!canChangePassword) {
+            errorMessage = "Enter your current password and a matching new password (min 8 chars)."
+            return
+        }
         runLoading {
             when (val result = useCase.changePassword(token, changePasswordCurrent, changePasswordNew)) {
                 is NetworkResult.Success -> {
@@ -354,7 +434,10 @@ class AuthState(
                     changePasswordConfirm = ""
                     infoMessage = "Password changed successfully."
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
@@ -374,27 +457,32 @@ class AuthState(
 
         runLoading {
             when (
-                val result = useCase.completeSellerProfile(
-                    authToken = token,
-                    request = CompleteSellerProfileRequestDto(
-                        storeName = sellerStoreName.trim(),
-                        storeCategory = sellerStoreCategory.trim(),
-                        locality = sellerLocality.trim(),
-                        city = sellerCity.trim(),
-                        state = sellerState.trim(),
-                        pincode = sellerPincode.trim(),
-                        country = sellerCountry.trim().ifEmpty { "India" },
-                        specialtyRegion = sellerSpecialtyRegion.trim(),
-                        storeDescription = sellerStoreDescription.trim(),
-                        phone = sellerPhone.trim().ifEmpty { null },
-                    ),
-                )
+                val result =
+                    useCase.completeSellerProfile(
+                        authToken = token,
+                        request =
+                            CompleteSellerProfileRequestDto(
+                                storeName = sellerStoreName.trim(),
+                                storeCategory = sellerStoreCategory.trim(),
+                                locality = sellerLocality.trim(),
+                                city = sellerCity.trim(),
+                                state = sellerState.trim(),
+                                pincode = sellerPincode.trim(),
+                                country = sellerCountry.trim().ifEmpty { "India" },
+                                specialtyRegion = sellerSpecialtyRegion.trim(),
+                                storeDescription = sellerStoreDescription.trim(),
+                                phone = sellerPhone.trim().ifEmpty { null },
+                            ),
+                    )
             ) {
                 is NetworkResult.Success -> {
                     persistSession(result.data)
                     infoMessage = "Seller profile setup completed."
                 }
-                is NetworkResult.Failure -> errorMessage = result.error.userMessage()
+
+                is NetworkResult.Failure -> {
+                    errorMessage = result.error.userMessage()
+                }
             }
         }
     }
@@ -415,19 +503,29 @@ class AuthState(
         }
     }
 
-    private suspend fun runSocialLoading(provider: String, role: UserRole, block: suspend () -> Unit) {
+    private suspend fun runSocialLoading(
+        provider: String,
+        role: UserRole,
+        block: suspend () -> Unit,
+    ) {
         isLoading = true
         errorMessage = null
-        updateSocialAuthDebugStatus(provider, SocialAuthOutcome.Started,
-            "Started in ${backendMode.rawValue} mode as ${role.title}.")
+        updateSocialAuthDebugStatus(
+            provider,
+            SocialAuthOutcome.Started,
+            "Started in ${backendMode.rawValue} mode as ${role.title}.",
+        )
         try {
             block()
             updateSocialAuthDebugStatus(provider, SocialAuthOutcome.Success, "Backend exchange succeeded.")
         } catch (e: Throwable) {
             val msg = e.message ?: "Something went wrong. Please try again."
             errorMessage = msg
-            updateSocialAuthDebugStatus(provider,
-                if (isCancellationMessage(msg)) SocialAuthOutcome.Cancelled else SocialAuthOutcome.Failed, msg)
+            updateSocialAuthDebugStatus(
+                provider,
+                if (isCancellationMessage(msg)) SocialAuthOutcome.Cancelled else SocialAuthOutcome.Failed,
+                msg,
+            )
         } finally {
             isLoading = false
         }
@@ -441,9 +539,16 @@ class AuthState(
         }
     }
 
-    private fun clearMessages() { infoMessage = null; errorMessage = null }
+    private fun clearMessages() {
+        infoMessage = null
+        errorMessage = null
+    }
 
-    private fun updateSocialAuthDebugStatus(provider: String, outcome: SocialAuthOutcome, detail: String) {
+    private fun updateSocialAuthDebugStatus(
+        provider: String,
+        outcome: SocialAuthOutcome,
+        detail: String,
+    ) {
         socialAuthDebugStatus = "[t=${QaClockFormatter.nowHms()}][$provider][$outcome] $detail"
     }
 
@@ -454,11 +559,12 @@ class AuthState(
         persistence.saveSession(session)
     }
 
-    private fun currentSocialRole(): UserRole = when (destination) {
-        AuthDestination.SellerSignup -> UserRole.Seller
-        AuthDestination.BuyerSignup -> UserRole.Buyer
-        else -> if (loginAsAdmin) UserRole.Admin else selectedMockRole
-    }
+    private fun currentSocialRole(): UserRole =
+        when (destination) {
+            AuthDestination.SellerSignup -> UserRole.Seller
+            AuthDestination.BuyerSignup -> UserRole.Buyer
+            else -> if (loginAsAdmin) UserRole.Admin else selectedMockRole
+        }
 
     private fun isPasswordValid(password: String) =
         password.length >= 8 &&

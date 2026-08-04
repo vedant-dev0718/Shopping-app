@@ -14,7 +14,7 @@ import platform.posix.memcpy
 
 actual object PlatformMediaFileReader {
     actual fun readBytes(uri: String): ByteArray? {
-        val url = NSURL.URLWithString(uri) ?: NSURL.fileURLWithPath(uri)
+        val url = parseUrl(uri) ?: NSURL.fileURLWithPath(uri)
         val data = NSData.dataWithContentsOfURL(url) ?: return null
         return data.toByteArray()
     }
@@ -23,7 +23,7 @@ actual object PlatformMediaFileReader {
         uri: String,
         fallback: String,
     ): String {
-        val fileName = NSURL.URLWithString(uri)?.lastPathComponent
+        val fileName = parseUrl(uri)?.lastPathComponent ?: NSURL.fileURLWithPath(uri).lastPathComponent
         if (!fileName.isNullOrBlank()) {
             return fileName
         }
@@ -34,7 +34,7 @@ actual object PlatformMediaFileReader {
         uri: String,
         fallback: String,
     ): String {
-        val extension = NSURL.URLWithString(uri)?.pathExtension?.lowercase() ?: return fallback
+        val extension = (parseUrl(uri)?.pathExtension ?: NSURL.fileURLWithPath(uri).pathExtension)?.lowercase() ?: return fallback
         return when (extension) {
             "mp4" -> "video/mp4"
             "mov" -> "video/quicktime"
@@ -42,10 +42,19 @@ actual object PlatformMediaFileReader {
             "jpg", "jpeg" -> "image/jpeg"
             "png" -> "image/png"
             "webp" -> "image/webp"
+            "heic" -> "image/heic"
+            "heif" -> "image/heif"
             else -> fallback
         }
     }
 }
+
+private fun parseUrl(uri: String): NSURL? =
+    if (uri.startsWith("file://")) {
+        NSURL.URLWithString(uri)
+    } else {
+        null
+    }
 
 @OptIn(ExperimentalForeignApi::class)
 private fun NSData.toByteArray(): ByteArray {

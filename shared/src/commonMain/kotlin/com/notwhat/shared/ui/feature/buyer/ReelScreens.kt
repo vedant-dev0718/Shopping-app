@@ -37,9 +37,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.StoreDto
-import com.notwhat.shared.catalog.seedProducts
-import com.notwhat.shared.catalog.seedReels
-import com.notwhat.shared.catalog.seedStores
 import kotlinx.coroutines.launch
 
 @Composable
@@ -52,12 +49,11 @@ internal fun BargainsScreen(
     val reelsBg = NotWhatColors.background
     val reelsAccent = NotWhatAuthTokens.accent
     var reelTab by remember { mutableStateOf("Following") }
-    val activeReels = state.content.reels.ifEmpty { seedReels() }
+    val activeReels = state.content.reels
 
     fun findStoreForReel(reel: com.notwhat.shared.catalog.ReelDto): StoreDto? =
         state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
             ?: state.content.stores.firstOrNull()
-            ?: seedStores().firstOrNull()
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(reelsBg),
@@ -240,7 +236,6 @@ internal fun ReelDetailScreen(
             .ifEmpty {
                 state.content.products
                     .take(3)
-                    .ifEmpty { seedProducts().take(3) }
             }
 
     LaunchedEffect(reel.id) {

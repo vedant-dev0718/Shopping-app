@@ -5,13 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.notwhat.shared.address.AddressDto
 import com.notwhat.shared.address.AddressRepository
-import com.notwhat.shared.address.seedDeliveryAddresses
 import com.notwhat.shared.cart.CartDto
-import com.notwhat.shared.cart.seedCart
+import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.domain.cart.CartUseCase
 import com.notwhat.shared.domain.order.OrderUseCase
 import com.notwhat.shared.order.OrderDto
-import com.notwhat.shared.order.seedOrders
 
 internal class BuyerTransactionState(
     private val cartUseCase: CartUseCase,
@@ -26,23 +24,59 @@ internal class BuyerTransactionState(
         private set
     var isCartLoading by mutableStateOf(false)
         private set
+    var cartErrorMessage by mutableStateOf<String?>(null)
+        private set
     var isOrdersLoading by mutableStateOf(false)
+        private set
+    var ordersErrorMessage by mutableStateOf<String?>(null)
+        private set
+    var addressesErrorMessage by mutableStateOf<String?>(null)
         private set
 
     suspend fun loadCart(bearerToken: String) {
         isCartLoading = true
-        cart = cartUseCase.getCart(bearerToken).getOrNull() ?: seedCart()
+        cartErrorMessage = null
+        when (val result = cartUseCase.getCart(bearerToken)) {
+            is NetworkResult.Success -> {
+                cart = result.data
+            }
+
+            is NetworkResult.Failure -> {
+                cart = null
+                cartErrorMessage = result.error.userMessage()
+            }
+        }
         isCartLoading = false
     }
 
     suspend fun loadOrders(bearerToken: String) {
         isOrdersLoading = true
-        orders = orderUseCase.listOrders(bearerToken).getOrNull() ?: seedOrders()
+        ordersErrorMessage = null
+        when (val result = orderUseCase.listOrders(bearerToken)) {
+            is NetworkResult.Success -> {
+                orders = result.data
+            }
+
+            is NetworkResult.Failure -> {
+                orders = emptyList()
+                ordersErrorMessage = result.error.userMessage()
+            }
+        }
         isOrdersLoading = false
     }
 
     suspend fun loadAddresses(bearerToken: String) {
-        addresses = addressRepository.listDeliveryAddresses(bearerToken).getOrNull() ?: seedDeliveryAddresses()
+        addressesErrorMessage = null
+        when (val result = addressRepository.listDeliveryAddresses(bearerToken)) {
+            is NetworkResult.Success -> {
+                addresses = result.data
+            }
+
+            is NetworkResult.Failure -> {
+                addresses = emptyList()
+                addressesErrorMessage = result.error.userMessage()
+            }
+        }
     }
 
     suspend fun load(bearerToken: String) {
@@ -53,6 +87,15 @@ internal class BuyerTransactionState(
 
     /** Re-fetches cart after a mutation (add/remove/update). */
     suspend fun refreshCart(bearerToken: String) {
-        cart = cartUseCase.getCart(bearerToken).getOrNull() ?: cart
+        cartErrorMessage = null
+        when (val result = cartUseCase.getCart(bearerToken)) {
+            is NetworkResult.Success -> {
+                cart = result.data
+            }
+
+            is NetworkResult.Failure -> {
+                cartErrorMessage = result.error.userMessage()
+            }
+        }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -101,6 +102,7 @@ internal fun ProductOnboardingScreen(
     var tags by remember { mutableStateOf(listOf<String>()) }
     var newTag by remember { mutableStateOf("") }
     var imageUrls by remember { mutableStateOf(listOf<String>()) }
+    var imagePreviewUrls by remember { mutableStateOf(listOf<String>()) }
     var isLoading by remember { mutableStateOf(false) }
     var isUploadingImage by remember { mutableStateOf(false) }
     var submitError by remember { mutableStateOf<String?>(null) }
@@ -211,8 +213,15 @@ internal fun ProductOnboardingScreen(
 
                     1 -> {
                         ProductOnboardingMediaStep(
-                            imageUrls = imageUrls,
-                            onImagesChange = { imageUrls = it },
+                            imageUrls = imagePreviewUrls,
+                            onRemoveImageAt = { index ->
+                                if (index in imagePreviewUrls.indices) {
+                                    imagePreviewUrls = imagePreviewUrls.filterIndexed { itemIndex, _ -> itemIndex != index }
+                                }
+                                if (index in imageUrls.indices) {
+                                    imageUrls = imageUrls.filterIndexed { itemIndex, _ -> itemIndex != index }
+                                }
+                            },
                             isUploadingImage = isUploadingImage,
                             surface = surface,
                             text = text,
@@ -236,6 +245,7 @@ internal fun ProductOnboardingScreen(
                                             isUploadingImage = true
                                             submitError = null
                                             val uploadedUrls = mutableListOf<String>()
+                                            val previewUrls = mutableListOf<String>()
 
                                             for (uri in uris) {
                                                 val imageBytes = PlatformMediaFileReader.readBytes(uri)
@@ -255,6 +265,7 @@ internal fun ProductOnboardingScreen(
                                                 when (uploadResult) {
                                                     is NetworkResult.Success -> {
                                                         uploadedUrls.add(uploadResult.data.imageUrl)
+                                                        previewUrls.add(uri)
                                                     }
 
                                                     is NetworkResult.Failure -> {
@@ -267,42 +278,42 @@ internal fun ProductOnboardingScreen(
 
                                             isUploadingImage = false
                                             imageUrls = imageUrls + uploadedUrls
+                                            imagePreviewUrls = imagePreviewUrls + previewUrls
                                         }
                                     }
                                 } else {
                                     // Fallback to single image picker
                                     PlatformImagePicker.launch { uri ->
-                                        if (uri.isNullOrBlank()) {
-                                            return@launch
-                                        }
+                                        if (!uri.isNullOrBlank()) {
+                                            scope.launch uploadLaunch@{
+                                                isUploadingImage = true
+                                                submitError = null
 
-                                        scope.launch {
-                                            isUploadingImage = true
-                                            submitError = null
-
-                                            val imageBytes = PlatformMediaFileReader.readBytes(uri)
-                                            if (imageBytes == null) {
-                                                isUploadingImage = false
-                                                submitError = "Could not read the selected image. Please try again."
-                                                return@launch
-                                            }
-
-                                            val uploadResult =
-                                                state.sellerContent.uploadImage(
-                                                    data = imageBytes,
-                                                    fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
-                                                    bearerToken = token,
-                                                    mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
-                                                )
-
-                                            isUploadingImage = false
-                                            when (uploadResult) {
-                                                is NetworkResult.Success -> {
-                                                    imageUrls = imageUrls + uploadResult.data.imageUrl
+                                                val imageBytes = PlatformMediaFileReader.readBytes(uri)
+                                                if (imageBytes == null) {
+                                                    isUploadingImage = false
+                                                    submitError = "Could not read the selected image. Please try again."
+                                                    return@uploadLaunch
                                                 }
 
-                                                is NetworkResult.Failure -> {
-                                                    submitError = uploadResult.error.userMessage()
+                                                val uploadResult =
+                                                    state.sellerContent.uploadImage(
+                                                        data = imageBytes,
+                                                        fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
+                                                        bearerToken = token,
+                                                        mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
+                                                    )
+
+                                                isUploadingImage = false
+                                                when (uploadResult) {
+                                                    is NetworkResult.Success -> {
+                                                        imageUrls = imageUrls + uploadResult.data.imageUrl
+                                                        imagePreviewUrls = imagePreviewUrls + uri
+                                                    }
+
+                                                    is NetworkResult.Failure -> {
+                                                        submitError = uploadResult.error.userMessage()
+                                                    }
                                                 }
                                             }
                                         }
@@ -332,7 +343,6 @@ internal fun ProductOnboardingScreen(
                             onRemoveTag = { tagToRemove -> tags = tags.filter { it != tagToRemove } },
                             surface = surface,
                             text = text,
-                            muted = muted,
                             accent = accent,
                         )
                     }
@@ -345,7 +355,7 @@ internal fun ProductOnboardingScreen(
                             region = region,
                             price = price,
                             stock = stock,
-                            imageUrl = imageUrls.firstOrNull(),
+                            imageUrl = imagePreviewUrls.firstOrNull() ?: imageUrls.firstOrNull(),
                             tags = tags,
                             surface = surface,
                             text = text,
@@ -494,7 +504,6 @@ private fun ProductOnboardingBasicInfoStep(
                 selectedCategory = category,
                 onCategorySelect = onCategoryChange,
                 categories = PRODUCT_CATEGORIES,
-                accent = accent,
                 text = text,
                 muted = muted,
             )
@@ -515,7 +524,6 @@ private fun ProductOnboardingBasicInfoStep(
                 selectedRegion = region,
                 onRegionSelect = onRegionChange,
                 regions = PRODUCT_REGIONS,
-                accent = accent,
                 text = text,
                 muted = muted,
             )
@@ -537,7 +545,6 @@ private fun CategoryDropdown(
     selectedCategory: String,
     onCategorySelect: (String) -> Unit,
     categories: List<String>,
-    accent: Color,
     text: Color,
     muted: Color,
 ) {
@@ -580,7 +587,6 @@ private fun RegionDropdown(
     selectedRegion: String,
     onRegionSelect: (String) -> Unit,
     regions: List<String>,
-    accent: Color,
     text: Color,
     muted: Color,
 ) {
@@ -621,7 +627,7 @@ private fun RegionDropdown(
 @Composable
 private fun ProductOnboardingMediaStep(
     imageUrls: List<String>,
-    onImagesChange: (List<String>) -> Unit,
+    onRemoveImageAt: (Int) -> Unit,
     isUploadingImage: Boolean,
     surface: Color,
     text: Color,
@@ -651,7 +657,7 @@ private fun ProductOnboardingMediaStep(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    items(imageUrls) { imageUrl ->
+                    itemsIndexed(imageUrls) { index, imageUrl ->
                         Box(
                             modifier =
                                 Modifier
@@ -670,7 +676,7 @@ private fun ProductOnboardingMediaStep(
                                     Modifier
                                         .align(Alignment.TopEnd)
                                         .background(Color.Red, shape = RoundedCornerShape(50.dp))
-                                        .clickable { onImagesChange(imageUrls.filter { it != imageUrl }) }
+                                        .clickable { onRemoveImageAt(index) }
                                         .padding(4.dp),
                             ) {
                                 Text("✕", color = Color.White, fontWeight = FontWeight.Bold)
@@ -719,7 +725,6 @@ private fun ProductOnboardingPricingStep(
     onRemoveTag: (String) -> Unit,
     surface: Color,
     text: Color,
-    muted: Color,
     accent: Color,
 ) {
     Surface(

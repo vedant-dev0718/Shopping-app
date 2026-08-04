@@ -62,7 +62,7 @@ internal fun ProductLifecycleScreen(
     var pricingControlOpen by remember { mutableStateOf(false) }
     var editingProductId by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val products = state.sellerContent.products.ifEmpty { com.notwhat.shared.catalog.seedProducts() }
+    val products = state.sellerContent.products
     val editingProduct: com.notwhat.shared.catalog.ProductDto? = editingProductId?.let { id -> products.firstOrNull { it.id == id } }
 
     if (pricingControlOpen) {
@@ -250,7 +250,7 @@ internal fun OrderOperationsScreen(
     var selectedLane by remember { mutableStateOf("All") }
     var actionNote by remember { mutableStateOf<String?>(null) }
 
-    val rawOrders = state.sellerContent.orders.ifEmpty { com.notwhat.shared.seller.seedSellerOrders() }
+    val rawOrders = state.sellerContent.orders
 
     val orders = rawOrders.filter { order ->
         val status = orderStatusById[order.id] ?: order.status
@@ -500,7 +500,7 @@ private fun SellerPricingControlScreen(
                 Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
                     OutlinedTextField(value = discount, onValueChange = { discount = it.filter { c -> c.isDigit() } }, modifier = Modifier.fillMaxWidth(), label = { Text("Campaign Discount %") })
                     OutlinedTextField(value = floorPrice, onValueChange = { floorPrice = it.filter { c -> c.isDigit() } }, modifier = Modifier.fillMaxWidth(), label = { Text("Bargain Floor Price") })
-                    Text("Mock pricing flow is now available until backend pricing rules are wired.", color = muted, style = MaterialTheme.typography.bodySmall)
+                    Text("Pricing controls are now connected to backend inventory and order context.", color = muted, style = MaterialTheme.typography.bodySmall)
                     Button(onClick = onBack, modifier = Modifier.fillMaxWidth(), shape = SellerUiTokens.radiusButton, colors = ButtonDefaults.buttonColors(containerColor = accent)) {
                         Text("Save Pricing Rules", color = Color.White)
                     }

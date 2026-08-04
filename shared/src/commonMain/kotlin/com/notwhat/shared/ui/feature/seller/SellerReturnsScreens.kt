@@ -51,45 +51,57 @@ internal fun SellerReturnsScreen(
 
     var selectedTab by remember { mutableStateOf("Requested (12)") }
     // Build return request display items from real orders with return/cancellation status
-    val liveReturnRequests = state.sellerContent.orders
-        .filter { it.status in listOf("return_requested", "cancelled", "refunded") }
-        .map { order ->
-            DemoSellerReturnRequest(
-                orderId = order.id,
-                productName = order.items.firstOrNull()?.titleSnapshot ?: "—",
-                size = "-",
-                color = "-",
-                status = "Requested",
-                reason = order.cancelReason ?: "Return requested by buyer",
-                buyerNote = "",
-                suggestedRefund = "\u20b9${order.totalAmount.toInt()}",
-                buyerPhotoCount = 0,
-            )
-        }
-    val returnRequests = liveReturnRequests.ifEmpty { PreviewContent.sellerReturnRequests }
+    val liveReturnRequests =
+        state.sellerContent.orders
+            .filter { it.status in listOf("return_requested", "cancelled", "refunded") }
+            .map { order ->
+                DemoSellerReturnRequest(
+                    orderId = order.id,
+                    productName = order.items.firstOrNull()?.titleSnapshot ?: "—",
+                    size = "-",
+                    color = "-",
+                    status = "Requested",
+                    reason = order.cancelReason ?: "Return requested by buyer",
+                    buyerNote = "",
+                    suggestedRefund = "\u20b9${order.totalAmount.toInt()}",
+                    buyerPhotoCount = 0,
+                )
+            }
+    val returnRequests = liveReturnRequests
     var selectedRequest by remember { mutableStateOf<DemoSellerReturnRequest?>(returnRequests.firstOrNull()) }
     val requestStatusById = remember { mutableStateMapOf<String, String>() }
     var actionMessage by remember { mutableStateOf<String?>(null) }
 
     val tabs = listOf("Requested (12)", "Approved (8)", "Completed (45)")
-    val filteredRequests = returnRequests.filter { request ->
-        val status = requestStatusById[request.orderId] ?: request.status
-        when (selectedTab) {
-            "Requested (12)" -> status == "Requested"
-            "Approved (8)" -> status == "Approved"
-            "Completed (45)" -> status == "Completed"
-            else -> true
+    val filteredRequests =
+        returnRequests.filter { request ->
+            val status = requestStatusById[request.orderId] ?: request.status
+            when (selectedTab) {
+                "Requested (12)" -> status == "Requested"
+                "Approved (8)" -> status == "Approved"
+                "Completed (45)" -> status == "Completed"
+                else -> true
+            }
         }
-    }
 
     Box(modifier = modifier.fillMaxSize().background(bg)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = SellerUiTokens.screenPadding, end = SellerUiTokens.screenPadding, top = SellerUiTokens.screenPadding, bottom = 24.dp),
+            contentPadding =
+                PaddingValues(
+                    start = SellerUiTokens.screenPadding,
+                    end = SellerUiTokens.screenPadding,
+                    top = SellerUiTokens.screenPadding,
+                    bottom = 24.dp,
+                ),
             verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
         ) {
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     TextButton(onClick = onBack) { Text("Back", color = accent) }
                     Text("Returns & Refunds", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                     TextButton(onClick = onOpenOrderOperations) { Text("Orders", color = accent) }
@@ -105,7 +117,16 @@ internal fun SellerReturnsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(msg, color = text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                            Text("Dismiss", color = accent, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { actionMessage = null })
+                            Text(
+                                "Dismiss",
+                                color = accent,
+                                fontWeight = FontWeight.Bold,
+                                modifier =
+                                    Modifier.clickable {
+                                        actionMessage =
+                                            null
+                                    },
+                            )
                         }
                     }
                 }
@@ -124,7 +145,11 @@ internal fun SellerReturnsScreen(
                             Text(
                                 tab,
                                 color = if (active) Color.White else muted,
-                                modifier = Modifier.padding(horizontal = SellerUiTokens.chipHorizontalPadding, vertical = SellerUiTokens.chipVerticalPadding),
+                                modifier =
+                                    Modifier.padding(
+                                        horizontal = SellerUiTokens.chipHorizontalPadding,
+                                        vertical = SellerUiTokens.chipVerticalPadding,
+                                    ),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
@@ -136,9 +161,15 @@ internal fun SellerReturnsScreen(
 
             item {
                 Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
+                    Column(
+                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
+                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+                    ) {
                         Text("Returns queue", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Manage return requests, suggested refunds, and approval flow from the seller inventory context.", color = muted)
+                        Text(
+                            "Manage return requests, suggested refunds, and approval flow from the seller inventory context.",
+                            color = muted,
+                        )
                     }
                 }
             }
@@ -150,11 +181,28 @@ internal fun SellerReturnsScreen(
                     color = surface,
                     shape = SellerUiTokens.radiusInnerCard,
                 ) {
-                    Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                    Column(
+                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
+                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top,
+                        ) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("ORDER #${request.orderId}", color = accent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                                Text(request.productName, color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "ORDER #${request.orderId}",
+                                    color = accent,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    request.productName,
+                                    color = text,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
                                 Text("Size ${request.size} • ${request.color}", color = muted, style = MaterialTheme.typography.bodySmall)
                             }
                             Surface(
@@ -171,7 +219,11 @@ internal fun SellerReturnsScreen(
                             }
                         }
 
-                        Surface(color = NotWhatColors.surfaceContainer, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Surface(
+                            color = NotWhatColors.surfaceContainer,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("Reason:", color = text, fontWeight = FontWeight.Bold)
@@ -184,7 +236,11 @@ internal fun SellerReturnsScreen(
                             }
                         }
 
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             Text("Buyer Photos (${request.buyerPhotoCount})", color = muted, style = MaterialTheme.typography.labelMedium)
                             Text("Suggested: ${request.suggestedRefund}", color = accent, fontWeight = FontWeight.Bold)
                         }
@@ -193,7 +249,11 @@ internal fun SellerReturnsScreen(
                             Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("Request details", color = text, fontWeight = FontWeight.Bold)
-                                    Text("Open this request to approve the return, reject it, or hand it back to order operations for exception handling.", color = muted, style = MaterialTheme.typography.bodySmall)
+                                    Text(
+                                        "Open this request to approve the return, reject it, or hand it back to order operations for exception handling.",
+                                        color = muted,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
                                 }
                             }
                         }
@@ -228,9 +288,20 @@ internal fun SellerReturnsScreen(
 
             item {
                 Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-                        Text("Refund policy reminders", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Approve returns when product condition is consistent with the buyer note and supported photos.", color = muted)
+                    Column(
+                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
+                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+                    ) {
+                        Text(
+                            "Refund policy reminders",
+                            color = text,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "Approve returns when product condition is consistent with the buyer note and supported photos.",
+                            color = muted,
+                        )
                         HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                         Text("Rejected requests should be routed back to order operations for exception review.", color = muted)
                     }

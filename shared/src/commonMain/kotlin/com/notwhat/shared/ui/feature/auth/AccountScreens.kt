@@ -148,11 +148,7 @@ internal fun AccountScreen(
 
         state.content.products
             .take(2)
-            .ifEmpty {
-                com.notwhat.shared.catalog
-                    .seedProducts()
-                    .take(2)
-            }.forEach { product ->
+            .forEach { product ->
                 Card(
                     modifier = Modifier.clickable { onOpenProduct(product) },
                     colors = CardDefaults.cardColors(containerColor = NotWhatColors.surfaceContainer),

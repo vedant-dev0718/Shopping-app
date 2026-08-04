@@ -83,7 +83,6 @@ internal fun SellerShellScreen(
         orders
             .groupBy { it.status }
             .map { (status, list) -> DemoSellerOrderPulse(status, list.size) }
-            .ifEmpty { listOf(DemoSellerOrderPulse("No orders yet", 0)) }
     val insights =
         listOf(
             DemoSellerInsightItem("Low stock", "${products.count { it.stock < 5 }} products need restocking.", "Review"),

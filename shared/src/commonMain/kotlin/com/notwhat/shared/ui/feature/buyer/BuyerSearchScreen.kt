@@ -46,9 +46,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.StoreDto
-import com.notwhat.shared.catalog.seedProducts
-import com.notwhat.shared.catalog.seedReels
-import com.notwhat.shared.catalog.seedStores
 import com.notwhat.shared.search.SearchFilterKind
 
 private val trendingSearchTerms = listOf(
@@ -86,7 +83,7 @@ internal fun SearchScreen(
     val searchHit = state.searchResults?.takeIf { it.query.lowercase() == normalizedQuery }
 
     val filteredProducts: List<ProductDto> = searchHit?.products
-        ?: state.content.products.ifEmpty { seedProducts() }.filter { product ->
+        ?: state.content.products.filter { product ->
             val categoryMatch = categoryFilter == null || product.category.lowercase() == categoryFilter
             val queryMatch = normalizedQuery.isBlank() ||
                 product.title.lowercase().contains(normalizedQuery) ||
@@ -95,17 +92,18 @@ internal fun SearchScreen(
             categoryMatch && queryMatch
         }
     val filteredStores: List<StoreDto> = searchHit?.stores
-        ?: state.content.stores.ifEmpty { seedStores() }.filter { store ->
+        ?: state.content.stores.filter { store ->
             normalizedQuery.isBlank() || store.storeName.lowercase().contains(normalizedQuery)
         }
-    val filteredReels = state.content.reels.ifEmpty { seedReels() }.filter { reel ->
+    val filteredReels = state.content.reels.filter { reel ->
         normalizedQuery.isBlank() ||
             reel.displayCreator.lowercase().contains(normalizedQuery) ||
             reel.displayLabel.lowercase().contains(normalizedQuery)
     }
 
     val isResultsMode = normalizedQuery.isNotBlank() || state.filters.hasActiveFilters()
-    val exploreProducts = (state.content.products.ifEmpty { seedProducts() }.let { p -> p + p }).take(6)
+    val exploreProducts = (state.content.products + state.content.products).take(6)
+    val nearbyStores = state.content.stores.take(2)
     val nearbyShops = listOf(
         Triple("The Hype Studio", "Streetwear • Bandra West", "0.8 km"),
         Triple("Curated Co.", "Lifestyle • Colaba", "1.2 km"),
@@ -148,7 +146,7 @@ internal fun SearchScreen(
             item {
                 Text("Browse Categories", style = MaterialTheme.typography.titleMedium, color = searchText, fontWeight = FontWeight.Bold)
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    state.content.categories.ifEmpty { PreviewContent.categories }.chunked(4).forEach { categoryRow ->
+                    state.content.categories.chunked(4).forEach { categoryRow ->
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                             categoryRow.forEach { category ->
                                 Surface(modifier = Modifier.weight(1f).clickable { state.selectCategory(category.name); state.submitSearch() }, color = searchSurface, shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, searchOutline)) {
@@ -174,22 +172,26 @@ internal fun SearchScreen(
                     }
                     ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = searchSurface)) {
                         Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
-                            DemoImage(url = state.content.stores.getOrNull(2)?.displayImageUrl ?: seedStores().first().displayImageUrl, contentDescription = "Mumbai map preview", modifier = Modifier.fillMaxSize(), shape = RoundedCornerShape(16.dp))
+                            DemoImage(url = state.content.stores.getOrNull(2)?.displayImageUrl.orEmpty(), contentDescription = "Mumbai map preview", modifier = Modifier.fillMaxSize(), shape = RoundedCornerShape(16.dp))
                             Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)))
                         }
                     }
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        val fallbackStores = state.content.stores.ifEmpty { seedStores() }
-                        items(nearbyShops.indices.toList()) { idx ->
+                    if (nearbyStores.isEmpty()) {
+                        Text("No nearby stores available yet.", color = searchMuted)
+                    } else {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(nearbyShops.indices.toList()) { idx ->
                             val (name, subtitle, distance) = nearbyShops[idx]
-                            ElevatedCard(modifier = Modifier.width(240.dp).clickable { actions.onOpenStore(fallbackStores[idx % fallbackStores.size]) }, colors = CardDefaults.elevatedCardColors(containerColor = searchSurface)) {
-                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Box {
-                                        DemoImage(url = fallbackStores[idx % fallbackStores.size].displayImageUrl, contentDescription = name, modifier = Modifier.fillMaxWidth().height(112.dp), shape = RoundedCornerShape(12.dp))
-                                        Text(distance, color = Color.White, style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(searchAccent, RoundedCornerShape(10.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                                val store = nearbyStores[idx % nearbyStores.size]
+                                ElevatedCard(modifier = Modifier.width(240.dp).clickable { actions.onOpenStore(store) }, colors = CardDefaults.elevatedCardColors(containerColor = searchSurface)) {
+                                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Box {
+                                            DemoImage(url = store.displayImageUrl, contentDescription = name, modifier = Modifier.fillMaxWidth().height(112.dp), shape = RoundedCornerShape(12.dp))
+                                            Text(distance, color = Color.White, style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(searchAccent, RoundedCornerShape(10.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                                        }
+                                        Text(name, color = searchText, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                        Text(subtitle, color = searchMuted, style = MaterialTheme.typography.bodySmall)
                                     }
-                                    Text(name, color = searchText, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                    Text(subtitle, color = searchMuted, style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }
@@ -242,7 +244,7 @@ internal fun SearchScreen(
                     TextButton(onClick = { state.selectTab(NotWhatTab.Bargains) }) { Text("View All", color = searchAccent) }
                 }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(state.content.reels.ifEmpty { seedReels() }) { reel ->
+                    items(state.content.reels) { reel ->
                         ElevatedCard(modifier = Modifier.size(width = 132.dp, height = 228.dp).clickable { actions.onOpenProduct(reel.toProductDtoStub()) }, colors = CardDefaults.elevatedCardColors(containerColor = searchSurface)) {
                             Box(modifier = Modifier.fillMaxSize()) {
                                 DemoImage(url = reel.thumbnailUrl, contentDescription = reel.displayLabel, modifier = Modifier.fillMaxSize(), shape = RoundedCornerShape(12.dp))
@@ -261,7 +263,7 @@ internal fun SearchScreen(
                     TextButton(onClick = { state.updateQuery("Streetwear Drops"); state.submitSearch() }) { Text("See More", color = searchAccent) }
                 }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(state.content.products.ifEmpty { seedProducts() }) { product ->
+                    items(state.content.products) { product ->
                         ElevatedCard(modifier = Modifier.width(188.dp).clickable { actions.onOpenProduct(product) }, colors = CardDefaults.elevatedCardColors(containerColor = searchSurface)) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 DemoImage(url = product.displayImageUrl, contentDescription = product.displayTitle, modifier = Modifier.fillMaxWidth().height(190.dp), shape = RoundedCornerShape(16.dp))
@@ -278,7 +280,7 @@ internal fun SearchScreen(
             item {
                 Text("Trending Stores", style = MaterialTheme.typography.titleMedium, color = searchText, fontWeight = FontWeight.Bold)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(state.content.stores.ifEmpty { seedStores() }) { story ->
+                    items(state.content.stores) { story ->
                         Column(modifier = Modifier.clickable { actions.onOpenStore(story) }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             DemoImage(url = story.displayImageUrl, contentDescription = story.storeName, modifier = Modifier.size(76.dp).border(2.dp, searchAccent, RoundedCornerShape(38.dp)).clip(RoundedCornerShape(38.dp)), shape = RoundedCornerShape(38.dp))
                             Text(story.storeName, color = searchMuted, style = MaterialTheme.typography.labelSmall)
@@ -336,7 +338,7 @@ internal fun SearchScreen(
                                 }
                             }
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                                state.content.products.ifEmpty { seedProducts() }.take(3).forEach { product ->
+                                state.content.products.take(3).forEach { product ->
                                     DemoImage(url = product.displayImageUrl, contentDescription = product.displayTitle, modifier = Modifier.weight(1f).height(86.dp), shape = RoundedCornerShape(8.dp))
                                 }
                             }

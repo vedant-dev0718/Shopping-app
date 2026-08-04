@@ -69,8 +69,7 @@ internal fun SellerReelListScreen(
     var reels by remember(state.sellerContent.reels) {
         mutableStateOf(
             state.sellerContent.reels
-                .map { it.toDemoSellerReel() }
-                .ifEmpty { PreviewContent.sellerReels },
+                .map { it.toDemoSellerReel() },
         )
     }
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
@@ -85,10 +84,7 @@ internal fun SellerReelListScreen(
             modifier = modifier,
             reel = reel,
             allProducts =
-                state.sellerContent.products.ifEmpty {
-                    com.notwhat.shared.catalog
-                        .seedProducts()
-                },
+                state.sellerContent.products,
             initialSelectedProductIds =
                 state.sellerContent.products
                     .filter { product -> reel.taggedProducts.contains(product.displayTitle) }
