@@ -4,6 +4,9 @@ import SwiftUI
 import AuthenticationServices
 import GoogleSignIn
 import SharedKit
+#if canImport(Razorpay)
+import Razorpay
+#endif
 #if canImport(PhotosUI)
 import PhotosUI
 import UniformTypeIdentifiers
@@ -18,6 +21,7 @@ struct SharedRootHostView: View {
             .task {
                 SharedSocialAuthInstaller.installIfNeeded()
                 SharedMediaPickerInstaller.installIfNeeded()
+                SharedPaymentInstaller.installIfNeeded()
             }
         #else
         VStack(spacing: 12) {
@@ -153,7 +157,7 @@ private enum SharedMediaPickerInstaller {
                 .flatMap(\.windows)
                 .first(where: \.isKeyWindow)?
                 .rootViewController else { callback(nil); return }
-            videoPicker.pick(from: root) { uri in callback(uri) }
+            videoPicker.pick(from: root.topmostPresented) { uri in callback(uri) }
         }
 
         let thumbPicker = ThumbnailPickerCoordinator()
@@ -163,9 +167,138 @@ private enum SharedMediaPickerInstaller {
                 .flatMap(\.windows)
                 .first(where: \.isKeyWindow)?
                 .rootViewController else { callback(nil); return }
-            thumbPicker.pick(from: root) { uri in callback(uri) }
+            thumbPicker.pick(from: root.topmostPresented) { uri in callback(uri) }
+        }
+        
+        // Register multi-image picker
+        IosImagePickerBridgeRegistry.shared.registerImagePickerMulti { callback in
+            guard let root = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap(\.windows)
+                .first(where: \.isKeyWindow)?
+                .rootViewController else { callback([]); return }
+            thumbPicker.pickMultiple(from: root.topmostPresented) { uris in callback(uris) }
         }
     }
 }
 
+@MainActor
+private enum SharedPaymentInstaller {
+    private static var installed = false
+
+    static func installIfNeeded() {
+        guard !installed else { return }
+        installed = true
+
+        PlatformPaymentBridge.shared.registerRazorpayCheckout { request, callback in
+            #if canImport(Razorpay)
+            guard let root = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap(\.windows)
+                .first(where: \.isKeyWindow)?
+                .rootViewController else {
+                callback(nil, "Unable to open Razorpay checkout.")
+                return
+            }
+
+            RazorpayCheckoutCoordinator.shared.open(
+                keyId: request.keyId,
+                orderId: request.orderId,
+                amount: Int(request.amount),
+                currency: request.currency,
+                merchantName: request.merchantName,
+                description: request.checkoutDescription,
+                prefillEmail: request.prefillEmail,
+                prefillPhone: request.prefillPhone,
+                presentingController: root.topmostPresented,
+                completion: callback
+            )
+            #else
+            callback(nil, "Razorpay SDK is not linked in this iOS target.")
+            #endif
+        }
+    }
+}
+
+#if canImport(Razorpay)
+@MainActor
+private final class RazorpayCheckoutCoordinator: NSObject, RazorpayPaymentCompletionProtocolWithData {
+    static let shared = RazorpayCheckoutCoordinator()
+
+    private var completion: ((RazorpayCheckoutCallbackPayload?, String?) -> Void)?
+    private var expectedOrderId: String = ""
+
+    func open(
+        keyId: String,
+        orderId: String,
+        amount: Int,
+        currency: String,
+        merchantName: String,
+        description: String,
+        prefillEmail: String?,
+        prefillPhone: String?,
+        presentingController: UIViewController,
+        completion: @escaping (RazorpayCheckoutCallbackPayload?, String?) -> Void
+    ) {
+        self.completion = completion
+        self.expectedOrderId = orderId
+
+        let checkout = RazorpayCheckout.initWithKey(keyId, andDelegateWithData: self)
+        var options: [String: Any] = [
+            "amount": amount,
+            "currency": currency,
+            "name": merchantName,
+            "description": description,
+            "order_id": orderId,
+        ]
+
+        var prefill: [String: String] = [:]
+        if let email = prefillEmail, !email.isEmpty {
+            prefill["email"] = email
+        }
+        if let phone = prefillPhone, !phone.isEmpty {
+            prefill["contact"] = phone
+        }
+        if !prefill.isEmpty {
+            options["prefill"] = prefill
+        }
+
+        checkout.open(options, displayController: presentingController)
+    }
+
+    func onPaymentSuccess(_ payment_id: String, andData response: [AnyHashable : Any]?) {
+        let callbackOrderId = response?["razorpay_order_id"] as? String
+        let callbackSignature = response?["razorpay_signature"] as? String
+
+        let responsePayload = RazorpayCheckoutCallbackPayload(
+            razorpayOrderId: callbackOrderId?.isEmpty == false ? callbackOrderId! : expectedOrderId,
+            razorpayPaymentId: payment_id,
+            razorpaySignature: callbackSignature ?? ""
+        )
+
+        completion?(responsePayload, nil)
+        completion = nil
+        expectedOrderId = ""
+    }
+
+    func onPaymentError(_ code: Int32, description str: String, andData response: [AnyHashable : Any]?) {
+        let fallback = code == 2 ? "Payment cancelled by user." : "Razorpay payment failed."
+        completion?(nil, str.isEmpty ? fallback : str)
+        completion = nil
+        expectedOrderId = ""
+    }
+}
 #endif
+
+#endif
+
+// Walks the presentation chain to find the controller that can safely present a new sheet.
+private extension UIViewController {
+    var topmostPresented: UIViewController {
+        var current = self
+        while let next = current.presentedViewController, !next.isBeingDismissed {
+            current = next
+        }
+        return current
+    }
+}

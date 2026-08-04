@@ -22,6 +22,8 @@ internal sealed interface AppRoute {
 
     data object Cart : AppRoute
 
+    data object BuyerReturns : AppRoute
+
     data class CheckoutDraftRoute(
         val draft: CheckoutDraft,
     ) : AppRoute
@@ -54,6 +56,8 @@ internal sealed interface AppNavEvent {
     ) : AppNavEvent
 
     data object OpenCart : AppNavEvent
+
+    data object OpenBuyerReturns : AppNavEvent
 
     data class ProceedToCheckout(
         val draft: CheckoutDraft,

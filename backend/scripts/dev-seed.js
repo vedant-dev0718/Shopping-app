@@ -1,18 +1,29 @@
 #!/usr/bin/env node
 /**
- * Local dev launcher: starts an in-memory MongoDB on 27017, seeds demo data,
+ * Local dev launcher: starts an in-memory MongoDB, seeds demo data,
  * then starts the Express API on PORT (default 5001).
  *
  * Usage: node scripts/dev-seed.js
  *
  * All data lives in memory and is lost when this process exits — for dev only.
+ * Safe to re-run: kills existing processes on ports 27017 and 5001 first.
  */
 
 'use strict';
 
 require('dotenv').config();
 
+const { execSync } = require('child_process');
 const { MongoMemoryServer } = require('mongodb-memory-server');
+
+// Kill any process already holding these ports so restarts never hit EADDRINUSE
+function freePort(port) {
+  try { execSync(`lsof -ti:${port} | xargs kill -9`, { stdio: 'ignore', shell: true }); } catch (_) {}
+  // Brief pause to let the OS release the socket before we bind it again
+  execSync('sleep 0.5', { stdio: 'ignore' });
+}
+freePort(27017);
+freePort(5001);
 
 (async () => {
     // ── 1. Start in-memory MongoDB ────────────────────────────────────────────

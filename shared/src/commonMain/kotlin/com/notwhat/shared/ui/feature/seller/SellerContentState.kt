@@ -3,10 +3,13 @@ package com.notwhat.shared.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.notwhat.shared.catalog.CreateProductRequestDto
 import com.notwhat.shared.catalog.CreateReelRequestDto
 import com.notwhat.shared.catalog.DeleteResponseDto
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.ReelDto
+import com.notwhat.shared.catalog.UpdateProductRequestDto
+import com.notwhat.shared.catalog.UpdateReelRequestDto
 import com.notwhat.shared.catalog.seedProducts
 import com.notwhat.shared.catalog.seedReels
 import com.notwhat.shared.core.NetworkResult
@@ -48,9 +51,17 @@ internal class SellerContentState(
         products = products.filterNot { it.id == id }
     }
 
+    fun updateProductLocally(product: ProductDto) {
+        products = listOf(product) + products.filterNot { it.id == product.id }
+    }
+
     /** Removes reel optimistically. */
     fun removeReelLocally(id: String) {
         reels = reels.filterNot { it.id == id }
+    }
+
+    fun updateReelLocally(reel: ReelDto) {
+        reels = listOf(reel) + reels.filterNot { it.id == reel.id }
     }
 
     suspend fun uploadVideo(
@@ -67,14 +78,54 @@ internal class SellerContentState(
         mimeType: String,
     ): NetworkResult<ImageUploadResponseDto> = uploadRepository.uploadImage(data, fileName, bearerToken, mimeType)
 
+    suspend fun createProduct(
+        request: CreateProductRequestDto,
+        bearerToken: String,
+    ): NetworkResult<ProductDto> {
+        val result = sellerUseCase.createProduct(request, bearerToken)
+        result.getOrNull()?.let(::updateProductLocally)
+        return result
+    }
+
+    suspend fun updateProduct(
+        id: String,
+        request: UpdateProductRequestDto,
+        bearerToken: String,
+    ): NetworkResult<ProductDto> {
+        val result = sellerUseCase.updateProduct(id, request, bearerToken)
+        result.getOrNull()?.let(::updateProductLocally)
+        return result
+    }
+
+    suspend fun deleteProduct(
+        id: String,
+        bearerToken: String,
+    ): NetworkResult<DeleteResponseDto> {
+        val result = sellerUseCase.deleteProduct(id, bearerToken)
+        if (result.getOrNull()?.deleted == true) {
+            removeProductLocally(id)
+        }
+        return result
+    }
+
     suspend fun createReel(
         request: CreateReelRequestDto,
         bearerToken: String,
     ): NetworkResult<ReelDto> {
         val result = sellerUseCase.createReel(request, bearerToken)
         result.getOrNull()?.let { created ->
-            reels = listOf(created) + reels.filterNot { it.id == created.id }
+            updateReelLocally(created)
         }
+        return result
+    }
+
+    suspend fun updateReel(
+        id: String,
+        request: UpdateReelRequestDto,
+        bearerToken: String,
+    ): NetworkResult<ReelDto> {
+        val result = sellerUseCase.updateReel(id, request, bearerToken)
+        result.getOrNull()?.let(::updateReelLocally)
         return result
     }
 
@@ -100,7 +151,7 @@ internal fun com.notwhat.shared.catalog.ReelDto.toDemoSellerReel(): DemoSellerRe
         duration = "${duration.toInt()}s",
         viewCount = viewCount.toString(),
         isShared = status == "active",
-        taggedProducts = emptyList(),
+        taggedProducts = taggedProducts.map { it.displayTitle },
     )
 
 internal val ReelDto.displayCreator: String get() = storeId?.storeName ?: "@${id.take(6)}"

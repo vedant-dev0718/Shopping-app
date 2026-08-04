@@ -1,5 +1,6 @@
 package com.notwhat.shared.contracts
 
+import com.notwhat.shared.checkout.CheckoutPlaceCodRequestDto
 import com.notwhat.shared.checkout.CheckoutVerifyRequestDto
 import com.notwhat.shared.seller.RejectOrderRequestDto
 import com.notwhat.shared.seller.ShipOrderRequestDto
@@ -18,6 +19,7 @@ class RequestContractEncodingTest {
     fun checkoutVerifyRequest_usesDeliveryAddressIdKey() {
         val payload =
             CheckoutVerifyRequestDto(
+                paymentMethod = "UPI",
                 razorpayOrderId = "order_123",
                 razorpayPaymentId = "payment_123",
                 razorpaySignature = "sig_123",
@@ -28,6 +30,23 @@ class RequestContractEncodingTest {
 
         assertTrue(encoded.contains("\"deliveryAddressId\""))
         assertFalse(encoded.contains("\"addressId\""))
+    }
+
+    @Test
+    fun checkoutPlaceCodRequest_usesCodAndOmitsRazorpayFields() {
+        val payload =
+            CheckoutPlaceCodRequestDto(
+                paymentMethod = "COD",
+                deliveryAddressId = "66b0e2b1a3f31ecbe0a12345",
+            )
+
+        val encoded = json.encodeToString(payload)
+
+        assertTrue(encoded.contains("\"paymentMethod\":\"COD\""))
+        assertTrue(encoded.contains("\"deliveryAddressId\""))
+        assertFalse(encoded.contains("razorpayOrderId"))
+        assertFalse(encoded.contains("razorpayPaymentId"))
+        assertFalse(encoded.contains("razorpaySignature"))
     }
 
     @Test

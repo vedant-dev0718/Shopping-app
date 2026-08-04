@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +42,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.notwhat.shared.catalog.CreateProductRequestDto
+import com.notwhat.shared.core.NetworkResult
+import kotlinx.coroutines.launch
 
 // Sample data for categories and regions (in production, these would come from the backend)
 val PRODUCT_CATEGORIES =
@@ -98,6 +102,9 @@ internal fun ProductOnboardingScreen(
     var newTag by remember { mutableStateOf("") }
     var imageUrls by remember { mutableStateOf(listOf<String>()) }
     var isLoading by remember { mutableStateOf(false) }
+    var isUploadingImage by remember { mutableStateOf(false) }
+    var submitError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     val stepTitles = listOf("Basic Info", "Media", "Pricing & Stock", "Review & Submit")
     val isStepValid =
@@ -168,6 +175,18 @@ internal fun ProductOnboardingScreen(
             contentPadding = PaddingValues(SellerUiTokens.screenPadding),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            submitError?.let { message ->
+                item {
+                    Surface(color = Color(0xFF4A1F1F), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = message,
+                            color = Color(0xFFFFC9C9),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        )
+                    }
+                }
+            }
             item {
                 when (currentStep) {
                     0 -> {
@@ -194,10 +213,102 @@ internal fun ProductOnboardingScreen(
                         ProductOnboardingMediaStep(
                             imageUrls = imageUrls,
                             onImagesChange = { imageUrls = it },
+                            isUploadingImage = isUploadingImage,
                             surface = surface,
                             text = text,
                             muted = muted,
                             accent = accent,
+                            onAddImage = {
+                                val token = state.currentSession?.authToken
+                                if (token.isNullOrBlank()) {
+                                    submitError = "Please sign in again to upload product images."
+                                    return@ProductOnboardingMediaStep
+                                }
+
+                                // Use multi-image picker if available, otherwise fall back to single
+                                if (PlatformImagePicker.isMultiAvailable()) {
+                                    PlatformImagePicker.launchMulti { uris ->
+                                        if (uris.isEmpty()) {
+                                            return@launchMulti
+                                        }
+
+                                        scope.launch {
+                                            isUploadingImage = true
+                                            submitError = null
+                                            val uploadedUrls = mutableListOf<String>()
+
+                                            for (uri in uris) {
+                                                val imageBytes = PlatformMediaFileReader.readBytes(uri)
+                                                if (imageBytes == null) {
+                                                    submitError = "Could not read one or more images. Continuing with valid selections."
+                                                    continue
+                                                }
+
+                                                val uploadResult =
+                                                    state.sellerContent.uploadImage(
+                                                        data = imageBytes,
+                                                        fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
+                                                        bearerToken = token,
+                                                        mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
+                                                    )
+
+                                                when (uploadResult) {
+                                                    is NetworkResult.Success -> {
+                                                        uploadedUrls.add(uploadResult.data.imageUrl)
+                                                    }
+
+                                                    is NetworkResult.Failure -> {
+                                                        if (submitError == null) {
+                                                            submitError = uploadResult.error.userMessage()
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            isUploadingImage = false
+                                            imageUrls = imageUrls + uploadedUrls
+                                        }
+                                    }
+                                } else {
+                                    // Fallback to single image picker
+                                    PlatformImagePicker.launch { uri ->
+                                        if (uri.isNullOrBlank()) {
+                                            return@launch
+                                        }
+
+                                        scope.launch {
+                                            isUploadingImage = true
+                                            submitError = null
+
+                                            val imageBytes = PlatformMediaFileReader.readBytes(uri)
+                                            if (imageBytes == null) {
+                                                isUploadingImage = false
+                                                submitError = "Could not read the selected image. Please try again."
+                                                return@launch
+                                            }
+
+                                            val uploadResult =
+                                                state.sellerContent.uploadImage(
+                                                    data = imageBytes,
+                                                    fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
+                                                    bearerToken = token,
+                                                    mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
+                                                )
+
+                                            isUploadingImage = false
+                                            when (uploadResult) {
+                                                is NetworkResult.Success -> {
+                                                    imageUrls = imageUrls + uploadResult.data.imageUrl
+                                                }
+
+                                                is NetworkResult.Failure -> {
+                                                    submitError = uploadResult.error.userMessage()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                         )
                     }
 
@@ -268,19 +379,58 @@ internal fun ProductOnboardingScreen(
                     if (currentStep < stepTitles.size - 1) {
                         currentStep++
                     } else {
-                        // Submit
-                        isLoading = true
-                        // In a real implementation, call the SellerUseCase.createProduct here
-                        // For now, simulate with a delay
-                        onProductCreated()
+                        val token = state.currentSession?.authToken
+                        if (token.isNullOrBlank()) {
+                            submitError = "Please sign in again to create products."
+                            return@Button
+                        }
+
+                        val parsedPrice = price.toDoubleOrNull()
+                        val parsedStock = stock.toIntOrNull()
+                        if (parsedPrice == null || parsedStock == null) {
+                            submitError = "Enter a valid price and stock before submitting."
+                            return@Button
+                        }
+
+                        scope.launch {
+                            isLoading = true
+                            submitError = null
+
+                            val result =
+                                state.sellerContent.createProduct(
+                                    CreateProductRequestDto(
+                                        title = title.trim(),
+                                        description = description.trim(),
+                                        category = category.trim(),
+                                        subcategory = subcategory.trim().ifBlank { null },
+                                        region = region.trim(),
+                                        price = parsedPrice,
+                                        sku = sku.trim().ifBlank { null },
+                                        stock = parsedStock,
+                                        tags = tags,
+                                        imageUrls = imageUrls,
+                                        productLink = productLink.trim().ifBlank { null },
+                                    ),
+                                    token,
+                                )
+
+                            isLoading = false
+                            if (result is com.notwhat.shared.core.NetworkResult.Success) {
+                                onProductCreated()
+                            } else if (result is com.notwhat.shared.core.NetworkResult.Failure) {
+                                submitError = result.error.userMessage()
+                            }
+                        }
                     }
                 },
                 modifier = Modifier.weight(if (currentStep == 0) 1f else 1f),
-                enabled = isStepValid && !isLoading,
+                enabled = isStepValid && !isLoading && !isUploadingImage,
                 shape = SellerUiTokens.radiusButton,
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
             ) {
                 if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                } else if (isUploadingImage) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
                 } else {
                     Text(if (currentStep == stepTitles.size - 1) "Submit" else "Next", color = Color.White)
@@ -472,10 +622,12 @@ private fun RegionDropdown(
 private fun ProductOnboardingMediaStep(
     imageUrls: List<String>,
     onImagesChange: (List<String>) -> Unit,
+    isUploadingImage: Boolean,
     surface: Color,
     text: Color,
     muted: Color,
     accent: Color,
+    onAddImage: () -> Unit,
 ) {
     Surface(
         color = surface,
@@ -528,27 +680,23 @@ private fun ProductOnboardingMediaStep(
                 }
             }
 
-            // Add Image Button (placeholder for actual image picker)
+            // Add Image Button
             Button(
-                onClick = {
-                    // In a real app, this would open the image picker
-                    // For now, add a placeholder image URL
-                    val sampleUrls =
-                        listOf(
-                            "https://images.unsplash.com/photo-1596703463905-5e70e3f1b2b3",
-                            "https://images.unsplash.com/photo-1571115764595-644a1f80121c",
-                        )
-                    onImagesChange(imageUrls + sampleUrls.random())
-                },
+                onClick = onAddImage,
+                enabled = !isUploadingImage,
                 modifier = Modifier.fillMaxWidth(),
                 shape = SellerUiTokens.radiusButton,
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
             ) {
-                Text("+ Add Image", color = Color.White)
+                if (isUploadingImage) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Text("+ Add Image", color = Color.White)
+                }
             }
 
             Text(
-                "Images: ${imageUrls.size} selected",
+                if (isUploadingImage) "Uploading image..." else "Images: ${imageUrls.size} selected",
                 color = if (imageUrls.isEmpty()) Color.Red else muted,
                 style = MaterialTheme.typography.labelSmall,
             )

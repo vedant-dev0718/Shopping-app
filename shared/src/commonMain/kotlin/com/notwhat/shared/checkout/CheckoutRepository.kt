@@ -5,14 +5,19 @@ import com.notwhat.shared.core.runCatchingNetwork
 import com.notwhat.shared.network.ApiClient
 
 /** Live-only repository for checkout flow. */
-class CheckoutRepository(private val client: ApiClient) {
-
+class CheckoutRepository(
+    private val client: ApiClient,
+) {
     suspend fun startCheckout(bearerToken: String): NetworkResult<CheckoutStartResponseDto> =
         runCatchingNetwork { client.post("checkout/start", emptyMap<String, String>(), bearerToken) }
 
     suspend fun verifyAndPlaceOrder(
         request: CheckoutVerifyRequestDto,
         bearerToken: String,
-    ): NetworkResult<CheckoutVerifyResponseDto> =
-        runCatchingNetwork { client.post("checkout/verify", request, bearerToken) }
+    ): NetworkResult<CheckoutVerifyResponseDto> = runCatchingNetwork { client.post("checkout/verify", request, bearerToken) }
+
+    suspend fun placeCodOrder(
+        request: CheckoutPlaceCodRequestDto,
+        bearerToken: String,
+    ): NetworkResult<CheckoutVerifyResponseDto> = runCatchingNetwork { client.post("checkout/place-cod", request, bearerToken) }
 }

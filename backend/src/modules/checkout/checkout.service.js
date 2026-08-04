@@ -22,6 +22,9 @@ const {
   buildNewOrderAlertEmail
 } = require('../../utils/emailTemplates');
 
+const ONLINE_PAYMENT_METHODS = ['UPI', 'card', 'netbanking', 'wallet'];
+const COD_PAYMENT_METHOD = 'COD';
+
 const roundMoney = (value) => Math.round(value * 100) / 100;
 const toPaise = (value) => Math.round(roundMoney(Number(value) || 0) * 100);
 
@@ -135,6 +138,14 @@ const validatePaymentAmountMatchesCart = (payment, cart) => {
   }
 };
 
+const getSupportedPaymentMethods = () => {
+  if (env.enableCodCheckout) {
+    return [...ONLINE_PAYMENT_METHODS, COD_PAYMENT_METHOD];
+  }
+
+  return [...ONLINE_PAYMENT_METHODS];
+};
+
 const startCheckout = async (buyerId) => {
   const cart = await getCheckoutCart(buyerId);
   await validateCartForCheckout(cart);
@@ -189,7 +200,7 @@ const startCheckout = async (buyerId) => {
         amount: cart.shipping
       }
     ],
-    paymentMethods: ['UPI', 'card', 'netbanking', 'wallet']
+    paymentMethods: getSupportedPaymentMethods()
   };
 };
 
@@ -281,6 +292,10 @@ const verifyAndPlaceOrder = async (
   addressInput,
   paymentMethod
 ) => {
+  if (!ONLINE_PAYMENT_METHODS.includes(paymentMethod)) {
+    throw new AppError('COD is not allowed on /checkout/verify. Use /checkout/place-cod', 400);
+  }
+
   const signatureIsValid = verifyPaymentSignature({
     razorpayOrderId,
     razorpayPaymentId,
@@ -455,7 +470,130 @@ const verifyAndPlaceOrder = async (
   return buildOrderConfirmation(order);
 };
 
+const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
+  if (!env.enableCodCheckout) {
+    throw new AppError('Cash on Delivery is currently unavailable', 400);
+  }
+
+  if (paymentMethod !== COD_PAYMENT_METHOD) {
+    throw new AppError('paymentMethod must be COD for this endpoint', 400);
+  }
+
+  let order;
+  let items = [];
+  const buyer = await User.findById(buyerId).select('email').lean();
+  const delivery = await addressService.resolveDeliveryAddressForOrder(buyerId, addressInput);
+  if (!delivery.shippingInfo.email) {
+    delivery.shippingInfo.email = buyer?.email || 'buyer@notwhat.in';
+    delivery.snapshot.email = delivery.shippingInfo.email;
+  }
+
+  await runMaybeTransaction(async (session) => {
+    const cart = await getCheckoutCart(buyerId, { session });
+    const checkoutItems = await validateCartForCheckout(cart, { session });
+    const orderNumber = generateOrderNumber();
+    items = applyPendingAcceptanceDefaults(await financeService.applyFinancialsToOrderItems(checkoutItems.map((item) => ({
+      productId: item.product._id,
+      sellerId: item.product.sellerId,
+      storeId: item.product.storeId,
+      titleSnapshot: item.product.title,
+      imageSnapshot: Array.isArray(item.product.imageUrls) && item.product.imageUrls.length > 0
+        ? item.product.imageUrls[0]
+        : '',
+      quantity: item.quantity,
+      priceSnapshot: item.priceSnapshot,
+      itemTotal: item.itemTotal
+    }))));
+    const sellerIds = [...new Set(items.map((item) => item.sellerId.toString()))];
+    const financialTotals = financeService.summarizeOrderFinancials(items, cart.shipping);
+    const commission = calculateCommission(cart.subtotal);
+    const gstAmount = extractGSTFromInclusivePrice(cart.finalTotal);
+    const sellerAcceptanceExpiresAt = getSellerAcceptanceExpiresAt();
+
+    const [createdOrder] = await Order.create([{
+      buyerId,
+      orderNumber,
+      sellerIds,
+      items,
+      shippingInfo: delivery.shippingInfo,
+      shippingAddressSnapshot: delivery.snapshot,
+      paymentMethod: COD_PAYMENT_METHOD,
+      paymentCaptureMode: 'automatic',
+      paymentStatus: 'pending',
+      orderStatus: 'awaiting_seller_acceptance',
+      trackingStatus: 'Waiting for seller confirmation',
+      sellerAcceptance: {
+        status: 'pending',
+        expiresAt: sellerAcceptanceExpiresAt
+      },
+      paymentFlow: {
+        captureAfterSellerAcceptance: false,
+        signatureVerified: false
+      },
+      razorpay: {
+        signatureVerified: false
+      },
+      inventoryConfirmation: {
+        confirmedAvailable: false
+      },
+      inventoryReservation: {
+        reservationIds: [],
+        expiresAt: sellerAcceptanceExpiresAt,
+        status: 'active'
+      },
+      subtotal: cart.subtotal,
+      shipping: cart.shipping,
+      finalTotal: cart.finalTotal,
+      commissionRate: PLATFORM_COMMISSION_RATE,
+      commissionAmount: financialTotals.totalPlatformCommission || commission.commissionAmount,
+      sellerPayoutAmount: financialTotals.totalSellerEarnings || commission.sellerPayoutAmount,
+      ...financialTotals,
+      payoutStatus: 'pending',
+      gstAmount,
+      gstRate: GST_RATE,
+      emailSent: false
+    }], { session });
+
+    await cartService.clearCart(buyerId, { session });
+    order = createdOrder;
+  });
+
+  await Promise.all(items.map((item) => {
+    return analyticsService.trackEventSafe({
+      userId: buyerId,
+      sellerId: item.sellerId,
+      storeId: item.storeId,
+      productId: item.productId,
+      eventType: 'order_placed',
+      metadata: {
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        quantity: item.quantity,
+        itemTotal: item.itemTotal,
+        paymentMethod: COD_PAYMENT_METHOD
+      }
+    });
+  }));
+  await Promise.all(items.map((item) => analyticsService.trackEventSafe({
+    userId: buyerId,
+    sellerId: item.sellerId,
+    storeId: item.storeId,
+    productId: item.productId,
+    eventType: 'order_awaiting_seller_acceptance',
+    metadata: {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      quantity: item.quantity,
+      itemTotal: item.itemTotal
+    }
+  })));
+  await sendOrderEmails(order);
+
+  return buildOrderConfirmation(order);
+};
+
 module.exports = {
   startCheckout,
-  verifyAndPlaceOrder
+  verifyAndPlaceOrder,
+  placeCodOrder
 };

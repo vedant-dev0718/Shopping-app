@@ -6,6 +6,7 @@ import com.notwhat.shared.catalog.DeleteResponseDto
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.ReelDto
 import com.notwhat.shared.catalog.UpdateProductRequestDto
+import com.notwhat.shared.catalog.UpdateReelRequestDto
 import com.notwhat.shared.catalog.seedProducts
 import com.notwhat.shared.catalog.seedReels
 import com.notwhat.shared.core.AppConfig
@@ -76,11 +77,32 @@ class SellerUseCase(
                     caption = request.caption,
                     videoUrl = request.videoUrl,
                     thumbnailUrl = request.thumbnailUrl,
-                    taggedProductIds = request.taggedProductIds,
+                    taggedProducts = seedProducts().filter { request.taggedProductIds.contains(it.id) },
                 ),
             )
         }
         return catalogUseCase.createReel(request, bearerToken)
+    }
+
+    suspend fun updateReel(
+        id: String,
+        request: UpdateReelRequestDto,
+        bearerToken: String,
+    ): NetworkResult<ReelDto> {
+        if (config.isMock) {
+            val seedReel = seedReels().first().copy(id = id)
+            return NetworkResult.Success(
+                seedReel.copy(
+                    caption = request.caption ?: seedReel.caption,
+                    hashtags = request.hashtags ?: seedReel.hashtags,
+                    taggedProducts =
+                        request.taggedProductIds?.let { ids ->
+                            seedProducts().filter { ids.contains(it.id) }
+                        } ?: seedReel.taggedProducts,
+                ),
+            )
+        }
+        return catalogUseCase.updateReel(id, request, bearerToken)
     }
 
     // Orders

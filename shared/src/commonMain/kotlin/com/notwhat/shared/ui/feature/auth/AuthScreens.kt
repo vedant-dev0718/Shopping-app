@@ -18,6 +18,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -193,7 +198,19 @@ internal fun SellerProfileSetupRequiredScreen(
 private fun LoginAuthCard(authState: AuthState) {
     val scope = rememberCoroutineScope()
     var showPassword by remember { mutableStateOf(false) }
+    var toastVisible by remember { mutableStateOf(false) }
+    var toastMessage by remember { mutableStateOf("") }
 
+    // Show toast whenever errorMessage changes
+    LaunchedEffect(authState.errorMessage) {
+        val msg = authState.errorMessage ?: return@LaunchedEffect
+        toastMessage = msg
+        toastVisible = true
+        delay(4000)
+        toastVisible = false
+    }
+
+    Box {
     ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = NotWhatAuthTokens.card)) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(
@@ -280,6 +297,31 @@ private fun LoginAuthCard(authState: AuthState) {
             }
         }
     }
+
+        // Toast overlaid at the bottom of the card
+        AnimatedVisibility(
+            visible = toastVisible,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFB00020),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .clickable { toastVisible = false },
+            ) {
+                Text(
+                    toastMessage,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                )
+            }
+        }
+    } // Box
 }
 
 @Composable

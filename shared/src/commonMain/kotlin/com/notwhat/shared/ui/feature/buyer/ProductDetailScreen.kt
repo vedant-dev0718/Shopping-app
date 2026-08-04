@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,22 +39,50 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import com.notwhat.shared.catalog.ProductDto
+import kotlinx.coroutines.launch
 
 @Composable
-internal fun ProductDetailScreen(modifier: Modifier, product: ProductDto, onBack: () -> Unit) {
+internal fun ProductDetailScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    product: ProductDto,
+    onBack: () -> Unit,
+) {
     val detailBg = Color(0xFF0A0A0A)
     val detailSurface = Color(0xFF2D1B16)
     val detailSurfaceHigh = Color(0xFF382620)
     val detailText = Color(0xFFFCDCD3)
     val detailMuted = Color(0xFFE6BEB2)
     val detailAccent = NotWhatAuthTokens.accent
-    val bargainScenario = BargainFixtures.forProduct(product)
+    val scope = rememberCoroutineScope()
+    val resolvedProduct = state.content.products.firstOrNull { it.id == product.id } ?: product
+    val bargainScenario = BargainFixtures.forProduct(resolvedProduct)
 
     var selectedSize by remember { mutableStateOf("M") }
     var selectedDelivery by remember { mutableStateOf("Standard") }
     var showBidSheet by remember { mutableStateOf(false) }
-    var bidInput by remember(product.id) { mutableStateOf(bargainScenario.defaultBidInput) }
-    var addedToCart by remember(product.id) { mutableStateOf(false) }
+    var bidInput by remember(resolvedProduct.id) { mutableStateOf(bargainScenario.defaultBidInput) }
+    var addedToCart by remember(resolvedProduct.id) { mutableStateOf(false) }
+    var saveMessage by remember(resolvedProduct.id) { mutableStateOf<String?>(null) }
+    var isSaving by remember(resolvedProduct.id) { mutableStateOf(false) }
+
+    val toggleSaved = {
+        val token = state.currentSession?.authToken
+        if (token.isNullOrBlank()) {
+            saveMessage = "Please sign in again to save products."
+        } else if (!isSaving) {
+            scope.launch {
+                isSaving = true
+                val result = if (resolvedProduct.isSaved) {
+                    state.content.unsaveProduct(resolvedProduct.id, token)
+                } else {
+                    state.content.saveProduct(resolvedProduct.id, token)
+                }
+                saveMessage = if (result is com.notwhat.shared.core.NetworkResult.Failure) result.error.userMessage() else null
+                isSaving = false
+            }
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize().background(detailBg)) {
         LazyColumn(
@@ -70,8 +99,8 @@ internal fun ProductDetailScreen(modifier: Modifier, product: ProductDto, onBack
             item {
                 Box(modifier = Modifier.fillMaxWidth().height(360.dp)) {
                     DemoImage(
-                        url = product.displayImageUrl,
-                        contentDescription = product.displayTitle,
+                        url = resolvedProduct.displayImageUrl,
+                        contentDescription = resolvedProduct.displayTitle,
                         modifier = Modifier.fillMaxSize(),
                         shape = RoundedCornerShape(16.dp),
                     )
@@ -95,25 +124,43 @@ internal fun ProductDetailScreen(modifier: Modifier, product: ProductDto, onBack
                 Surface(color = detailSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                            Text(product.displayTitle, style = MaterialTheme.typography.headlineSmall, color = detailText, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            Surface(color = detailSurfaceHigh, shape = RoundedCornerShape(16.dp)) {
-                                Text("4.8", color = detailAccent, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), fontWeight = FontWeight.Bold)
+                            Text(resolvedProduct.displayTitle, style = MaterialTheme.typography.headlineSmall, color = detailText, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Surface(color = detailSurfaceHigh, shape = RoundedCornerShape(16.dp)) {
+                                    Text("4.8", color = detailAccent, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), fontWeight = FontWeight.Bold)
+                                }
+                                Surface(
+                                    color = if (resolvedProduct.isSaved) detailAccent.copy(alpha = 0.22f) else detailSurfaceHigh,
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.clickable(enabled = !isSaving, onClick = toggleSaved),
+                                ) {
+                                    Text(
+                                        if (resolvedProduct.isSaved) "Saved" else if (isSaving) "Saving" else "Save",
+                                        color = if (resolvedProduct.isSaved) detailAccent else detailText,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
                             }
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Surface(color = detailSurfaceHigh, shape = RoundedCornerShape(16.dp)) {
-                                Text(product.displayStoreName, color = detailText, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium)
+                                Text(resolvedProduct.displayStoreName, color = detailText, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium)
                             }
                             Text("Visit Store", color = detailAccent, style = MaterialTheme.typography.labelMedium)
                         }
 
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(product.displayPrice, color = detailAccent, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                            Text(resolvedProduct.displayPrice, color = detailAccent, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
                             Text("₹4,999", color = detailMuted)
                             Surface(color = Color(0xFF93000A), shape = RoundedCornerShape(8.dp)) {
                                 Text("50% OFF", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
                             }
+                        }
+
+                        saveMessage?.let {
+                            Text(it, color = Color(0xFFFFC9C9), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -189,7 +236,7 @@ internal fun ProductDetailScreen(modifier: Modifier, product: ProductDto, onBack
             ) {
                 Column {
                     Text("Total", color = detailMuted, style = MaterialTheme.typography.labelSmall)
-                    Text(product.displayPrice, color = detailText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(resolvedProduct.displayPrice, color = detailText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = { addedToCart = true },
@@ -205,7 +252,7 @@ internal fun ProductDetailScreen(modifier: Modifier, product: ProductDto, onBack
         BidBottomSheet(
             isVisible = showBidSheet,
             onDismiss = { showBidSheet = false },
-            product = product,
+            product = resolvedProduct,
             scenario = bargainScenario,
             bidInput = bidInput,
             onBidInputChange = { bidInput = it },

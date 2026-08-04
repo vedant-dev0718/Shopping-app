@@ -90,4 +90,14 @@ class AppFlowStateTest {
         assertEquals(SellerShellRoute.Insights, flow.sellerRoute)
         assertEquals(AppRoute.SellerShellRouteEntry(SellerShellRoute.Insights), flow.route)
     }
+
+    @Test
+    fun openBuyerReturns_setsReturnsRoute() {
+        val flow = AppFlowState()
+
+        flow.onEvent(AppNavEvent.OpenBuyerReturns)
+
+        assertEquals(AppRoute.BuyerReturns, flow.route)
+        assertTrue(flow.isInSubScreen)
+    }
 }

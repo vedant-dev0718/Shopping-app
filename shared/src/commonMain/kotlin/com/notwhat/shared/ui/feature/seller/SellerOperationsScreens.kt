@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.notwhat.shared.catalog.UpdateProductRequestDto
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun ProductLifecycleScreen(
@@ -58,6 +61,7 @@ internal fun ProductLifecycleScreen(
     var searchQuery by remember { mutableStateOf("") }
     var pricingControlOpen by remember { mutableStateOf(false) }
     var editingProductId by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
     val products = state.sellerContent.products.ifEmpty { com.notwhat.shared.catalog.seedProducts() }
     val editingProduct: com.notwhat.shared.catalog.ProductDto? = editingProductId?.let { id -> products.firstOrNull { it.id == id } }
 
@@ -78,7 +82,24 @@ internal fun ProductLifecycleScreen(
             modifier = modifier,
             product = editingProduct,
             onBack = { editingProductId = null },
-            onSave = { editingProductId = null },
+            onSave = { request ->
+                val token = state.currentSession?.authToken
+                if (!token.isNullOrBlank()) {
+                    scope.launch {
+                        state.sellerContent.updateProduct(editingProduct.id, request, token)
+                    }
+                }
+                editingProductId = null
+            },
+            onDelete = {
+                val token = state.currentSession?.authToken
+                if (!token.isNullOrBlank()) {
+                    scope.launch {
+                        state.sellerContent.deleteProduct(editingProduct.id, token)
+                    }
+                }
+                editingProductId = null
+            },
             accent = accent,
             text = text,
             muted = muted,
@@ -373,7 +394,8 @@ private fun SellerEditProductScreen(
     modifier: Modifier,
     product: com.notwhat.shared.catalog.ProductDto,
     onBack: () -> Unit,
-    onSave: () -> Unit,
+    onSave: (UpdateProductRequestDto) -> Unit,
+    onDelete: () -> Unit,
     accent: Color,
     text: Color,
     muted: Color,
@@ -383,6 +405,7 @@ private fun SellerEditProductScreen(
     var category by remember(product.id) { mutableStateOf(product.category) }
     var price by remember(product.id) { mutableStateOf(product.price.toInt().toString()) }
     var stockText by remember(product.id) { mutableStateOf(product.stock.toString()) }
+    var errorMessage by remember(product.id) { mutableStateOf<String?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(Color(0xFF1F0F0B)),
@@ -399,6 +422,7 @@ private fun SellerEditProductScreen(
         item {
             Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
+                    errorMessage?.let { Text(it, color = Color(0xFFFFC9C9), style = MaterialTheme.typography.bodySmall) }
                     OutlinedTextField(value = name, onValueChange = { name = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Product Name") })
                     OutlinedTextField(value = category, onValueChange = { category = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Category") })
                     OutlinedTextField(value = price, onValueChange = { price = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Price") })
@@ -408,7 +432,23 @@ private fun SellerEditProductScreen(
                             Text("Cancel", color = text)
                         }
                         Button(
-                            onClick = { onSave() },
+                            onClick = {
+                                val parsedPrice = price.toDoubleOrNull()
+                                val parsedStock = stockText.toIntOrNull()
+                                if (parsedPrice == null || parsedStock == null) {
+                                    errorMessage = "Enter a valid price and stock before saving."
+                                } else {
+                                    errorMessage = null
+                                    onSave(
+                                        UpdateProductRequestDto(
+                                            title = name.trim(),
+                                            category = category.trim(),
+                                            price = parsedPrice,
+                                            stock = parsedStock,
+                                        ),
+                                    )
+                                }
+                            },
                             modifier = Modifier.weight(1f),
                             shape = SellerUiTokens.radiusButton,
                             colors = ButtonDefaults.buttonColors(containerColor = accent),
@@ -416,7 +456,15 @@ private fun SellerEditProductScreen(
                             Text("Save", color = Color.White)
                         }
                     }
-                    Text("This is a mock edit flow and now updates seller list state.", color = muted, style = MaterialTheme.typography.bodySmall)
+                    Button(
+                        onClick = onDelete,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = SellerUiTokens.radiusButton,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
+                    ) {
+                        Text("Delete Product", color = Color.White)
+                    }
+                    Text("Changes are now sent to the live seller product APIs when a session token is available.", color = muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

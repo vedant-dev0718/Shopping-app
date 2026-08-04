@@ -29,6 +29,7 @@ import com.notwhat.shared.network.defaultApiBaseUrl
 import com.notwhat.shared.order.OrderRepository
 import com.notwhat.shared.recommendations.RecommendationRepository
 import com.notwhat.shared.returns.ReturnRepository
+import com.notwhat.shared.returns.ReturnsAnalyticsTransport
 import com.notwhat.shared.safety.SafetyRepository
 import com.notwhat.shared.search.SearchRepository
 import com.notwhat.shared.seller.SellerOrderRepository
@@ -95,6 +96,7 @@ class ServiceLocator(
     // Phase 8 — engagement, returns, contact, safety, seller analytics
     val likeRepository: LikeRepository by lazy { LikeRepository(apiClient) }
     val returnRepository: ReturnRepository by lazy { ReturnRepository(apiClient) }
+    val returnsAnalyticsTransport: ReturnsAnalyticsTransport by lazy { ReturnsAnalyticsTransport(apiClient) }
     val contactRepository: ContactRepository by lazy { ContactRepository(apiClient) }
     val safetyRepository: SafetyRepository by lazy { SafetyRepository(apiClient) }
     val sellerAnalyticsRepository: SellerAnalyticsRepository by lazy { SellerAnalyticsRepository(apiClient) }

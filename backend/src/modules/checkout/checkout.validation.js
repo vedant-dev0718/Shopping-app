@@ -1,5 +1,7 @@
 const { body } = require('express-validator');
 
+const ONLINE_PAYMENT_METHODS = ['UPI', 'card', 'netbanking', 'wallet'];
+
 const shippingInfoValidation = [
   body().custom((value) => {
     if (value.deliveryAddressId || value.addressId || value.shippingInfo) return true;
@@ -19,8 +21,8 @@ const shippingInfoValidation = [
 const placeOrderValidation = [
   ...shippingInfoValidation,
   body('paymentMethod')
-    .isIn(['UPI', 'card', 'netbanking', 'wallet'])
-    .withMessage('Payment method must be UPI, card, netbanking, or wallet')
+    .isIn(ONLINE_PAYMENT_METHODS)
+    .withMessage('Payment method must be UPI, card, netbanking, or wallet. For COD use /api/checkout/place-cod')
 ];
 
 const verifyCheckoutValidation = [
@@ -30,7 +32,25 @@ const verifyCheckoutValidation = [
   ...placeOrderValidation
 ];
 
+const placeCodValidation = [
+  ...shippingInfoValidation,
+  body('paymentMethod')
+    .equals('COD')
+    .withMessage('paymentMethod must be COD for this endpoint'),
+  body().custom((value = {}) => {
+    const razorpayFields = ['razorpayOrderId', 'razorpayPaymentId', 'razorpaySignature'];
+    const hasRazorpayFields = razorpayFields.some((field) => Object.prototype.hasOwnProperty.call(value, field));
+
+    if (hasRazorpayFields) {
+      throw new Error('Razorpay fields are not allowed for COD checkout');
+    }
+
+    return true;
+  })
+];
+
 module.exports = {
   placeOrderValidation,
-  verifyCheckoutValidation
+  verifyCheckoutValidation,
+  placeCodValidation
 };

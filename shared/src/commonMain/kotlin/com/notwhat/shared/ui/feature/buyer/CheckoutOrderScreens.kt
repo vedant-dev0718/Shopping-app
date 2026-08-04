@@ -24,9 +24,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,10 +38,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.notwhat.shared.checkout.CheckoutPaymentMethod
+import com.notwhat.shared.checkout.PaymentBridgeResult
+import com.notwhat.shared.checkout.PlatformPaymentBridge
+import com.notwhat.shared.checkout.RazorpayCheckoutPayload
+import com.notwhat.shared.checkout.defaultMaskedText
+import com.notwhat.shared.checkout.defaultSubtitle
+import com.notwhat.shared.checkout.displayLabel
+import com.notwhat.shared.core.NetworkResult
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun CheckoutConfirmationScreen(
     modifier: Modifier,
+    state: NotWhatAppState,
     draft: CheckoutDraft,
     onBack: () -> Unit,
     onPlaceOrder: (CheckoutOrderSummary) -> Unit,
@@ -49,6 +61,10 @@ internal fun CheckoutConfirmationScreen(
     val text = NotWhatColors.onSurface
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
+    val scope = rememberCoroutineScope()
+
+    val requiresOnlineVerification = draft.selectedPayment.method != CheckoutPaymentMethod.COD
+    var submitError by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = modifier.fillMaxSize().background(bg)) {
         LazyColumn(
@@ -57,7 +73,11 @@ internal fun CheckoutConfirmationScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     TextButton(onClick = onBack) { Text("Back", color = accent) }
                     Text("Checkout", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                     Text("Step 1/1", color = muted, style = MaterialTheme.typography.labelMedium)
@@ -77,8 +97,35 @@ internal fun CheckoutConfirmationScreen(
                 Surface(color = surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Payment Method", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("${draft.selectedPayment.label} ${draft.selectedPayment.maskedNumber}", color = text, fontWeight = FontWeight.SemiBold)
+                        Text(draft.selectedPayment.titleLine(), color = text, fontWeight = FontWeight.SemiBold)
                         Text(draft.selectedPayment.holderName, color = muted)
+
+                        if (requiresOnlineVerification) {
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.12f))
+                            Text(
+                                "Online Payment",
+                                color = text,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                "Razorpay checkout opens automatically and callback verification is submitted from SDK response.",
+                                color = muted,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+            }
+
+            submitError?.let { message ->
+                item {
+                    Surface(
+                        color = NotWhatColors.surfaceContainerHigh,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(message, color = text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
                     }
                 }
             }
@@ -123,50 +170,91 @@ internal fun CheckoutConfirmationScreen(
                 }
                 Button(
                     onClick = {
-                        onPlaceOrder(
-                            CheckoutOrderSummary(
-                                orderId = "NW-${(kotlin.random.Random.nextInt(100000, 999999))}",
-                                items = draft.items,
-                                payment = draft.selectedPayment,
-                                subtotal = draft.subtotal,
-                                shipping = draft.shipping,
-                                total = draft.total,
-                                shippingAddress = draft.shippingAddress,
-                                estimatedDelivery = "27 Jul 2026",
-                                trackingSteps = listOf(
-                                    OrderTrackingStep(
-                                        title = "Order Confirmed",
-                                        detail = "Seller accepted your order and started packing.",
-                                        timestamp = "Today, 10:24 AM",
-                                        isComplete = true,
-                                    ),
-                                    OrderTrackingStep(
-                                        title = "Packed",
-                                        detail = "Items were packed and quality checked.",
-                                        timestamp = "Today, 2:10 PM",
-                                        isComplete = true,
-                                    ),
-                                    OrderTrackingStep(
-                                        title = "Shipped",
-                                        detail = "Shipment handed over to courier partner.",
-                                        timestamp = "Tomorrow, expected",
-                                        isComplete = false,
-                                    ),
-                                    OrderTrackingStep(
-                                        title = "Out for Delivery",
-                                        detail = "Courier will attempt final delivery.",
-                                        timestamp = "27 Jul, expected",
-                                        isComplete = false,
-                                    ),
-                                ),
-                            ),
-                        )
+                        submitError = null
+                        scope.launch {
+                            if (requiresOnlineVerification) {
+                                val sessionResult = state.startOnlineCheckoutSession()
+                                when (sessionResult) {
+                                    is NetworkResult.Success -> {
+                                        if (!PlatformPaymentBridge.isRazorpayAvailable()) {
+                                            submitError = "Razorpay SDK bridge is unavailable. Please contact support."
+                                            return@launch
+                                        }
+
+                                        val session = sessionResult.data
+                                        when (
+                                            val paymentResult =
+                                                PlatformPaymentBridge.launchRazorpay(
+                                                    RazorpayCheckoutPayload(
+                                                        keyId = session.razorpayKeyId,
+                                                        orderId = session.razorpayOrderId,
+                                                        amount = session.razorpayOrderAmount,
+                                                        currency = session.currency,
+                                                        merchantName = "NotWhat",
+                                                        checkoutDescription = "Marketplace order payment",
+                                                        prefillEmail = state.currentSession?.email,
+                                                        prefillPhone =
+                                                            state.transaction.addresses
+                                                                .firstOrNull { it.isDefault }
+                                                                ?.phone,
+                                                    ),
+                                                )
+                                        ) {
+                                            is PaymentBridgeResult.Success -> {
+                                                when (
+                                                    val verifyResult =
+                                                        state.submitCheckoutOrder(
+                                                            draft = draft,
+                                                            razorpayOrderId = paymentResult.razorpayOrderId,
+                                                            razorpayPaymentId = paymentResult.razorpayPaymentId,
+                                                            razorpaySignature = paymentResult.razorpaySignature,
+                                                        )
+                                                ) {
+                                                    is NetworkResult.Success -> onPlaceOrder(verifyResult.data)
+                                                    is NetworkResult.Failure -> submitError = verifyResult.error.userMessage()
+                                                }
+                                            }
+
+                                            is PaymentBridgeResult.Failure -> {
+                                                submitError = paymentResult.message
+                                            }
+
+                                            PaymentBridgeResult.Cancelled -> {
+                                                submitError = "Payment cancelled. No amount was charged."
+                                            }
+                                        }
+                                    }
+
+                                    is NetworkResult.Failure -> {
+                                        submitError = sessionResult.error.userMessage()
+                                    }
+                                }
+                            } else {
+                                when (
+                                    val result =
+                                        state.submitCheckoutOrder(
+                                            draft = draft,
+                                            razorpayOrderId = "",
+                                            razorpayPaymentId = "",
+                                            razorpaySignature = "",
+                                        )
+                                ) {
+                                    is NetworkResult.Success -> onPlaceOrder(result.data)
+                                    is NetworkResult.Failure -> submitError = result.error.userMessage()
+                                }
+                            }
+                        }
                     },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(16.dp),
+                    enabled = !state.isCheckoutSubmitting,
                     colors = ButtonDefaults.buttonColors(containerColor = accent),
                 ) {
-                    Text("PLACE ORDER", color = Color.White, fontWeight = FontWeight.Black)
+                    Text(
+                        if (state.isCheckoutSubmitting) "PLACING..." else "PLACE ORDER",
+                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                    )
                 }
             }
         }
@@ -196,6 +284,14 @@ internal fun CheckoutSummaryHandoffScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Order Placed", color = text, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
                     Text("Order ID: ${summary.orderId}", color = accent, fontWeight = FontWeight.Bold)
+                    if (summary.orderNumber.isNotBlank()) {
+                        Text("Order Number: ${summary.orderNumber}", color = muted)
+                    }
+                    Text(
+                        "Status: ${summary.orderStatus} • Payment: ${summary.paymentStatus}",
+                        color = muted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Text("Estimated Delivery: ${summary.estimatedDelivery}", color = muted)
                 }
             }
@@ -204,29 +300,44 @@ internal fun CheckoutSummaryHandoffScreen(
         item {
             Surface(color = surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Order Tracking Timeline", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Order Tracking Timeline",
+                        color = text,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
                     summary.trackingSteps.forEachIndexed { index, step ->
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.Top,
+                        ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(if (step.isComplete) accent else Color.White.copy(alpha = 0.24f)),
+                                    modifier =
+                                        Modifier
+                                            .size(12.dp)
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(if (step.isComplete) accent else Color.White.copy(alpha = 0.24f)),
                                 )
                                 if (index != summary.trackingSteps.lastIndex) {
                                     Box(
-                                        modifier = Modifier
-                                            .width(2.dp)
-                                            .height(30.dp)
-                                            .background(Color.White.copy(alpha = 0.16f)),
+                                        modifier =
+                                            Modifier
+                                                .width(2.dp)
+                                                .height(30.dp)
+                                                .background(Color.White.copy(alpha = 0.16f)),
                                     )
                                 }
                             }
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
                                 Text(step.title, color = text, fontWeight = FontWeight.Bold)
                                 Text(step.detail, color = muted, style = MaterialTheme.typography.bodySmall)
-                                Text(step.timestamp, color = if (step.isComplete) accent else muted, style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    step.timestamp,
+                                    color = if (step.isComplete) accent else muted,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
                             }
                         }
                     }
@@ -239,7 +350,7 @@ internal fun CheckoutSummaryHandoffScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Order Details", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text("Shipping: ${summary.shippingAddress}", color = muted)
-                    Text("Payment: ${summary.payment.label} ${summary.payment.maskedNumber}", color = muted)
+                    Text("Payment: ${summary.payment.titleLine()}", color = muted)
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Subtotal", color = muted)
                         Text(summary.subtotal, color = text)
@@ -312,18 +423,32 @@ internal fun CartSavedPaymentsScreen(
     val cartMuted = NotWhatColors.onSurfaceVariant
     val cartAccent = NotWhatAuthTokens.accent
 
-    val cart = state.transaction.cart ?: com.notwhat.shared.cart.seedCart()
+    val cart =
+        state.transaction.cart ?: com.notwhat.shared.cart
+            .seedCart()
     val cartItems = cart.items
     val subtotal = "₹${cart.subtotal.toInt()}"
     val shipping = if (cart.shipping > 0) "₹${cart.shipping.toInt()}" else "Free"
     val total = "₹${cart.finalTotal.toInt()}"
-    val shippingAddress = state.transaction.addresses.firstOrNull { it.isDefault }
-        ?.let { "${it.addressLine1}, ${it.city}, ${it.state} ${it.pincode}" }
-        ?: "Add a delivery address"
+    val shippingAddress =
+        state.transaction.addresses
+            .firstOrNull { it.isDefault }
+            ?.let { "${it.addressLine1}, ${it.city}, ${it.state} ${it.pincode}" }
+            ?: "Add a delivery address"
 
     var paymentMethods by remember { mutableStateOf(PreviewContent.savedPayments) }
     var selectedPaymentIndex by remember {
         mutableStateOf(paymentMethods.indexOfFirst { it.isDefault }.let { if (it >= 0) it else 0 })
+    }
+    val sessionToken = state.authState.currentSession?.authToken
+
+    LaunchedEffect(sessionToken) {
+        if (sessionToken.isNullOrBlank()) return@LaunchedEffect
+        val liveMethods = state.fetchCheckoutPaymentMethods().orEmpty()
+        if (liveMethods.isEmpty()) return@LaunchedEffect
+
+        paymentMethods = liveMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
+        selectedPaymentIndex = 0
     }
 
     Box(modifier = modifier.fillMaxSize().background(cartBg)) {
@@ -333,7 +458,11 @@ internal fun CartSavedPaymentsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     TextButton(onClick = onBack) { Text("Back", color = cartAccent) }
                     Text("Cart", color = cartText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                     Text("${cartItems.size} items", color = cartMuted, style = MaterialTheme.typography.labelMedium)
@@ -364,7 +493,12 @@ internal fun CartSavedPaymentsScreen(
                             Text("₹${cartItem.priceSnapshot.toInt()}", color = cartAccent, fontWeight = FontWeight.Bold)
                         }
                         Surface(color = cartSurfaceHigh, shape = RoundedCornerShape(10.dp)) {
-                            Text("Qty ${cartItem.quantity}", color = cartText, modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                "Qty ${cartItem.quantity}",
+                                color = cartText,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
                         }
                     }
                 }
@@ -381,25 +515,41 @@ internal fun CartSavedPaymentsScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth().clickable { selectedPaymentIndex = index },
                             ) {
-                                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Column {
-                                            Text("${payment.label} ${payment.maskedNumber}", color = cartText, fontWeight = FontWeight.SemiBold)
+                                            Text(payment.titleLine(), color = cartText, fontWeight = FontWeight.SemiBold)
                                             Text(payment.holderName, color = cartMuted, style = MaterialTheme.typography.bodySmall)
                                         }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
                                             if (payment.isDefault) {
                                                 Surface(color = cartAccent.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp)) {
-                                                    Text("Default", color = cartAccent, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
+                                                    Text(
+                                                        "Default",
+                                                        color = cartAccent,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                    )
                                                 }
                                             }
                                             if (isSelected) {
                                                 Surface(color = Color.White.copy(alpha = 0.16f), shape = RoundedCornerShape(8.dp)) {
-                                                    Text("Selected", color = cartText, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
+                                                    Text(
+                                                        "Selected",
+                                                        color = cartText,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                    )
                                                 }
                                             }
                                         }
@@ -408,9 +558,10 @@ internal fun CartSavedPaymentsScreen(
                                     if (!payment.isDefault) {
                                         TextButton(
                                             onClick = {
-                                                paymentMethods = paymentMethods.mapIndexed { idx, item ->
-                                                    item.copy(isDefault = idx == index)
-                                                }
+                                                paymentMethods =
+                                                    paymentMethods.mapIndexed { idx, item ->
+                                                        item.copy(isDefault = idx == index)
+                                                    }
                                                 selectedPaymentIndex = index
                                             },
                                             modifier = Modifier.align(Alignment.End),
@@ -464,31 +615,33 @@ internal fun CartSavedPaymentsScreen(
                     Text(total, color = cartText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 Button(
-                        onClick = {
-                            val selectedPayment = paymentMethods.getOrElse(selectedPaymentIndex) { paymentMethods.first() }
-                            onProceedToCheckout(
-                                CheckoutDraft(
-                                    items = cartItems.map { item ->
+                    onClick = {
+                        val selectedPayment = paymentMethods.getOrElse(selectedPaymentIndex) { paymentMethods.first() }
+                        onProceedToCheckout(
+                            CheckoutDraft(
+                                items =
+                                    cartItems.map { item ->
                                         DemoCartItem(
-                                            product = DemoProduct(
-                                                name = item.productId?.displayTitle ?: "Product",
-                                                price = "\u20b9${item.priceSnapshot.toInt()}",
-                                                store = item.productId?.displayStoreName ?: "",
-                                                category = item.productId?.category ?: "",
-                                                imageUrl = item.productId?.displayImageUrl ?: "",
-                                            ),
+                                            product =
+                                                DemoProduct(
+                                                    name = item.productId?.displayTitle ?: "Product",
+                                                    price = "\u20b9${item.priceSnapshot.toInt()}",
+                                                    store = item.productId?.displayStoreName ?: "",
+                                                    category = item.productId?.category ?: "",
+                                                    imageUrl = item.productId?.displayImageUrl ?: "",
+                                                ),
                                             size = "-",
                                             quantity = item.quantity,
                                         )
                                     },
-                                    selectedPayment = selectedPayment,
-                                    subtotal = subtotal,
-                                    shipping = shipping,
-                                    total = total,
-                                    shippingAddress = shippingAddress,
-                                ),
-                            )
-                        },
+                                selectedPayment = selectedPayment,
+                                subtotal = subtotal,
+                                shipping = shipping,
+                                total = total,
+                                shippingAddress = shippingAddress,
+                            ),
+                        )
+                    },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = cartAccent),
@@ -499,6 +652,17 @@ internal fun CartSavedPaymentsScreen(
         }
     }
 }
+
+private fun CheckoutPaymentMethod.toSavedPayment(isDefault: Boolean): DemoSavedPayment =
+    DemoSavedPayment(
+        method = this,
+        label = displayLabel(),
+        maskedNumber = defaultMaskedText(),
+        holderName = defaultSubtitle(),
+        isDefault = isDefault,
+    )
+
+private fun DemoSavedPayment.titleLine(): String = "$label $maskedNumber".trim()
 
 @Composable
 private fun CheckoutImage(

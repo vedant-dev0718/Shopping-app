@@ -24,6 +24,111 @@ const signPayment = (razorpayOrderId, razorpayPaymentId) => crypto
   .digest('hex');
 
 describe('checkout API with mocked Razorpay', () => {
+  test('checkout start includes COD only when feature flag is enabled', async () => {
+    const originalCodFlag = env.enableCodCheckout;
+
+    try {
+      const buyer = await createBuyer({ email: 'cod-flag-buyer@example.com' });
+      const seller = await createSeller();
+      const product = await createProduct(seller, { price: 199, stock: 5 });
+
+      await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: product._id, quantity: 1 }).expect(201);
+
+      env.enableCodCheckout = false;
+      const withoutCod = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
+      expect(withoutCod.body.data.paymentMethods).not.toContain('COD');
+
+      env.enableCodCheckout = true;
+      const withCod = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
+      expect(withCod.body.data.paymentMethods).toContain('COD');
+    } finally {
+      env.enableCodCheckout = originalCodFlag;
+    }
+  });
+
+  test('buyer can place COD order via /checkout/place-cod and order has COD-safe payment fields', async () => {
+    const originalCodFlag = env.enableCodCheckout;
+    env.enableCodCheckout = true;
+
+    try {
+      const buyer = await createBuyer({ email: 'cod-place-buyer@example.com' });
+      const seller = await createSeller();
+      const product = await createProduct(seller, { price: 799, stock: 4 });
+
+      await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: product._id, quantity: 2 }).expect(201);
+
+      const placed = await api()
+        .post('/api/checkout/place-cod')
+        .set('Authorization', authHeader(buyer))
+        .send({
+          paymentMethod: 'COD',
+          shippingInfo
+        })
+        .expect(201);
+
+      expect(placed.body.data.orderNumber).toBeTruthy();
+      expect(placed.body.data.paymentStatus).toBe('pending');
+      expect(placed.body.data.orderStatus).toBe('awaiting_seller_acceptance');
+
+      const order = await Order.findById(placed.body.data.orderId).lean();
+      expect(order.paymentMethod).toBe('COD');
+      expect(order.razorpayOrderId).toBe('');
+      expect(order.razorpayPaymentId).toBe('');
+
+      const cart = await api().get('/api/cart').set('Authorization', authHeader(buyer)).expect(200);
+      expect(cart.body.data.items).toHaveLength(0);
+    } finally {
+      env.enableCodCheckout = originalCodFlag;
+    }
+  });
+
+  test('checkout place-cod rejects Razorpay-only fields in request body', async () => {
+    const originalCodFlag = env.enableCodCheckout;
+    env.enableCodCheckout = true;
+
+    try {
+      const buyer = await createBuyer({ email: 'cod-reject-razorpay@example.com' });
+      const seller = await createSeller();
+      const product = await createProduct(seller, { price: 499, stock: 2 });
+
+      await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: product._id, quantity: 1 }).expect(201);
+
+      const response = await api()
+        .post('/api/checkout/place-cod')
+        .set('Authorization', authHeader(buyer))
+        .send({
+          paymentMethod: 'COD',
+          shippingInfo,
+          razorpayOrderId: 'order_should_not_be_sent'
+        })
+        .expect(400);
+
+      expect(response.body.message).toBe('Validation failed');
+      expect(response.body.errors?.[0]?.msg).toBe('Razorpay fields are not allowed for COD checkout');
+    } finally {
+      env.enableCodCheckout = originalCodFlag;
+    }
+  });
+
+  test('checkout verify rejects COD payment method and keeps online-only contract', async () => {
+    const buyer = await createBuyer({ email: 'cod-verify-reject@example.com' });
+
+    const response = await api()
+      .post('/api/checkout/verify')
+      .set('Authorization', authHeader(buyer))
+      .send({
+        paymentMethod: 'COD',
+        razorpayOrderId: 'order_cod_wrong_route',
+        razorpayPaymentId: 'pay_cod_wrong_route',
+        razorpaySignature: 'signature_cod_wrong_route',
+        shippingInfo
+      })
+      .expect(400);
+
+    expect(response.body.message).toBe('Validation failed');
+    expect(response.body.errors?.[0]?.msg).toContain('/api/checkout/place-cod');
+  });
+
   test('buyer checkout starts payment, creates awaiting-acceptance order, and clears cart', async () => {
     const originalManualCaptureEnabled = env.razorpayManualCaptureEnabled;
     env.razorpayManualCaptureEnabled = true;

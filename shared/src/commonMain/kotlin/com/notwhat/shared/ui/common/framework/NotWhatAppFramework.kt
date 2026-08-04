@@ -35,8 +35,8 @@ internal fun NotWhatAppFramework(
 
     LaunchedEffect(state.isAuthenticated) {
         if (state.isAuthenticated) {
-            state.content.load()
             val token = state.authState.currentSession?.authToken ?: return@LaunchedEffect
+            state.content.load(token)
             state.transaction.load(token)
             if (state.uiRole == UserRole.Seller) {
                 state.sellerContent.load(token)

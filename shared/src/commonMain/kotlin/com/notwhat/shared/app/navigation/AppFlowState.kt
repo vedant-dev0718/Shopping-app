@@ -34,6 +34,10 @@ internal class AppFlowState {
                 route = AppRoute.Cart
             }
 
+            AppNavEvent.OpenBuyerReturns -> {
+                route = AppRoute.BuyerReturns
+            }
+
             is AppNavEvent.ProceedToCheckout -> {
                 route = AppRoute.CheckoutDraftRoute(event.draft)
             }

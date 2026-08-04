@@ -66,6 +66,7 @@ internal fun AppContentRouter(
             val route = flow.route as AppRoute.ProductDetail
             productCoordinator.DetailScreen(
                 modifier = Modifier.padding(padding),
+                state = state,
                 product = route.product,
                 onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
             )
@@ -126,6 +127,7 @@ internal fun AppContentRouter(
         val route = flow.route as AppRoute.CheckoutDraftRoute
         CheckoutConfirmationScreen(
             modifier = Modifier.padding(padding),
+            state = state,
             draft = route.draft,
             onBack = { flow.onEvent(AppNavEvent.OpenCart) },
             onPlaceOrder = { summary -> flow.onEvent(AppNavEvent.PlaceOrder(summary)) },
@@ -144,10 +146,20 @@ internal fun AppContentRouter(
         return
     }
 
+    if (flow.route is AppRoute.BuyerReturns) {
+        BuyerReturnsScreen(
+            modifier = Modifier.padding(padding),
+            state = state,
+            onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
+        )
+        return
+    }
+
     if (flow.route is AppRoute.ProductDetail) {
         val route = flow.route as AppRoute.ProductDetail
         productCoordinator.DetailScreen(
             modifier = Modifier.padding(padding),
+            state = state,
             product = route.product,
             onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
         )
@@ -207,9 +219,23 @@ internal fun AppContentRouter(
                 onOpenSellerDashboard = { flow.onEvent(AppNavEvent.OpenSellerDashboard) },
                 onOpenProfile = { flow.onEvent(AppNavEvent.OpenProfile) },
                 onOpenCart = { flow.onEvent(AppNavEvent.OpenCart) },
+                onOpenBuyerReturns = { flow.onEvent(AppNavEvent.OpenBuyerReturns) },
             )
         }
     }
+}
+
+@Composable
+private fun BuyerReturnsScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
+) {
+    BuyerReturnsContentScreen(
+        modifier = modifier,
+        state = state,
+        onBack = onBack,
+    )
 }
 
 @Composable

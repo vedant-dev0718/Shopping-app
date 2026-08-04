@@ -34,6 +34,7 @@ module.exports = {
   razorpayCaptureAfterSellerAcceptance: process.env.RAZORPAY_CAPTURE_AFTER_SELLER_ACCEPTANCE === 'true',
   razorpayManualCaptureEnabled: process.env.RAZORPAY_MANUAL_CAPTURE_ENABLED === 'true'
     || process.env.RAZORPAY_CAPTURE_AFTER_SELLER_ACCEPTANCE === 'true',
+  enableCodCheckout: process.env.ENABLE_COD_CHECKOUT === 'true',
   razorpayAuthorizationTimeoutMinutes: parseInt(process.env.RAZORPAY_AUTHORIZATION_TIMEOUT_MINUTES || '240', 10),
   googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
   googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID || '',

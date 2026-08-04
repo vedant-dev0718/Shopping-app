@@ -10,6 +10,7 @@
     "seed": "node src/database/seed.js",
     "seed:pickup-addresses": "node scripts/backfill-pickup-addresses.js",
     "seed:admin": "node scripts/seed-admin.js",
+    "smoke:product-reel-contract": "node scripts/product-reel-contract-smoke.js",
     "checklist:staging": "bash scripts/staging-checklist-smoke.sh",
     "checklist:staging:sync": "node scripts/run-staging-checklist-and-sync.js",
     "monitor:hardening": "bash scripts/monitor-hardening-metrics.sh",

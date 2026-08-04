@@ -23,9 +23,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +40,7 @@ import com.notwhat.shared.catalog.StoreDto
 import com.notwhat.shared.catalog.seedProducts
 import com.notwhat.shared.catalog.seedReels
 import com.notwhat.shared.catalog.seedStores
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun BargainsScreen(
@@ -227,18 +230,42 @@ internal fun ReelDetailScreen(
     val text = NotWhatColors.onSurface
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
+    val scope = rememberCoroutineScope()
 
     val store: StoreDto? =
         state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
             ?: state.content.stores.firstOrNull()
     val taggedProducts =
-        reel.taggedProductIds
-            .mapNotNull { id -> state.content.products.firstOrNull { it.id == id } }
+        reel.taggedProducts
             .ifEmpty {
                 state.content.products
                     .take(3)
                     .ifEmpty { seedProducts().take(3) }
             }
+
+    LaunchedEffect(reel.id) {
+        state.content.recordReelView(reel.id, state.currentSession?.authToken)
+    }
+
+    val openTrackedProduct: (ProductDto) -> Unit = { product ->
+        scope.launch {
+            state.content.recordProductClick(product.id, state.currentSession?.authToken)
+        }
+        onOpenProduct(product)
+    }
+
+    val toggleSavedProduct: (ProductDto) -> Unit = { product ->
+        val token = state.currentSession?.authToken
+        if (!token.isNullOrBlank()) {
+            scope.launch {
+                if (product.isSaved) {
+                    state.content.unsaveProduct(product.id, token)
+                } else {
+                    state.content.saveProduct(product.id, token)
+                }
+            }
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize().background(bg)) {
         LazyColumn(
@@ -309,7 +336,7 @@ internal fun ReelDetailScreen(
                     Surface(
                         color = surface,
                         shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth().clickable { onOpenProduct(item) },
+                        modifier = Modifier.fillMaxWidth().clickable { openTrackedProduct(item) },
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -326,12 +353,25 @@ internal fun ReelDetailScreen(
                                 Text(item.displayTitle, color = text, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(item.displayPrice, color = accent, fontWeight = FontWeight.Bold)
                             }
-                            Surface(
-                                color = accent,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.clickable { onOpenProduct(item) },
-                            ) {
-                                Text("View", color = Color.White, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Surface(
+                                    color = if (item.isSaved) accent.copy(alpha = 0.2f) else surface,
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.clickable { toggleSavedProduct(item) },
+                                ) {
+                                    Text(
+                                        if (item.isSaved) "Saved" else "Save",
+                                        color = if (item.isSaved) accent else text,
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    )
+                                }
+                                Surface(
+                                    color = accent,
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.clickable { openTrackedProduct(item) },
+                                ) {
+                                    Text("View", color = Color.White, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
+                                }
                             }
                         }
                     }

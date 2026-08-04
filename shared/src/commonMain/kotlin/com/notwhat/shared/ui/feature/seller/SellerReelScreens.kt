@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.notwhat.shared.catalog.UpdateReelRequestDto
 import kotlinx.coroutines.launch
 
 @Composable
@@ -88,6 +89,10 @@ internal fun SellerReelListScreen(
                     com.notwhat.shared.catalog
                         .seedProducts()
                 },
+            initialSelectedProductIds =
+                state.sellerContent.products
+                    .filter { product -> reel.taggedProducts.contains(product.displayTitle) }
+                    .map { it.id },
             bg = bg,
             surface = surface,
             surfaceHigh = surfaceHigh,
@@ -96,7 +101,32 @@ internal fun SellerReelListScreen(
             accent = accent,
             border = border,
             onDismiss = { tagPickerReelId = null },
-            onSave = { _ ->
+            onSave = { products ->
+                val token = state.currentSession?.authToken
+                if (token.isNullOrBlank()) {
+                    deleteError = "Please sign in again to update reel products."
+                    tagPickerReelId = null
+                    return@ReelProductTagSheet
+                }
+
+                scope.launch {
+                    val updateResult =
+                        state.sellerContent.updateReel(
+                            reel.id,
+                            UpdateReelRequestDto(taggedProductIds = products.map { it.id }),
+                            token,
+                        )
+                    if (updateResult is com.notwhat.shared.core.NetworkResult.Success) {
+                        reels =
+                            reels.map {
+                                if (it.id == reel.id) updateResult.data.toDemoSellerReel() else it
+                            }
+                        deleteError = null
+                    } else if (updateResult is com.notwhat.shared.core.NetworkResult.Failure) {
+                        deleteError = updateResult.error.userMessage()
+                    }
+                }
+
                 tagPickerReelId = null
             },
         )
@@ -272,7 +302,28 @@ internal fun SellerReelListScreen(
                 onDelete = { pendingDeleteId = reel.id },
                 onTagProducts = { tagPickerReelId = reel.id },
                 onEditCaption = { newCaption ->
-                    reels = reels.map { if (it.id == reel.id) it.copy(caption = newCaption) else it }
+                    val token = state.currentSession?.authToken
+                    if (token.isNullOrBlank()) {
+                        deleteError = "Please sign in again to update the reel caption."
+                    } else {
+                        scope.launch {
+                            val updateResult =
+                                state.sellerContent.updateReel(
+                                    reel.id,
+                                    UpdateReelRequestDto(caption = newCaption),
+                                    token,
+                                )
+                            if (updateResult is com.notwhat.shared.core.NetworkResult.Success) {
+                                reels =
+                                    reels.map {
+                                        if (it.id == reel.id) updateResult.data.toDemoSellerReel() else it
+                                    }
+                                deleteError = null
+                            } else if (updateResult is com.notwhat.shared.core.NetworkResult.Failure) {
+                                deleteError = updateResult.error.userMessage()
+                            }
+                        }
+                    }
                 },
             )
         }
@@ -495,6 +546,7 @@ internal fun ReelProductTagSheet(
     modifier: Modifier,
     reel: DemoSellerReel,
     allProducts: List<com.notwhat.shared.catalog.ProductDto>,
+    initialSelectedProductIds: List<String>,
     bg: Color,
     surface: Color,
     surfaceHigh: Color,
@@ -507,7 +559,7 @@ internal fun ReelProductTagSheet(
 ) {
     val selectedIds =
         remember {
-            mutableStateListOf<String>()
+            mutableStateListOf<String>().apply { addAll(initialSelectedProductIds) }
         }
 
     Column(
@@ -551,10 +603,10 @@ internal fun ReelProductTagSheet(
                     },
                     shape = SellerUiTokens.radiusButton,
                     colors = ButtonDefaults.buttonColors(containerColor = accent),
-                    enabled = selectedIds.size <= 5,
+                    enabled = selectedIds.size in 1..3,
                 ) {
                     Text(
-                        "Save (${selectedIds.size}/5)",
+                        "Save (${selectedIds.size}/3)",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelMedium,
@@ -571,7 +623,7 @@ internal fun ReelProductTagSheet(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                "Select up to 5 products. Selected products will appear in the buyer feed when this reel is shared.",
+                "Select 1 to 3 products. Selected products will appear in the buyer feed when this reel is shared.",
                 color = muted,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -585,7 +637,7 @@ internal fun ReelProductTagSheet(
         ) {
             items(allProducts, key = { it.id }) { product ->
                 val isSelected = selectedIds.contains(product.id)
-                val atLimit = selectedIds.size >= 5 && !isSelected
+                val atLimit = selectedIds.size >= 3 && !isSelected
 
                 Surface(
                     color = if (isSelected) Color(0xFF2C1F0A) else surface,

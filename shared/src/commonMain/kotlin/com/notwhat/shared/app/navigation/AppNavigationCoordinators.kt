@@ -94,11 +94,13 @@ internal class ProductNavigationCoordinator {
     @Composable
     fun DetailScreen(
         modifier: Modifier,
+        state: NotWhatAppState,
         product: ProductDto,
         onBack: () -> Unit,
     ) {
         ProductDetailScreen(
             modifier = modifier,
+            state = state,
             product = product,
             onBack = onBack,
         )
