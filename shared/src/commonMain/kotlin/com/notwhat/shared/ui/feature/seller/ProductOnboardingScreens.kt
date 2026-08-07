@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -103,6 +104,7 @@ internal fun ProductOnboardingScreen(
     var newTag by remember { mutableStateOf("") }
     var imageUrls by remember { mutableStateOf(listOf<String>()) }
     var imagePreviewUrls by remember { mutableStateOf(listOf<String>()) }
+    var bargainEnabled by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var isUploadingImage by remember { mutableStateOf(false) }
     var submitError by remember { mutableStateOf<String?>(null) }
@@ -236,20 +238,20 @@ internal fun ProductOnboardingScreen(
 
                                 // Use multi-image picker if available, otherwise fall back to single
                                 if (PlatformImagePicker.isMultiAvailable()) {
-                                    PlatformImagePicker.launchMulti { uris ->
-                                        if (uris.isEmpty()) {
-                                            return@launchMulti
-                                        }
-
+                                    PlatformImagePicker.launchMulti { uris: List<String> ->
+                                        if (uris.isEmpty()) return@launchMulti
+                                        // show previews immediately so user sees selection
+                                        imagePreviewUrls = (imagePreviewUrls + uris).toList()
                                         scope.launch {
                                             isUploadingImage = true
                                             submitError = null
                                             val uploadedUrls = mutableListOf<String>()
-                                            val previewUrls = mutableListOf<String>()
+                                            val failedUris = mutableListOf<String>()
 
                                             for (uri in uris) {
                                                 val imageBytes = PlatformMediaFileReader.readBytes(uri)
                                                 if (imageBytes == null) {
+                                                    failedUris.add(uri)
                                                     submitError = "Could not read one or more images. Continuing with valid selections."
                                                     continue
                                                 }
@@ -265,26 +267,27 @@ internal fun ProductOnboardingScreen(
                                                 when (uploadResult) {
                                                     is NetworkResult.Success -> {
                                                         uploadedUrls.add(uploadResult.data.imageUrl)
-                                                        previewUrls.add(uri)
                                                     }
 
                                                     is NetworkResult.Failure -> {
-                                                        if (submitError == null) {
-                                                            submitError = uploadResult.error.userMessage()
-                                                        }
+                                                        failedUris.add(uri)
+                                                        if (submitError == null) submitError = uploadResult.error.userMessage()
                                                     }
                                                 }
                                             }
 
                                             isUploadingImage = false
+                                            // remove failed previews, add uploaded URLs
+                                            imagePreviewUrls = imagePreviewUrls.filter { it !in failedUris }
                                             imageUrls = imageUrls + uploadedUrls
-                                            imagePreviewUrls = imagePreviewUrls + previewUrls
                                         }
                                     }
                                 } else {
                                     // Fallback to single image picker
                                     PlatformImagePicker.launch { uri ->
                                         if (!uri.isNullOrBlank()) {
+                                            // show preview immediately
+                                            imagePreviewUrls = imagePreviewUrls + uri
                                             scope.launch uploadLaunch@{
                                                 isUploadingImage = true
                                                 submitError = null
@@ -292,6 +295,7 @@ internal fun ProductOnboardingScreen(
                                                 val imageBytes = PlatformMediaFileReader.readBytes(uri)
                                                 if (imageBytes == null) {
                                                     isUploadingImage = false
+                                                    imagePreviewUrls = imagePreviewUrls.filter { it != uri }
                                                     submitError = "Could not read the selected image. Please try again."
                                                     return@uploadLaunch
                                                 }
@@ -308,10 +312,12 @@ internal fun ProductOnboardingScreen(
                                                 when (uploadResult) {
                                                     is NetworkResult.Success -> {
                                                         imageUrls = imageUrls + uploadResult.data.imageUrl
-                                                        imagePreviewUrls = imagePreviewUrls + uri
+                                                        // preview already added above
                                                     }
 
                                                     is NetworkResult.Failure -> {
+                                                        // remove failed preview
+                                                        imagePreviewUrls = imagePreviewUrls.filter { it != uri }
                                                         submitError = uploadResult.error.userMessage()
                                                     }
                                                 }
@@ -341,6 +347,8 @@ internal fun ProductOnboardingScreen(
                                 }
                             },
                             onRemoveTag = { tagToRemove -> tags = tags.filter { it != tagToRemove } },
+                            bargainEnabled = bargainEnabled,
+                            onBargainEnabledChange = { bargainEnabled = it },
                             surface = surface,
                             text = text,
                             accent = accent,
@@ -420,6 +428,7 @@ internal fun ProductOnboardingScreen(
                                         tags = tags,
                                         imageUrls = imageUrls,
                                         productLink = productLink.trim().ifBlank { null },
+                                        bargainEnabled = bargainEnabled,
                                     ),
                                     token,
                                 )
@@ -659,10 +668,7 @@ private fun ProductOnboardingMediaStep(
                 ) {
                     itemsIndexed(imageUrls) { index, imageUrl ->
                         Box(
-                            modifier =
-                                Modifier
-                                    .size(100.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
+                            modifier = Modifier.size(100.dp).clip(RoundedCornerShape(12.dp)),
                         ) {
                             AsyncImage(
                                 model = imageUrl,
@@ -670,16 +676,18 @@ private fun ProductOnboardingMediaStep(
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                             )
-                            // Remove button
+                            // Small dismiss badge in top-right corner
                             Box(
                                 modifier =
                                     Modifier
                                         .align(Alignment.TopEnd)
-                                        .background(Color.Red, shape = RoundedCornerShape(50.dp))
-                                        .clickable { onRemoveImageAt(index) }
-                                        .padding(4.dp),
+                                        .padding(4.dp)
+                                        .size(20.dp)
+                                        .background(Color.Black.copy(alpha = 0.55f), shape = RoundedCornerShape(10.dp))
+                                        .clickable { onRemoveImageAt(index) },
+                                contentAlignment = Alignment.Center,
                             ) {
-                                Text("✕", color = Color.White, fontWeight = FontWeight.Bold)
+                                Text("✕", color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -723,6 +731,8 @@ private fun ProductOnboardingPricingStep(
     onNewTagChange: (String) -> Unit,
     onAddTag: () -> Unit,
     onRemoveTag: (String) -> Unit,
+    bargainEnabled: Boolean,
+    onBargainEnabledChange: (Boolean) -> Unit,
     surface: Color,
     text: Color,
     accent: Color,
@@ -806,6 +816,25 @@ private fun ProductOnboardingPricingStep(
                             )
                         }
                     }
+                }
+            }
+
+            // Bargain toggle
+            Surface(color = accent.copy(alpha = 0.08f), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Enable Bargain", color = text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Buyers can place bids on this product",
+                            color = text.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    Switch(checked = bargainEnabled, onCheckedChange = onBargainEnabledChange)
                 }
             }
         }

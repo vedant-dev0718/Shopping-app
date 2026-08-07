@@ -69,6 +69,8 @@ internal sealed interface AppNavEvent {
 
     data object OpenProfile : AppNavEvent
 
+    data object OpenAddresses : AppNavEvent
+
     data class ChangeProfileRoute(
         val route: ProfileShellRoute,
     ) : AppNavEvent

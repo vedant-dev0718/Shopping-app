@@ -46,6 +46,7 @@ internal enum class SellerShellRoute {
     ReturnsRefunds,
     SellerReelList,
     UploadReel,
+    SellerProfile,
 }
 
 @Composable
@@ -71,13 +72,15 @@ internal fun SellerShellScreen(
     val products = state.sellerContent.products
     val orders = state.sellerContent.orders
     val reels = state.sellerContent.reels
-    val totalRevenue = orders.sumOf { it.totalAmount }
+    // Revenue: only completed orders with no active return
+    val completedRevenue = orders.filter { it.status == "delivered" }.sumOf { it.totalAmount }
+    val completedOrderCount = orders.count { it.status == "delivered" }
     val kpis =
         listOf(
-            DemoSellerKpi("Revenue", "\u20b9${totalRevenue.toInt()}", if (totalRevenue > 0) "+Live" else "--"),
-            DemoSellerKpi("Orders", orders.size.toString(), "${orders.count { it.status == "placed" }} new"),
+            DemoSellerKpi("Revenue", "₹${completedRevenue.toInt()}", if (completedRevenue > 0) "+Live" else "--"),
+            DemoSellerKpi("Orders", completedOrderCount.toString(), "${orders.count { it.status == "placed" }} pending"),
             DemoSellerKpi("Products", products.size.toString(), "${products.count { it.stock < 5 }} low stock"),
-            DemoSellerKpi("Reels", reels.size.toString(), "${reels.sumOf { it.viewCount }} views"),
+            DemoSellerKpi("Reels", reels.size.toString(), "active"),
         )
     val orderPulse =
         orders
@@ -87,7 +90,6 @@ internal fun SellerShellScreen(
         listOf(
             DemoSellerInsightItem("Low stock", "${products.count { it.stock < 5 }} products need restocking.", "Review"),
             DemoSellerInsightItem("Pending orders", "${orders.count { it.status == "placed" }} orders await acceptance.", "Process"),
-            DemoSellerInsightItem("Reel reach", "${reels.sumOf { it.viewCount }} total reel views so far.", "Insights"),
         )
     val drillDownCards =
         listOf(
@@ -157,6 +159,16 @@ internal fun SellerShellScreen(
         return
     }
 
+    if (route == SellerShellRoute.SellerProfile) {
+        SellerProfileScreen(
+            modifier = modifier,
+            state = state,
+            onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+            onSignOut = onBackToAccount,
+        )
+        return
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize().background(bg),
         contentPadding = PaddingValues(SellerUiTokens.screenPadding),
@@ -173,11 +185,12 @@ internal fun SellerShellScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    // UE avatar — opens seller profile
                     Surface(
                         color = surfaceHigh,
                         shape = RoundedCornerShape(20.dp),
                         border = androidx.compose.foundation.BorderStroke(2.dp, accent.copy(alpha = 0.7f)),
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(40.dp).clickable { onRouteChange(SellerShellRoute.SellerProfile) },
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Text("UE", color = text, fontWeight = FontWeight.Black, style = MaterialTheme.typography.labelMedium)
@@ -198,25 +211,6 @@ internal fun SellerShellScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Surface(
-                        color = surfaceHigh,
-                        shape = RoundedCornerShape(14.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
-                    ) {
-                        Text(
-                            "ALERTS",
-                            color = accent,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
-                    TextButton(
-                        onClick = onBackToAccount,
-                        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                    ) {
-                        Text("Exit", color = muted, fontWeight = FontWeight.SemiBold)
-                    }
                 }
             }
         }
@@ -298,7 +292,6 @@ internal fun SellerShellScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
-                    Text("Live readout of sales velocity and bargain activity.", color = muted, style = MaterialTheme.typography.bodySmall)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(SellerUiTokens.chipGap)) {
                         items(listOf("7d", "30d", "90d")) { label ->
                             SellerRouteChip(
@@ -326,7 +319,7 @@ internal fun SellerShellScreen(
                             color = surface,
                             shape = SellerUiTokens.radiusChip,
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                            modifier = Modifier.width(154.dp).clickable { selectedDrillDownTitle = kpi.label },
+                            modifier = Modifier.width(154.dp),
                         ) {
                             Column(
                                 modifier = Modifier.padding(SellerUiTokens.cardPadding),
@@ -350,54 +343,8 @@ internal fun SellerShellScreen(
                 Surface(
                     color = surface,
                     shape = SellerUiTokens.radiusInnerCard,
-                    modifier = Modifier.fillMaxWidth().clickable { onRouteChange(SellerShellRoute.OrderOperationsStub) },
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Column(
-                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
-                    ) {
-                        Text("Order Pulse", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        orderPulse.forEach { pulse ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(pulse.status, color = muted)
-                                Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp)) {
-                                    Text(
-                                        pulse.count.toString(),
-                                        color = text,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                val selectedCard =
-                    drillDownCards.firstOrNull { card ->
-                        selectedDrillDownTitle == null || card.title.contains(selectedDrillDownTitle.orEmpty(), ignoreCase = true)
-                    } ?: drillDownCards.first()
-                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
-                    ) {
-                        Text("Drill-down", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text(selectedCard.title, color = accent, fontWeight = FontWeight.Bold)
-                        Text(selectedCard.metric, color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                        Text(selectedCard.detail, color = muted, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-
-            item {
-                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(SellerUiTokens.cardPadding),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -418,55 +365,6 @@ internal fun SellerShellScreen(
                         ) {
                             Text(if (autoCounterEnabled) "ON" else "OFF", color = if (autoCounterEnabled) NotWhatColors.onPrimary else text)
                         }
-                    }
-                }
-            }
-            item {
-                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
-                    ) {
-                        Text("Next seller slices", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        ProfileActionRow(
-                            title = "Product Lifecycle",
-                            subtitle = "Inventory, pricing, and product editing stubs",
-                            cta = "Open",
-                            onClick = { onRouteChange(SellerShellRoute.ProductLifecycleStub) },
-                            accent = accent,
-                            text = text,
-                            muted = muted,
-                        )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        ProfileActionRow(
-                            title = "Order Operations",
-                            subtitle = "Pick-pack-ship workflow and exception handling stubs",
-                            cta = "Open",
-                            onClick = { onRouteChange(SellerShellRoute.OrderOperationsStub) },
-                            accent = accent,
-                            text = text,
-                            muted = muted,
-                        )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        ProfileActionRow(
-                            title = "Returns & Refunds",
-                            subtitle = "Return approvals, refunds, and exception review",
-                            cta = "Open",
-                            onClick = { onRouteChange(SellerShellRoute.ReturnsRefunds) },
-                            accent = accent,
-                            text = text,
-                            muted = muted,
-                        )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        ProfileActionRow(
-                            title = "Upload Reel",
-                            subtitle = "Create shoppable video reels with product tagging and bargaining controls",
-                            cta = "Open",
-                            onClick = { onRouteChange(SellerShellRoute.UploadReel) },
-                            accent = accent,
-                            text = text,
-                            muted = muted,
-                        )
                     }
                 }
             }
@@ -496,34 +394,6 @@ internal fun SellerShellScreen(
                             ) {
                                 Text(insight.action, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Top selling product", color = text, fontWeight = FontWeight.Bold)
-                            Text(
-                                state.sellerContent.products
-                                    .firstOrNull()
-                                    ?.displayTitle ?: "—",
-                                color = muted,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                        Button(
-                            onClick = { onRouteChange(SellerShellRoute.ProductLifecycleStub) },
-                            shape = SellerUiTokens.radiusButton,
-                            colors = ButtonDefaults.buttonColors(containerColor = accent),
-                        ) {
-                            Text("Open", color = Color.White)
                         }
                     }
                 }
@@ -649,5 +519,157 @@ private fun SellerStubScreenCard(
                 Text(backLabel, color = Color.White)
             }
         }
+    }
+}
+
+@Composable
+private fun SellerProfileScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
+    onSignOut: () -> Unit,
+) {
+    val bg = NotWhatColors.background
+    val surface = NotWhatColors.surface
+    val surfaceHigh = NotWhatColors.surfaceContainerHigh
+    val text = NotWhatColors.onSurface
+    val muted = NotWhatColors.onSurfaceVariant
+    val accent = NotWhatAuthTokens.accent
+
+    val name = state.currentSession?.name ?: "Urban Edge"
+    val email = state.currentSession?.email ?: ""
+    val initials =
+        name
+            .split(" ")
+            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+            .take(2)
+            .joinToString("")
+    val products = state.sellerContent.products.size
+    val reels = state.sellerContent.reels.size
+    val orders = state.sellerContent.orders.count { it.status == "delivered" }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onBack) { Text("← Back", color = accent, fontWeight = FontWeight.SemiBold) }
+                Text("Profile", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                Box(modifier = Modifier.width(72.dp))
+            }
+        }
+
+        // Avatar + store name + email
+        item {
+            Surface(color = surface, shape = SellerUiTokens.radiusCard, modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Surface(
+                        color = accent.copy(alpha = 0.18f),
+                        shape = RoundedCornerShape(40.dp),
+                        modifier = Modifier.size(80.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                initials.ifEmpty { "S" },
+                                fontWeight = FontWeight.Black,
+                                color = accent,
+                                style = MaterialTheme.typography.headlineMedium,
+                            )
+                        }
+                    }
+                    Text(name, color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    if (email.isNotBlank()) {
+                        Text(email, color = muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+
+        // Store stats
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                listOf(
+                    "Products" to products.toString(),
+                    "Reels" to reels.toString(),
+                    "Completed" to orders.toString(),
+                ).forEach { (label, value) ->
+                    Surface(color = surface, shape = SellerUiTokens.radiusChip, modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier.padding(vertical = 14.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(value, color = accent, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                            Text(label, color = muted, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Options
+        item {
+            Surface(color = surface, shape = SellerUiTokens.radiusCard, modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    SellerProfileTile("Store Settings", "Edit store name, region, and category", accent, text, muted) {}
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+                    SellerProfileTile("Payout & Banking", "Manage your payout account details", accent, text, muted) {}
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+                    SellerProfileTile("Notifications", "Configure order and bargain alerts", accent, text, muted) {}
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+                    SellerProfileTile("Help & Support", "Contact seller support team", accent, text, muted) {}
+                }
+            }
+        }
+
+        // Sign Out
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth().clickable { onSignOut() },
+                shape = SellerUiTokens.radiusCard,
+                color = surfaceHigh,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Sign Out", fontWeight = FontWeight.Bold, color = accent)
+                    Text("→", color = accent, style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SellerProfileTile(
+    label: String,
+    subtitle: String,
+    accent: Color,
+    text: Color,
+    muted: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, fontWeight = FontWeight.SemiBold, color = text)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = muted)
+        }
+        Text("›", color = accent, style = MaterialTheme.typography.titleLarge)
     }
 }

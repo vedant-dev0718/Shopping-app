@@ -1,5 +1,10 @@
 package com.notwhat.shared.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,11 +23,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -211,92 +211,111 @@ private fun LoginAuthCard(authState: AuthState) {
     }
 
     Box {
-    ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = NotWhatAuthTokens.card)) {
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(
-                "Welcome Back",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = NotWhatAuthTokens.textPrimary,
-            )
-            Text("Sign in to sync your bargains and feed.", color = NotWhatAuthTokens.textMuted)
-            AuthTextField("Email", authState.loginEmail, { authState.loginEmail = it }, false, placeholder = "you@example.com")
-
-            OutlinedTextField(
-                value = authState.loginPassword,
-                onValueChange = { authState.loginPassword = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Password") },
-                placeholder = { Text("••••••••") },
-                singleLine = true,
-                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    TextButton(onClick = { showPassword = !showPassword }) {
-                        Text(if (showPassword) "HIDE" else "SHOW", color = NotWhatAuthTokens.accent)
+        ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = NotWhatAuthTokens.card)) {
+            Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    "Welcome Back",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = NotWhatAuthTokens.textPrimary,
+                )
+                Text("Sign in to sync your bargains and feed.", color = NotWhatAuthTokens.textMuted)
+                // Demo credentials for testing
+                Surface(
+                    color = NotWhatAuthTokens.accent.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            "Buyer: buyer@example.com / Password123!",
+                            color = NotWhatAuthTokens.accent,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                        Text(
+                            "Seller: seller@example.com / Password123!",
+                            color = NotWhatAuthTokens.accent,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
                     }
-                },
-                shape = RoundedCornerShape(16.dp),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NotWhatAuthTokens.accent,
-                        focusedLabelColor = NotWhatAuthTokens.accent,
-                        unfocusedBorderColor = NotWhatAuthTokens.border,
-                        unfocusedLabelColor = NotWhatAuthTokens.textMuted,
-                        focusedContainerColor = NotWhatAuthTokens.field,
-                        unfocusedContainerColor = NotWhatAuthTokens.field,
-                        focusedTextColor = NotWhatAuthTokens.textPrimary,
-                        unfocusedTextColor = NotWhatAuthTokens.textPrimary,
-                        focusedPlaceholderColor = NotWhatAuthTokens.textFaint,
-                        unfocusedPlaceholderColor = NotWhatAuthTokens.textFaint,
-                    ),
-            )
+                }
+                AuthTextField("Email", authState.loginEmail, { authState.loginEmail = it }, false, placeholder = "you@example.com")
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = authState::openForgotPassword) {
-                    Text("Forgot Password?", color = NotWhatAuthTokens.accent)
+                OutlinedTextField(
+                    value = authState.loginPassword,
+                    onValueChange = { authState.loginPassword = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Password") },
+                    placeholder = { Text("••••••••") },
+                    singleLine = true,
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        TextButton(onClick = { showPassword = !showPassword }) {
+                            Text(if (showPassword) "HIDE" else "SHOW", color = NotWhatAuthTokens.accent)
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NotWhatAuthTokens.accent,
+                            focusedLabelColor = NotWhatAuthTokens.accent,
+                            unfocusedBorderColor = NotWhatAuthTokens.border,
+                            unfocusedLabelColor = NotWhatAuthTokens.textMuted,
+                            focusedContainerColor = NotWhatAuthTokens.field,
+                            unfocusedContainerColor = NotWhatAuthTokens.field,
+                            focusedTextColor = NotWhatAuthTokens.textPrimary,
+                            unfocusedTextColor = NotWhatAuthTokens.textPrimary,
+                            focusedPlaceholderColor = NotWhatAuthTokens.textFaint,
+                            unfocusedPlaceholderColor = NotWhatAuthTokens.textFaint,
+                        ),
+                )
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = authState::openForgotPassword) {
+                        Text("Forgot Password?", color = NotWhatAuthTokens.accent)
+                    }
+                }
+
+                Button(
+                    onClick = { scope.launch { authState.submitLogin() } },
+                    enabled = authState.canLogin,
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
+                ) {
+                    Text(if (authState.isLoading) "Signing in..." else "Log In")
+                }
+
+                if (PlatformSocialAuthBridge.supportsGoogle || PlatformSocialAuthBridge.supportsApple) {
+                    HorizontalDivider(color = NotWhatAuthTokens.border)
+                    Text(
+                        "OR CONTINUE WITH",
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = NotWhatAuthTokens.textFaint,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    SocialButtons(authState, scope, signUpContext = false)
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("New here?", color = NotWhatAuthTokens.textMuted)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Create Account",
+                        color = NotWhatAuthTokens.accent,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable(onClick = authState::openBuyerSignup),
+                    )
+                }
+                TextButton(onClick = authState::openSellerSignup, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text("Seller signup", color = NotWhatAuthTokens.accent)
                 }
             }
-
-            Button(
-                onClick = { scope.launch { authState.submitLogin() } },
-                enabled = authState.canLogin,
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
-            ) {
-                Text(if (authState.isLoading) "Signing in..." else "Log In")
-            }
-
-            if (PlatformSocialAuthBridge.supportsGoogle || PlatformSocialAuthBridge.supportsApple) {
-                HorizontalDivider(color = NotWhatAuthTokens.border)
-                Text(
-                    "OR CONTINUE WITH",
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = NotWhatAuthTokens.textFaint,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                SocialButtons(authState, scope, signUpContext = false)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("New here?", color = NotWhatAuthTokens.textMuted)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Create Account",
-                    color = NotWhatAuthTokens.accent,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable(onClick = authState::openBuyerSignup),
-                )
-            }
-            TextButton(onClick = authState::openSellerSignup, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Seller signup", color = NotWhatAuthTokens.accent)
-            }
         }
-    }
 
         // Toast overlaid at the bottom of the card
         AnimatedVisibility(
@@ -308,9 +327,10 @@ private fun LoginAuthCard(authState: AuthState) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = Color(0xFFB00020),
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .clickable { toastVisible = false },
+                modifier =
+                    Modifier
+                        .padding(horizontal = 16.dp)
+                        .clickable { toastVisible = false },
             ) {
                 Text(
                     toastMessage,

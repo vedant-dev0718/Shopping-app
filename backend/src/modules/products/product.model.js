@@ -88,6 +88,11 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  bargainEnabled: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
   status: {
     type: String,
     enum: ['active', 'hidden', 'sold_out', 'inactive', 'kyc_pending'],

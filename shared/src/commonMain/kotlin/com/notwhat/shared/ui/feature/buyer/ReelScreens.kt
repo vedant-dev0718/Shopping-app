@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,8 +29,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.catalog.ProductDto
@@ -46,163 +46,122 @@ internal fun BargainsScreen(
     onOpenReel: (com.notwhat.shared.catalog.ReelDto) -> Unit,
     onOpenStore: (StoreDto) -> Unit,
 ) {
-    val reelsBg = NotWhatColors.background
-    val reelsAccent = NotWhatAuthTokens.accent
-    var reelTab by remember { mutableStateOf("Following") }
+    val bg = NotWhatColors.background
+    val accent = NotWhatAuthTokens.accent
     val activeReels = state.content.reels
 
-    fun findStoreForReel(reel: com.notwhat.shared.catalog.ReelDto): StoreDto? =
-        state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
-            ?: state.content.stores.firstOrNull()
+    fun findStore(reel: com.notwhat.shared.catalog.ReelDto): StoreDto? =
+        state.content.stores.firstOrNull { it.id == reel.storeId?.id }
+            ?: state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize().background(reelsBg),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(color = Color.White.copy(alpha = 0.12f), shape = RoundedCornerShape(16.dp)) {
-                    Text(
-                        "Camera",
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                }
-                Text("REELS", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-                Surface(color = Color.White.copy(alpha = 0.12f), shape = RoundedCornerShape(16.dp)) {
-                    Text(
-                        "Search",
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                }
-            }
-        }
-
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("For You", "Following", "Near Me").forEach { label ->
-                        val selected = reelTab == label
-                        Surface(
-                            modifier = Modifier.clickable { reelTab = label },
-                            color = if (selected) Color.White.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.08f),
-                            shape = RoundedCornerShape(16.dp),
-                        ) {
-                            Text(
-                                label,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        }
+        if (activeReels.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 120.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            "No reels yet",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "Sellers haven't uploaded any reels yet.\nCheck back soon!",
+                            color = Color.White.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                        )
                     }
                 }
             }
         }
 
         items(activeReels) { reel ->
-            val store: StoreDto? = findStoreForReel(reel)
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth().height(620.dp).clickable { onOpenReel(reel) },
-                colors = CardDefaults.elevatedCardColors(containerColor = Color.Black),
+            val store = findStore(reel)
+            val storeName = store?.storeName ?: reel.displayCreator
+
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(620.dp)
+                        .clickable { onOpenReel(reel) },
             ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    DemoImage(
-                        url = reel.thumbnailUrl,
-                        contentDescription = reel.displayLabel,
-                        modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(16.dp),
-                    )
-                    Box(
-                        modifier =
-                            Modifier.fillMaxSize().background(
-                                androidx.compose.ui.graphics.Brush.verticalGradient(
-                                    colors =
-                                        listOf(
-                                            Color.Black.copy(alpha = 0.55f),
-                                            Color.Transparent,
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.70f),
-                                        ),
+                // Thumbnail as background (video plays on detail screen)
+                DemoImage(
+                    url = reel.thumbnailUrl,
+                    contentDescription = storeName,
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(0.dp),
+                )
+
+                // Gradient overlay
+                Box(
+                    modifier =
+                        Modifier.fillMaxSize().background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Black.copy(alpha = 0.3f),
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.75f),
                                 ),
                             ),
+                        ),
+                )
+
+                // Store name top-left
+                Row(
+                    modifier = Modifier.align(Alignment.TopStart).padding(16.dp).clickable { store?.let { onOpenStore(it) } },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    DemoImage(
+                        url = store?.displayImageUrl ?: "",
+                        contentDescription = storeName,
+                        modifier = Modifier.size(40.dp).border(2.dp, Color.White, RoundedCornerShape(20.dp)),
+                        shape = RoundedCornerShape(20.dp),
                     )
+                    Text(storeName, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                }
 
-                    Row(
-                        modifier = Modifier.align(Alignment.TopStart).padding(16.dp).clickable { store?.let { onOpenStore(it) } },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        DemoImage(
-                            url = store?.displayImageUrl ?: "",
-                            contentDescription = store?.storeName ?: reel.displayCreator,
-                            modifier = Modifier.size(44.dp).border(2.dp, Color.White, RoundedCornerShape(22.dp)),
-                            shape = RoundedCornerShape(22.dp),
-                        )
-                        Column {
-                            Text(
-                                store?.displayHandle ?: "@${reel.displayCreator.lowercase().replace(" ","")}",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                store?.storeName ?: reel.displayCreator,
-                                color = Color.White.copy(alpha = 0.85f),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp, bottom = 108.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        ActionStatPill(label = "12.4K", icon = "Like")
-                        ActionStatPill(label = "842", icon = "Comments")
-                    }
-
-                    Column(
-                        modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                store?.displayHandle ?: "@${reel.displayCreator.lowercase().replace(" ","")}",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            if (store?.verified ==
-                                true
-                            ) {
-                                Text("Verified", color = Color(0xFF8EC6FF), style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
+                // Caption + tap hint bottom
+                Column(
+                    modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        storeName,
+                        color = accent,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (!reel.caption.isNullOrBlank()) {
                         Text(
-                            reel.displayCreator,
-                            color = reelsAccent,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            reel.caption ?: "Discover this drop — live bargain is active! #notwhat",
+                            reel.caption,
                             color = Color.White,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodySmall,
                         )
-                        Surface(color = Color.Black.copy(alpha = 0.35f), shape = RoundedCornerShape(16.dp)) {
+                    }
+                    if (reel.taggedProducts.isNotEmpty()) {
+                        Surface(color = Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(12.dp)) {
                             Text(
-                                "Original Audio - ${store?.storeName ?: reel.displayCreator}",
+                                "${reel.taggedProducts.size} product${if (reel.taggedProducts.size > 1) "s" else ""} tagged — tap to view",
                                 color = Color.White,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             )
                         }
                     }
@@ -229,12 +188,15 @@ internal fun ReelDetailScreen(
     val scope = rememberCoroutineScope()
 
     val store: StoreDto? =
-        state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
-            ?: state.content.stores.firstOrNull()
+        state.content.stores.firstOrNull { it.id == reel.storeId?.id }
+            ?: state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
+    val storeName = store?.storeName ?: reel.displayCreator
+
     val taggedProducts =
         reel.taggedProducts
             .ifEmpty {
                 state.content.products
+                    .filter { it.storeId?.id == store?.id }
                     .take(3)
             }
 
@@ -243,9 +205,7 @@ internal fun ReelDetailScreen(
     }
 
     val openTrackedProduct: (ProductDto) -> Unit = { product ->
-        scope.launch {
-            state.content.recordProductClick(product.id, state.currentSession?.authToken)
-        }
+        scope.launch { state.content.recordProductClick(product.id, state.currentSession?.authToken) }
         onOpenProduct(product)
     }
 
@@ -265,76 +225,126 @@ internal fun ReelDetailScreen(
     Box(modifier = modifier.fillMaxSize().background(bg)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
+            // Fullscreen video player — falls back to thumbnail for seed/fake URLs
             item {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onBack) { Text("Back", color = accent) }
-                }
-            }
+                val isPlayable =
+                    reel.videoUrl.isNotBlank() &&
+                        !reel.videoUrl.contains("example.com") &&
+                        reel.videoUrl.startsWith("http")
 
-            item {
-                Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-                    DemoImage(
-                        url = reel.thumbnailUrl,
-                        contentDescription = reel.displayLabel,
-                        modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(16.dp),
-                    )
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.25f)))
-                    Text(
-                        reel.displayLabel,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
+                Box(modifier = Modifier.fillMaxWidth().height(620.dp).background(Color.Black)) {
+                    if (isPlayable) {
+                        NativeVideoPlayer(
+                            uri = reel.videoUrl,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
+                        DemoImage(
+                            url = reel.thumbnailUrl,
+                            contentDescription = storeName,
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                        )
+                        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)))
+                        Surface(
+                            color = Color.Black.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.align(Alignment.Center),
+                        ) {
+                            Text(
+                                "▶  Preview unavailable",
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                    // Back button overlay
+                    TextButton(
+                        onClick = onBack,
+                        modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                    ) {
+                        Text("Back", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                    // Store name overlay
+                    Row(
                         modifier =
                             Modifier
-                                .align(
-                                    Alignment.TopStart,
-                                ).padding(12.dp)
-                                .background(accent, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
+                                .align(Alignment.BottomStart)
+                                .padding(16.dp)
+                                .clickable { store?.let { onOpenStore(it) } },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        DemoImage(
+                            url = store?.displayImageUrl ?: "",
+                            contentDescription = storeName,
+                            modifier = Modifier.size(36.dp).border(2.dp, Color.White, RoundedCornerShape(18.dp)),
+                            shape = RoundedCornerShape(18.dp),
+                        )
+                        Column {
+                            Text(storeName, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                            if (!reel.caption.isNullOrBlank()) {
+                                Text(
+                                    reel.caption,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
+            // Store row (tappable)
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { store?.let { onOpenStore(it) } },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(surface)
+                            .clickable { store?.let { onOpenStore(it) } }
+                            .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     DemoImage(
                         url = store?.displayImageUrl ?: "",
-                        contentDescription = store?.storeName ?: reel.displayCreator,
-                        modifier = Modifier.size(44.dp),
-                        shape = RoundedCornerShape(22.dp),
+                        contentDescription = storeName,
+                        modifier = Modifier.size(48.dp),
+                        shape = RoundedCornerShape(24.dp),
                     )
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(store?.storeName ?: reel.displayCreator, color = text, fontWeight = FontWeight.Bold)
-                        Text(
-                            reel.caption ?: "",
-                            color = muted,
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Text(storeName, color = text, fontWeight = FontWeight.Bold)
+                        Text("Visit Store →", color = accent, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
 
+            // Tagged products header
             if (taggedProducts.isNotEmpty()) {
                 item {
-                    Text("Products in this Reel", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Products in this Reel",
+                        color = text,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    )
                 }
                 items(taggedProducts) { item ->
                     Surface(
                         color = surface,
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(0.dp),
                         modifier = Modifier.fillMaxWidth().clickable { openTrackedProduct(item) },
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -345,50 +355,46 @@ internal fun ReelDetailScreen(
                                 shape = RoundedCornerShape(12.dp),
                             )
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(item.displayTitle, color = text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(
+                                    item.displayTitle,
+                                    color = text,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
                                 Text(item.displayPrice, color = accent, fontWeight = FontWeight.Bold)
+                                Text(item.category, color = muted, style = MaterialTheme.typography.labelSmall)
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Surface(
-                                    color = if (item.isSaved) accent.copy(alpha = 0.2f) else surface,
-                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (item.isSaved) accent.copy(alpha = 0.2f) else bg,
+                                    shape = RoundedCornerShape(10.dp),
                                     modifier = Modifier.clickable { toggleSavedProduct(item) },
                                 ) {
                                     Text(
                                         if (item.isSaved) "Saved" else "Save",
-                                        color = if (item.isSaved) accent else text,
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                        color = if (item.isSaved) accent else muted,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        style = MaterialTheme.typography.labelMedium,
                                     )
                                 }
                                 Surface(
                                     color = accent,
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(10.dp),
                                     modifier = Modifier.clickable { openTrackedProduct(item) },
                                 ) {
-                                    Text("View", color = Color.White, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
+                                    Text(
+                                        "View",
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                    )
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ActionStatPill(
-    label: String,
-    icon: String,
-) {
-    Surface(color = Color.Black.copy(alpha = 0.35f), shape = RoundedCornerShape(16.dp)) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(icon, color = Color.White, style = MaterialTheme.typography.labelSmall)
-            Text(label, color = Color.White, style = MaterialTheme.typography.labelSmall)
         }
     }
 }

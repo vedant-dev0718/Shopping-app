@@ -7,14 +7,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -122,8 +125,8 @@ internal fun ProductLifecycleScreen(
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onBack) { Text("Back", color = accent) }
-                Text("Product Lifecycle", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                Text("Inventory", color = muted, style = MaterialTheme.typography.labelSmall)
+                Text("Products", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                Spacer(modifier = Modifier.width(56.dp))
             }
         }
 
@@ -148,16 +151,6 @@ internal fun ProductLifecycleScreen(
                         surface = surface,
                         text = text,
                     )
-                }
-            }
-        }
-
-        item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-                    Text("Inventory summary", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Live items: 2 · Draft items: 1 · Needs attention: 1", color = muted)
-                    Text("Tap a product row to jump into product editing context.", color = accent, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -213,24 +206,6 @@ internal fun ProductLifecycleScreen(
             }
         }
 
-        item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-                    Text("Editing surface", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("This screen gives sellers a working entry point for inventory, pricing, and draft/product state management.", color = muted)
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Campaign price", color = muted)
-                        Text(
-                            "Add pricing control",
-                            color = accent,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable { pricingControlOpen = true },
-                        )
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -350,15 +325,6 @@ internal fun OrderOperationsScreen(
                 }
             }
         }
-
-        item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-                    Text("Operations notes", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Use the queue filters to isolate SLAs, exceptions, and courier lanes before opening related product or order contexts.", color = muted)
-                }
-            }
-        }
     }
 }
 
@@ -401,70 +367,193 @@ private fun SellerEditProductScreen(
     muted: Color,
     surface: Color,
 ) {
-    var name by remember(product.id) { mutableStateOf(product.title) }
+    var title by remember(product.id) { mutableStateOf(product.title) }
+    var description by remember(product.id) { mutableStateOf(product.description) }
     var category by remember(product.id) { mutableStateOf(product.category) }
+    var region by remember(product.id) { mutableStateOf(product.region) }
     var price by remember(product.id) { mutableStateOf(product.price.toInt().toString()) }
-    var stockText by remember(product.id) { mutableStateOf(product.stock.toString()) }
+    var stock by remember(product.id) { mutableStateOf(product.stock.toString()) }
+    var imageUrls by remember(product.id) { mutableStateOf(product.imageUrls) }
     var errorMessage by remember(product.id) { mutableStateOf<String?>(null) }
 
+    val bg = NotWhatColors.background
+    val surfaceCard = NotWhatColors.surface
+
     LazyColumn(
-        modifier = modifier.fillMaxSize().background(Color(0xFF1F0F0B)),
+        modifier = modifier.fillMaxSize().background(bg),
         contentPadding = PaddingValues(SellerUiTokens.screenPadding),
         verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
     ) {
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("Back", color = accent) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onBack) { Text("← Back", color = accent, fontWeight = FontWeight.SemiBold) }
                 Text("Edit Product", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                Box(modifier = Modifier.size(48.dp))
+                Box(modifier = Modifier.width(72.dp))
             }
         }
+
         item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-                    errorMessage?.let { Text(it, color = Color(0xFFFFC9C9), style = MaterialTheme.typography.bodySmall) }
-                    OutlinedTextField(value = name, onValueChange = { name = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Product Name") })
-                    OutlinedTextField(value = category, onValueChange = { category = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Category") })
-                    OutlinedTextField(value = price, onValueChange = { price = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Price") })
-                    OutlinedTextField(value = stockText, onValueChange = { stockText = it.filter { c -> c.isDigit() } }, modifier = Modifier.fillMaxWidth(), label = { Text("Stock") })
+            Surface(color = surfaceCard, shape = SellerUiTokens.radiusCard, modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(SellerUiTokens.cardPadding),
+                    verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+                ) {
+                    // Error message
+                    errorMessage?.let {
+                        Surface(color = Color(0xFFB3261E).copy(alpha = 0.15f), shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            Text(it, color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
+                        }
+                    }
+
+                    // Product Images
+                    Text("Product Images", color = text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    if (imageUrls.isNotEmpty()) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            itemsIndexed(imageUrls) { index, imageUrl ->
+                                Box(
+                                    modifier = Modifier.size(100.dp).clip(RoundedCornerShape(12.dp)),
+                                ) {
+                                    AsyncImage(
+                                        model = imageUrl,
+                                        contentDescription = "Product image",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop,
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .size(20.dp)
+                                            .background(Color.Black.copy(alpha = 0.55f), shape = RoundedCornerShape(10.dp))
+                                            .clickable { imageUrls = imageUrls.filterIndexed { i, _ -> i != index } },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text("✕", color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Text("Images: ${imageUrls.size}", color = muted, style = MaterialTheme.typography.labelSmall)
+
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+
+                    // Title
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Product Title") },
+                        shape = RoundedCornerShape(10.dp),
+                    )
+
+                    // Description
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        modifier = Modifier.fillMaxWidth().height(100.dp),
+                        label = { Text("Description") },
+                        shape = RoundedCornerShape(10.dp),
+                        maxLines = 5,
+                    )
+
+                    // Category
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = { category = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Category") },
+                        shape = RoundedCornerShape(10.dp),
+                    )
+
+                    // Region
+                    OutlinedTextField(
+                        value = region,
+                        onValueChange = { region = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Region") },
+                        shape = RoundedCornerShape(10.dp),
+                    )
+
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        Button(onClick = onBack, modifier = Modifier.weight(1f), shape = SellerUiTokens.radiusButton, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF44302A))) {
-                            Text("Cancel", color = text)
+                        OutlinedTextField(
+                            value = price,
+                            onValueChange = { price = it },
+                            modifier = Modifier.weight(1f),
+                            label = { Text("Price") },
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        OutlinedTextField(
+                            value = stock,
+                            onValueChange = { stock = it.filter { c -> c.isDigit() } },
+                            modifier = Modifier.weight(1f),
+                            label = { Text("Stock") },
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                    }
+
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+
+                    // Action buttons
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        Button(
+                            onClick = onBack,
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = NotWhatColors.surfaceContainerHigh),
+                        ) {
+                            Text("Cancel", color = text, fontWeight = FontWeight.SemiBold)
                         }
                         Button(
                             onClick = {
                                 val parsedPrice = price.toDoubleOrNull()
-                                val parsedStock = stockText.toIntOrNull()
-                                if (parsedPrice == null || parsedStock == null) {
-                                    errorMessage = "Enter a valid price and stock before saving."
-                                } else {
-                                    errorMessage = null
-                                    onSave(
-                                        UpdateProductRequestDto(
-                                            title = name.trim(),
-                                            category = category.trim(),
-                                            price = parsedPrice,
-                                            stock = parsedStock,
-                                        ),
-                                    )
+                                val parsedStock = stock.toIntOrNull()
+                                when {
+                                    title.isBlank() -> errorMessage = "Title is required"
+                                    description.isBlank() -> errorMessage = "Description is required"
+                                    category.isBlank() -> errorMessage = "Category is required"
+                                    region.isBlank() -> errorMessage = "Region is required"
+                                    parsedPrice == null || parsedPrice < 0 -> errorMessage = "Valid price is required"
+                                    parsedStock == null || parsedStock < 0 -> errorMessage = "Valid stock is required"
+                                    else -> {
+                                        errorMessage = null
+                                        onSave(
+                                            UpdateProductRequestDto(
+                                                title = title.trim(),
+                                                description = description.trim(),
+                                                category = category.trim(),
+                                                region = region.trim(),
+                                                price = parsedPrice,
+                                                stock = parsedStock,
+                                                imageUrls = imageUrls,
+                                            ),
+                                        )
+                                    }
                                 }
                             },
-                            modifier = Modifier.weight(1f),
-                            shape = SellerUiTokens.radiusButton,
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = accent),
                         ) {
-                            Text("Save", color = Color.White)
+                            Text("Save", color = Color.White, fontWeight = FontWeight.SemiBold)
                         }
                     }
+
                     Button(
                         onClick = onDelete,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = SellerUiTokens.radiusButton,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
                     ) {
-                        Text("Delete Product", color = Color.White)
+                        Text("Delete Product", color = Color.White, fontWeight = FontWeight.SemiBold)
                     }
-                    Text("Changes are now sent to the live seller product APIs when a session token is available.", color = muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

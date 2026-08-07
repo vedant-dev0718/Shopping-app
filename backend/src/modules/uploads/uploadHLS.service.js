@@ -5,7 +5,7 @@ const path = require('path');
 
 const env = require('../../config/env');
 const AppError = require('../../utils/AppError');
-const { createHLSTranscodingJob, isMediaConvertConfigured } = require('../../utils/mediaTranscoding');
+const { transcodeLocalVideoToHLS, isFfmpegAvailable } = require('../../utils/ffmpegHLS');
 const { optimizeImage } = require('../../utils/imageOptimization');
 const MediaTranscoding = require('./mediaTranscoding.model');
 
@@ -89,66 +89,52 @@ const uploadRawVideoForTranscoding = async ({ file, sellerId }) => {
         throw new AppError('Video file size cannot exceed 500MB', 413);
     }
 
-    // Upload raw video to S3
     const timestamp = Date.now();
     const randomHash = Math.random().toString(36).slice(2, 8);
-    const ext = path.extname(file.originalname);
-    const sourceKey = `notwhat/sellers/${sellerId}/reels/raw/${timestamp}-${randomHash}${ext}`;
-
-    const uploadResult = await uploadToS3({
-        file,
-        objectKey: sourceKey,
-        contentType: file.mimetype
-    });
-
-    // Create output prefix for HLS segments
     const outputPrefix = `notwhat/sellers/${sellerId}/reels/hls/${timestamp}-${randomHash}`;
 
-    // Queue MediaConvert job for HLS transcoding
-    const s3InputPath = `s3://${env.awsS3Bucket}/${sourceKey}`;
-    const s3OutputPath = `s3://${env.awsS3Bucket}/${outputPrefix}/`;
+    // Input file must be on disk for ffmpeg (multer diskStorage writes it to tmpdir)
+    const inputPath = file.path;
+    if (!inputPath) {
+        throw new AppError('Video file must be written to disk before transcoding', 500);
+    }
 
     try {
-        const transcodingJob = await createHLSTranscodingJob({
-            s3InputPath,
-            s3OutputPath,
-            videoMetadata: {
-                originalFilename: file.originalname,
-                uploadedSize: file.size
-            }
-        });
-
-        // Save transcoding job record
-        const mediaRecord = await MediaTranscoding.createTranscodingJob({
-            contentType: 'reel',
-            sellerId,
-            sourceS3Key: sourceKey,
-            sourceSize: file.size,
-            sourceMetadata: {
-                codec: file.mimetype,
-                uploadedAt: new Date()
-            },
-            mediaConvertJobId: transcodingJob.jobId,
+        // Transcode MP4 → HLS segments and upload all files to S3
+        const result = await transcodeLocalVideoToHLS({
+            inputPath,
             outputS3Prefix: outputPrefix
         });
 
+        // Save a record so clients can fetch the manifest URL later
+        const mediaRecord = await MediaTranscoding.createTranscodingJob({
+            contentType: 'reel',
+            sellerId,
+            sourceS3Key: outputPrefix,
+            sourceSize: file.size,
+            sourceMetadata: { codec: file.mimetype, uploadedAt: new Date() },
+            mediaConvertJobId: `ffmpeg-${timestamp}-${randomHash}`,
+            outputS3Prefix: outputPrefix
+        });
+
+        // Mark immediately complete — ffmpeg is synchronous in this flow
+        await mediaRecord.updateJobStatus('COMPLETE', {});
+        mediaRecord.hlsManifestUrl = result.manifestUrl;
+        await mediaRecord.save();
+
         return {
-            transcodingJobId: transcodingJob.jobId,
+            transcodingJobId: `ffmpeg-${timestamp}-${randomHash}`,
             mediaRecordId: mediaRecord._id,
-            jobStatus: 'SUBMITTED',
-            sourceUrl: uploadResult.url,
-            message: 'Video queued for HLS transcoding. Manifests will be available shortly.',
-            estimatedTimeMinutes: 2,
+            jobStatus: 'COMPLETE',
+            hlsManifestUrl: result.manifestUrl,
+            manifestKey: result.manifestKey,
+            segmentCount: result.segmentCount,
+            message: 'Video transcoded to HLS successfully.',
             pollingUrl: `/api/uploads/media/${mediaRecord._id}/status`
         };
     } finally {
-        // Best effort cleanup of temp file
         if (file.path) {
-            try {
-                await fs.promises.unlink(file.path);
-            } catch (_e) {
-                // Ignore
-            }
+            try { await fs.promises.unlink(file.path); } catch (_e) { /* ignore */ }
         }
     }
 };

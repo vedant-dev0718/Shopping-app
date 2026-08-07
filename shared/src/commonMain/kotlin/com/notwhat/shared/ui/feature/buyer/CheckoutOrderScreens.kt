@@ -513,6 +513,13 @@ internal fun CartSavedPaymentsScreen(
         )
     }
 
+    // Reload cart every time this screen is shown
+    LaunchedEffect(Unit) {
+        if (!sessionToken.isNullOrBlank()) {
+            state.transaction.loadCart(sessionToken)
+        }
+    }
+
     LaunchedEffect(sessionToken) {
         if (sessionToken.isNullOrBlank()) {
             paymentMethods = emptyList()

@@ -9,7 +9,9 @@ const resolveBaseUrl = (req) => {
 };
 
 const buildMediaProxyUrl = (req, objectKey) => {
-  return `${resolveBaseUrl(req)}/api/uploads/media/${encodeURIComponent(objectKey)}`;
+  // Use slash-based path (not encodeURIComponent) so HLS relative segments resolve correctly
+  const safePath = objectKey.split('/').map(encodeURIComponent).join('/');
+  return `${resolveBaseUrl(req)}/api/uploads/media/${safePath}`;
 };
 
 const withMediaProxyUrls = (req, data) => {
@@ -105,9 +107,21 @@ const streamMediaObject = asyncHandler(async (req, res, next) => {
   const objectKey = req.params.objectKey || req.params[0];
   const media = await uploadService.getMediaObjectStream({ objectKey });
 
-  const cacheControl = media.cacheControl || 'public, max-age=31536000, immutable';
+  // HLS manifests must not be cached aggressively; segments can be cached long-term
+  const isManifest = objectKey.endsWith('.m3u8');
+  const isSegment = objectKey.endsWith('.ts');
+  const cacheControl = isManifest
+    ? 'no-cache'
+    : (media.cacheControl || 'public, max-age=31536000, immutable');
 
-  res.setHeader('Content-Type', media.contentType);
+  // Force correct MIME type for HLS files (S3 may return application/octet-stream)
+  const contentType = isManifest
+    ? 'application/vnd.apple.mpegurl'
+    : isSegment
+    ? 'video/MP2T'
+    : media.contentType;
+
+  res.setHeader('Content-Type', contentType);
   res.setHeader('Cache-Control', cacheControl);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');

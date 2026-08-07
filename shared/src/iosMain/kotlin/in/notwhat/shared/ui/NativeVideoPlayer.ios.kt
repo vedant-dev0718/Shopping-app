@@ -6,24 +6,43 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVPlayer
+import platform.AVFoundation.pause
+import platform.AVFoundation.play
 import platform.AVKit.AVPlayerViewController
 import platform.Foundation.NSURL
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
-actual fun NativeVideoPlayer(uri: String, modifier: Modifier) {
-    val player = remember(uri) { AVPlayer(uRL = NSURL(string = uri)) }
-    // Retain the view controller so it isn't deallocated between recompositions
-    val playerVC = remember(player) {
-        AVPlayerViewController().also { vc ->
-            vc.player = player
-            vc.showsPlaybackControls = true
-        }
+actual fun NativeVideoPlayer(
+    uri: String,
+    modifier: Modifier,
+) {
+    // Guard: don't create AVPlayer for empty or clearly-fake URLs
+    if (uri.isBlank() || uri.contains("example.com") || !uri.startsWith("http")) {
+        return
     }
 
+    val player: AVPlayer =
+        remember(uri) {
+            AVPlayer(uRL = NSURL(string = uri))
+        }
+    val playerVC =
+        remember(player) {
+            AVPlayerViewController().also { vc ->
+                vc.player = player
+                vc.showsPlaybackControls = true
+                vc.videoGravity = AVLayerVideoGravityResizeAspectFill
+            }
+        }
+
     DisposableEffect(playerVC) {
-        onDispose { playerVC.player = null }
+        player.play()
+        onDispose {
+            player.pause()
+            playerVC.player = null
+        }
     }
 
     UIKitView(

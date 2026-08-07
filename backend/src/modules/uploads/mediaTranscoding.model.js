@@ -67,8 +67,7 @@ const mediaTranscodingSchema = new mongoose.Schema(
     }
 );
 
-// Index for job monitoring
-mediaTranscodingSchema.index({ mediaConvertJobId: 1 });
+// Indexes for efficient job lookup and TTL cleanup
 mediaTranscodingSchema.index({ sellerId: 1, contentType: 1, createdAt: -1 });
 mediaTranscodingSchema.index({ jobStatus: 1, contentType: 1 });
 mediaTranscodingSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

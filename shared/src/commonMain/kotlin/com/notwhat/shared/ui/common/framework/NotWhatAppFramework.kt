@@ -3,15 +3,17 @@ package com.notwhat.shared.ui
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,8 +84,14 @@ internal fun NotWhatAppFramework(
                             )
                         },
                         actions = {
-                            TextButton(onClick = state::signOut) {
-                                Text("Sign out", color = NotWhatColors.primary)
+                            if (appRole == UserRole.Buyer) {
+                                IconButton(onClick = { flow.onEvent(AppNavEvent.OpenCart) }) {
+                                    Icon(
+                                        Icons.Default.ShoppingCart,
+                                        contentDescription = "Cart",
+                                        tint = NotWhatColors.primary,
+                                    )
+                                }
                             }
                         },
                     )
@@ -97,6 +105,12 @@ internal fun NotWhatAppFramework(
                             onClick = { state.selectTab(NotWhatTab.Home) },
                             icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                             label = { Text("Home") },
+                        )
+                        NavigationBarItem(
+                            selected = state.activeTab == NotWhatTab.Reels,
+                            onClick = { state.selectTab(NotWhatTab.Reels) },
+                            icon = { Icon(Icons.Default.PlayArrow, contentDescription = "Reels") },
+                            label = { Text("Reels") },
                         )
                         NavigationBarItem(
                             selected = state.activeTab == NotWhatTab.Search,
@@ -143,6 +157,7 @@ private fun titleForTab(
 ): String =
     when (tab) {
         NotWhatTab.Home -> if (appRole == UserRole.Buyer) "NotWhat" else consoleTitle(appRole)
+        NotWhatTab.Reels -> if (appRole == UserRole.Buyer) "Reels" else consoleTitle(appRole)
         NotWhatTab.Search -> if (appRole == UserRole.Buyer) "Search" else consoleTitle(appRole)
         NotWhatTab.Bargains -> if (appRole == UserRole.Buyer) "Bargains" else consoleTitle(appRole)
         NotWhatTab.Account -> if (appRole == UserRole.Buyer) "Account" else consoleTitle(appRole)

@@ -19,7 +19,7 @@ const uploadReelVideo = asyncHandler(async (req, res) => {
     const { id: sellerId } = req.user;
 
     if (!req.file) {
-        return res.status(400).json(errorResponse('Video file is required', 400));
+        return errorResponse(res, { statusCode: 400, message: 'Video file is required' });
     }
 
     const result = await uploadRawVideoForTranscoding({
@@ -27,7 +27,7 @@ const uploadReelVideo = asyncHandler(async (req, res) => {
         sellerId
     });
 
-    return res.status(202).json(successResponse(result, 'Video queued for transcoding', 202));
+    return successResponse(res, { statusCode: 202, message: 'Video transcoded to HLS', data: result });
 });
 
 /**
@@ -41,11 +41,11 @@ const getTranscodingStatus = asyncHandler(async (req, res) => {
     const mediaRecord = await MediaTranscoding.findById(mediaRecordId);
 
     if (!mediaRecord) {
-        return res.status(404).json(errorResponse('Media record not found', 404));
+        return errorResponse(res, { statusCode: 404, message: 'Media record not found' });
     }
 
     if (mediaRecord.sellerId.toString() !== sellerId) {
-        return res.status(403).json(errorResponse('Access denied', 403));
+        return errorResponse(res, { statusCode: 403, message: 'Access denied' });
     }
 
     const status = {
@@ -63,39 +63,16 @@ const getTranscodingStatus = asyncHandler(async (req, res) => {
             sellerId
         });
 
-        return res.status(200).json(successResponse(
-            {
-                ...status,
-                ...manifestInfo
-            },
-            'Transcoding complete',
-            200
-        ));
+        return successResponse(res, { statusCode: 200, message: 'Transcoding complete', data: { ...status, ...manifestInfo } });
     }
 
     // If error, return error details
     if (mediaRecord.jobStatus === 'ERROR') {
-        return res.status(202).json(successResponse(
-            {
-                ...status,
-                errorCode: mediaRecord.jobErrorCode,
-                errorMessage: mediaRecord.jobErrorMessage,
-                message: 'Transcoding failed. Please try again.'
-            },
-            'Transcoding error',
-            202
-        ));
+        return successResponse(res, { statusCode: 202, message: 'Transcoding error', data: { ...status, errorCode: mediaRecord.jobErrorCode, errorMessage: mediaRecord.jobErrorMessage } });
     }
 
     // Still processing
-    return res.status(202).json(successResponse(
-        {
-            ...status,
-            message: `Video is ${mediaRecord.jobStatus.toLowerCase()}...`
-        },
-        'Transcoding in progress',
-        202
-    ));
+    return successResponse(res, { statusCode: 202, message: `Video is ${mediaRecord.jobStatus.toLowerCase()}...`, data: status });
 });
 
 /**
@@ -107,7 +84,7 @@ const uploadProductImagesOptimized = asyncHandler(async (req, res) => {
     const { id: sellerId } = req.user;
 
     if (!req.files || req.files.length === 0) {
-        return res.status(400).json(errorResponse('At least one image is required', 400));
+        return errorResponse(res, { statusCode: 400, message: 'At least one image is required' });
     }
 
     const result = await uploadProductImages({
@@ -115,7 +92,7 @@ const uploadProductImagesOptimized = asyncHandler(async (req, res) => {
         sellerId
     });
 
-    return res.status(201).json(successResponse(result, 'Product images uploaded and optimized'));
+    return successResponse(res, { statusCode: 201, message: 'Product images uploaded and optimized', data: result });
 });
 
 /**
@@ -136,7 +113,7 @@ const uploadAvatarOptimized = asyncHandler(async (req, res) => {
         role
     });
 
-    return res.status(201).json(successResponse(result, 'Avatar uploaded and optimized'));
+    return successResponse(res, { statusCode: 201, message: 'Avatar uploaded and optimized', data: result });
 });
 
 /**
@@ -148,7 +125,7 @@ const uploadStoreBannerOptimized = asyncHandler(async (req, res) => {
     const { id: sellerId } = req.user;
 
     if (!req.file) {
-        return res.status(400).json(errorResponse('Image file is required', 400));
+        return errorResponse(res, { statusCode: 400, message: 'Image file is required' });
     }
 
     const result = await uploadStoreBanner({
@@ -156,7 +133,7 @@ const uploadStoreBannerOptimized = asyncHandler(async (req, res) => {
         sellerId
     });
 
-    return res.status(201).json(successResponse(result, 'Banner uploaded and optimized'));
+    return successResponse(res, { statusCode: 201, message: 'Banner uploaded and optimized', data: result });
 });
 
 /**
@@ -172,7 +149,7 @@ const getHLSPlaybackUrl = asyncHandler(async (req, res) => {
         sellerId
     });
 
-    return res.status(200).json(successResponse(result, 'HLS manifest URL'));
+    return successResponse(res, { statusCode: 200, message: 'HLS manifest URL', data: result });
 });
 
 module.exports = {

@@ -86,6 +86,7 @@ data class ProductDto(
     val status: String = "active",
     val isSaved: Boolean = false,
     val saveCount: Int = 0,
+    val bargainEnabled: Boolean = false,
     @Serializable(with = StoreCardOrIdSerializer::class)
     val storeId: StoreCardDto? = null,
     val createdAt: String? = null,
@@ -188,6 +189,7 @@ data class CreateProductRequestDto(
     val imageUrls: List<String> = emptyList(),
     val productLink: String? = null,
     val featured: Boolean? = null,
+    val bargainEnabled: Boolean? = null,
     val status: String? = null,
     val storeId: String? = null,
 )
@@ -207,6 +209,7 @@ data class UpdateProductRequestDto(
     val status: String? = null,
     val productLink: String? = null,
     val featured: Boolean? = null,
+    val bargainEnabled: Boolean? = null,
     val storeId: String? = null,
 )
 

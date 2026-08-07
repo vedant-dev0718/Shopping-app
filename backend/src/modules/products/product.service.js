@@ -348,6 +348,7 @@ const createSellerProduct = async (user, data) => {
     tags: normalizeStringArray(data.tags),
     imageUrls: normalizeStringArray(data.imageUrls),
     featured: data.featured || false,
+    bargainEnabled: data.bargainEnabled || false,
     status
   });
 
@@ -391,6 +392,7 @@ const updateSellerProduct = async (user, productId, data) => {
     'price',
     'stock',
     'featured',
+    'bargainEnabled',
     'status'
   ];
 

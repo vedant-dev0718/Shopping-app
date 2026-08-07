@@ -1,5 +1,6 @@
 const { body, param, query } = require('express-validator');
 
+const isValidUrl = (value) => /^https?:\/\/.+/.test(value);
 const reelIdValidation = [
   param('id').isMongoId().withMessage('A valid reel id is required')
 ];
@@ -14,15 +15,16 @@ const listReelsValidation = [
 ];
 
 const taggedProductsValidation = body('taggedProductIds')
-  .isArray({ min: 1, max: 3 })
-  .withMessage('Reels must tag between 1 and 3 products');
+  .optional()
+  .isArray({ max: 3 })
+  .withMessage('Reels can tag at most 3 products');
 
 const createReelValidation = [
   body('videoUrl')
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .custom(isValidUrl)
     .withMessage('Video URL must be valid'),
   body('thumbnailUrl')
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .custom(isValidUrl)
     .withMessage('Thumbnail URL must be valid'),
   body('caption').optional().trim(),
   body('hashtags').optional().isArray().withMessage('Hashtags must be an array'),
@@ -46,11 +48,11 @@ const updateReelValidation = [
   param('id').isMongoId().withMessage('A valid reel id is required'),
   body('videoUrl')
     .optional()
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .custom(isValidUrl)
     .withMessage('Video URL must be valid'),
   body('thumbnailUrl')
     .optional()
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .custom(isValidUrl)
     .withMessage('Thumbnail URL must be valid'),
   body('caption').optional().trim(),
   body('hashtags').optional().isArray().withMessage('Hashtags must be an array'),

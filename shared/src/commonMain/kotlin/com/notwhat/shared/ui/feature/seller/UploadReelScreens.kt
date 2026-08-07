@@ -75,6 +75,7 @@ internal fun UploadReelScreen(
     var allowBargaining by remember { mutableStateOf(true) }
     var isSharing by remember { mutableStateOf(false) }
     var shareStatus by remember { mutableStateOf<String?>(null) }
+    var uploadStage by remember { mutableStateOf<String?>(null) }
     var tagQuery by remember { mutableStateOf("") }
     var selectedProductIds by remember { mutableStateOf(emptyList<String>()) }
     val scope = rememberCoroutineScope()
@@ -108,22 +109,25 @@ internal fun UploadReelScreen(
             return@share
         }
 
-        if (selectedProductIds.size !in 1..3) {
-            shareStatus = "Tag 1 to 3 products before uploading."
+        if (selectedProductIds.size > 3) {
+            shareStatus = "Tag at most 3 products before uploading."
             return@share
         }
 
         scope.launch {
             isSharing = true
             shareStatus = null
+            uploadStage = "Preparing video…"
 
             val videoBytes = PlatformMediaFileReader.readBytes(selectedVideoUri)
             if (videoBytes == null) {
                 isSharing = false
                 shareStatus = "Could not read the selected video. Please try again."
+                uploadStage = null
                 return@launch
             }
 
+            uploadStage = "Uploading video (${(videoBytes.size / 1024)} KB)…"
             val videoUploadResult =
                 state.sellerContent.uploadVideo(
                     data = videoBytes,
@@ -141,6 +145,7 @@ internal fun UploadReelScreen(
                     is NetworkResult.Failure -> {
                         isSharing = false
                         shareStatus = videoUploadResult.error.userMessage()
+                        uploadStage = null
                         return@launch
                     }
                 }
@@ -149,6 +154,7 @@ internal fun UploadReelScreen(
             var finalThumbnailUrl = videoUpload.thumbnailUrl.ifBlank { videoUpload.videoUrl }
 
             if (!selectedThumbnailUri.isNullOrBlank()) {
+                uploadStage = "Uploading thumbnail…"
                 val thumbnailBytes = PlatformMediaFileReader.readBytes(selectedThumbnailUri)
                 if (thumbnailBytes != null) {
                     val imageUploadResult =
@@ -178,8 +184,10 @@ internal fun UploadReelScreen(
                     taggedProductIds = selectedProductIds,
                 )
 
+            uploadStage = "Publishing reel…"
             val createResult = state.sellerContent.createReel(createRequest, token)
             isSharing = false
+            uploadStage = null
 
             if (createResult is NetworkResult.Success) {
                 shareStatus = "Reel uploaded and published to buyer feed."
@@ -207,6 +215,37 @@ internal fun UploadReelScreen(
                     enabled = videoUri != null && !isSharing,
                 ) {
                     Text("Done", color = if (videoUri != null) accent else muted, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        // Upload progress banner
+        uploadStage?.let { stage ->
+            item {
+                Surface(color = NotWhatColors.surfaceContainerHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                stage,
+                                color = NotWhatColors.onSurface,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.weight(1f),
+                            )
+                            CircularProgressIndicator(color = NotWhatAuthTokens.accent, modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                        }
+                        androidx.compose.material3.LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = NotWhatAuthTokens.accent,
+                            trackColor = NotWhatColors.surface,
+                        )
+                    }
                 }
             }
         }

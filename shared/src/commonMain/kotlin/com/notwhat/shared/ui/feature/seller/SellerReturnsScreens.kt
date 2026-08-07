@@ -49,7 +49,7 @@ internal fun SellerReturnsScreen(
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
 
-    var selectedTab by remember { mutableStateOf("Requested (12)") }
+    var selectedTab by remember { mutableStateOf("Requested") }
     // Build return request display items from real orders with return/cancellation status
     val liveReturnRequests =
         state.sellerContent.orders
@@ -72,14 +72,14 @@ internal fun SellerReturnsScreen(
     val requestStatusById = remember { mutableStateMapOf<String, String>() }
     var actionMessage by remember { mutableStateOf<String?>(null) }
 
-    val tabs = listOf("Requested (12)", "Approved (8)", "Completed (45)")
+    val tabs = listOf("Requested", "Approved", "Completed")
     val filteredRequests =
         returnRequests.filter { request ->
             val status = requestStatusById[request.orderId] ?: request.status
             when (selectedTab) {
-                "Requested (12)" -> status == "Requested"
-                "Approved (8)" -> status == "Approved"
-                "Completed (45)" -> status == "Completed"
+                "Requested" -> status == "Requested"
+                "Approved" -> status == "Approved"
+                "Completed" -> status == "Completed"
                 else -> true
             }
         }
@@ -104,7 +104,7 @@ internal fun SellerReturnsScreen(
                 ) {
                     TextButton(onClick = onBack) { Text("Back", color = accent) }
                     Text("Returns & Refunds", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                    TextButton(onClick = onOpenOrderOperations) { Text("Orders", color = accent) }
+                    Box(modifier = Modifier.size(56.dp))
                 }
             }
 
@@ -282,28 +282,6 @@ internal fun SellerReturnsScreen(
                                 Text("Reject", color = text, fontWeight = FontWeight.Bold)
                             }
                         }
-                    }
-                }
-            }
-
-            item {
-                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
-                    ) {
-                        Text(
-                            "Refund policy reminders",
-                            color = text,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            "Approve returns when product condition is consistent with the buyer note and supported photos.",
-                            color = muted,
-                        )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        Text("Rejected requests should be routed back to order operations for exception review.", color = muted)
                     }
                 }
             }

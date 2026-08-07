@@ -98,4 +98,15 @@ internal class BuyerTransactionState(
             }
         }
     }
+
+    suspend fun addCartItem(
+        productId: String,
+        quantity: Int = 1,
+        bearerToken: String,
+    ): NetworkResult<CartDto> =
+        cartUseCase.addItem(
+            com.notwhat.shared.cart
+                .AddCartItemRequestDto(productId, quantity),
+            bearerToken,
+        )
 }

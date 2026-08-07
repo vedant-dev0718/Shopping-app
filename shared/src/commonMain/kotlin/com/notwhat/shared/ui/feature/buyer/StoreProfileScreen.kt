@@ -17,13 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.catalog.ProductDto
+import com.notwhat.shared.catalog.ReelDto
 import com.notwhat.shared.catalog.StoreDto
 
 @Composable
@@ -45,6 +45,7 @@ internal fun StoreProfileScreen(
     store: StoreDto,
     onBack: () -> Unit,
     onOpenProduct: (ProductDto) -> Unit,
+    onOpenReel: (ReelDto) -> Unit,
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -54,28 +55,18 @@ internal fun StoreProfileScreen(
     val accent = NotWhatAuthTokens.accent
     var tab by remember { mutableStateOf("Products") }
 
+    val storeProductCount = state.content.products.count { it.storeId?.id == store.id }
+    val storeReelCount = state.content.reels.count { it.displayCreator == store.storeName }
+
     LazyColumn(
         modifier = modifier.fillMaxSize().background(bg),
         contentPadding = PaddingValues(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
-                DemoImage(
-                    url = store.bannerImageUrl ?: store.displayImageUrl,
-                    contentDescription = "Store hero",
-                    modifier = Modifier.fillMaxSize(),
-                    shape = RoundedCornerShape(0.dp),
-                )
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
-                Button(
-                    onClick = onBack,
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black.copy(alpha = 0.35f)),
-                    modifier = Modifier.padding(16.dp),
-                ) {
-                    Text("Back", color = Color.White)
-                }
+            // Back button without banner image
+            Row(modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp)) {
+                TextButton(onClick = onBack) { Text("Back", color = accent) }
             }
         }
 
@@ -92,14 +83,11 @@ internal fun StoreProfileScreen(
                         Text(store.storeName, style = MaterialTheme.typography.headlineSmall, color = text, fontWeight = FontWeight.Bold)
                         Text("${store.city ?: ""}, ${store.state ?: ""}".trim().trimEnd(','), color = muted)
                     }
-                    Button(onClick = {}, colors = ButtonDefaults.buttonColors(containerColor = accent), shape = RoundedCornerShape(20.dp)) {
-                        Text("Follow", color = Color.White)
-                    }
                 }
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(
-                        listOf("${store.productCount} Products", "${store.followerCount} Followers", "${store.reelCount} Reels"),
+                        listOf("$storeProductCount Products", "$storeReelCount Reels"),
                     ) { stat ->
                         Surface(color = surfaceHigh, shape = RoundedCornerShape(16.dp)) {
                             Text(stat, color = text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
@@ -176,7 +164,7 @@ internal fun StoreProfileScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                             rowReels.forEach { reel ->
                                 ElevatedCard(
-                                    modifier = Modifier.weight(1f).height(160.dp).clickable { onOpenProduct(reel.toProductDtoStub()) },
+                                    modifier = Modifier.weight(1f).height(160.dp).clickable { onOpenReel(reel) },
                                     colors = CardDefaults.elevatedCardColors(containerColor = surface),
                                 ) {
                                     Box(modifier = Modifier.fillMaxSize()) {

@@ -48,11 +48,11 @@ internal fun ProductDetailScreen(
     product: ProductDto,
     onBack: () -> Unit,
 ) {
-    val detailBg = Color(0xFF0A0A0A)
-    val detailSurface = Color(0xFF2D1B16)
-    val detailSurfaceHigh = Color(0xFF382620)
-    val detailText = Color(0xFFFCDCD3)
-    val detailMuted = Color(0xFFE6BEB2)
+    val detailBg = Color(0xFFFAF7F4)
+    val detailSurface = Color(0xFFFFFFFF)
+    val detailSurfaceHigh = Color(0xFFF2EDE8)
+    val detailText = Color(0xFF1A1008)
+    val detailMuted = Color(0xFF7A6A5A)
     val detailAccent = NotWhatAuthTokens.accent
     val scope = rememberCoroutineScope()
     val resolvedProduct = state.content.products.firstOrNull { it.id == product.id } ?: product
@@ -63,6 +63,8 @@ internal fun ProductDetailScreen(
     var showBidSheet by remember { mutableStateOf(false) }
     var bidInput by remember(resolvedProduct.id) { mutableStateOf(bargainScenario.defaultBidInput) }
     var addedToCart by remember(resolvedProduct.id) { mutableStateOf(false) }
+    var isAddingToCart by remember(resolvedProduct.id) { mutableStateOf(false) }
+    var cartError by remember(resolvedProduct.id) { mutableStateOf<String?>(null) }
     var saveMessage by remember(resolvedProduct.id) { mutableStateOf<String?>(null) }
     var isSaving by remember(resolvedProduct.id) { mutableStateOf(false) }
 
@@ -154,12 +156,15 @@ internal fun ProductDetailScreen(
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(resolvedProduct.displayPrice, color = detailAccent, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
                             Text("₹4,999", color = detailMuted)
-                            Surface(color = Color(0xFF93000A), shape = RoundedCornerShape(8.dp)) {
+                            Surface(color = Color(0xFFD32F2F), shape = RoundedCornerShape(8.dp)) {
                                 Text("50% OFF", color = Color.White, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
                             }
                         }
 
                         saveMessage?.let {
+                            Text(it, color = Color(0xFFFFC9C9), style = MaterialTheme.typography.bodySmall)
+                        }
+                        cartError?.let {
                             Text(it, color = Color(0xFFFFC9C9), style = MaterialTheme.typography.bodySmall)
                         }
                     }
@@ -177,7 +182,7 @@ internal fun ProductDetailScreen(
                                     modifier = Modifier.clickable { selectedSize = size },
                                     color = if (active) detailAccent.copy(alpha = 0.2f) else detailSurfaceHigh,
                                     shape = RoundedCornerShape(12.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (active) detailAccent else Color(0xFF5C4037)),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (active) detailAccent else Color(0xFFD4C4B8)),
                                 ) {
                                     Text(size, color = if (active) detailAccent else detailText, modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), fontWeight = FontWeight.Bold)
                                 }
@@ -190,9 +195,9 @@ internal fun ProductDetailScreen(
                                 val active = selectedDelivery == mode
                                 Surface(
                                     modifier = Modifier.clickable { selectedDelivery = mode },
-                                    color = if (active) detailAccent.copy(alpha = 0.2f) else detailSurfaceHigh,
+                                    color = if (active) detailAccent.copy(alpha = 0.1f) else detailSurfaceHigh,
                                     shape = RoundedCornerShape(12.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (active) detailAccent else Color(0xFF5C4037)),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (active) detailAccent else Color(0xFFD4C4B8)),
                                 ) {
                                     Text(mode, color = if (active) detailAccent else detailText, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), style = MaterialTheme.typography.labelMedium)
                                 }
@@ -239,12 +244,45 @@ internal fun ProductDetailScreen(
                     Text(resolvedProduct.displayPrice, color = detailText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 Button(
-                    onClick = { addedToCart = true },
+                    onClick = {
+                        if (!addedToCart && !isAddingToCart) {
+                            val token = state.currentSession?.authToken
+                            if (token.isNullOrBlank()) {
+                                cartError = "Please sign in to add items to cart."
+                            } else {
+                                scope.launch {
+                                    isAddingToCart = true
+                                    cartError = null
+                                    val result = state.transaction.addCartItem(
+                                        productId = resolvedProduct.id,
+                                        quantity = 1,
+                                        bearerToken = token,
+                                    )
+                                    if (result is com.notwhat.shared.core.NetworkResult.Success) {
+                                        addedToCart = true
+                                        state.transaction.refreshCart(token)
+                                    } else if (result is com.notwhat.shared.core.NetworkResult.Failure) {
+                                        cartError = result.error.userMessage()
+                                    }
+                                    isAddingToCart = false
+                                }
+                            }
+                        }
+                    },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = if (addedToCart) Color(0xFF2E7D32) else detailAccent),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (addedToCart) Color(0xFF388E3C) else detailAccent),
+                    enabled = !isAddingToCart,
                 ) {
-                    Text(if (addedToCart) "✓ ADDED TO CART" else "ADD TO CART", color = Color.White, fontWeight = FontWeight.Black)
+                    Text(
+                        when {
+                            isAddingToCart -> "Adding..."
+                            addedToCart -> "✓ ADDED TO CART"
+                            else -> "ADD TO CART"
+                        },
+                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                    )
                 }
             }
         }
@@ -352,7 +390,7 @@ internal fun BoxScope.BidBottomSheet(
                     focusedContainerColor = surfaceColor,
                     unfocusedContainerColor = surfaceColor,
                     focusedBorderColor = accentColor,
-                    unfocusedBorderColor = Color(0xFF5C4037),
+                    unfocusedBorderColor = Color(0xFFD4C4B8),
                     focusedLabelColor = accentColor,
                     unfocusedLabelColor = mutedColor,
                     focusedTextColor = textColor,

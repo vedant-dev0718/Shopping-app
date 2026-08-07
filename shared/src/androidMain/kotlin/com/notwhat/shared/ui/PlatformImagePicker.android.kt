@@ -7,9 +7,9 @@ actual object PlatformImagePicker {
         onResult(null)
     }
 
-    fun isMultiAvailable(): Boolean = false
+    actual fun isMultiAvailable(): Boolean = false
 
-    fun launchMulti(onResult: (List<String>) -> Unit) {
+    actual fun launchMulti(onResult: (List<String>) -> Unit) {
         onResult(emptyList())
     }
 }

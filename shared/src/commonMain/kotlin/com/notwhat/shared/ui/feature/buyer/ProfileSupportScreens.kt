@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 
 internal enum class ProfileShellRoute {
     ProfileAddress,
+    AddressOnly,
     SettingsHelp,
     ContactSupport,
     PrivacyPolicy,
@@ -58,6 +59,7 @@ internal fun ProfileShellScreen(
     route: ProfileShellRoute,
     onBackToAccount: () -> Unit,
     onRouteChange: (ProfileShellRoute) -> Unit,
+    onSignOut: () -> Unit = {},
 ) {
     when (route) {
         ProfileShellRoute.ProfileAddress -> {
@@ -65,10 +67,17 @@ internal fun ProfileShellScreen(
                 modifier = modifier,
                 state = state,
                 onBack = onBackToAccount,
-                onOpenSettings = { onRouteChange(ProfileShellRoute.SettingsHelp) },
                 onOpenSupport = { onRouteChange(ProfileShellRoute.ContactSupport) },
                 onOpenPrivacy = { onRouteChange(ProfileShellRoute.PrivacyPolicy) },
                 onOpenAbout = { onRouteChange(ProfileShellRoute.AboutNotWhat) },
+            )
+        }
+
+        ProfileShellRoute.AddressOnly -> {
+            AddressesOnlyScreen(
+                modifier = modifier,
+                state = state,
+                onBack = onBackToAccount,
             )
         }
 
@@ -80,6 +89,7 @@ internal fun ProfileShellScreen(
                 onOpenSupport = { onRouteChange(ProfileShellRoute.ContactSupport) },
                 onOpenPrivacy = { onRouteChange(ProfileShellRoute.PrivacyPolicy) },
                 onOpenAbout = { onRouteChange(ProfileShellRoute.AboutNotWhat) },
+                onSignOut = onSignOut,
             )
         }
 
@@ -111,10 +121,86 @@ private fun ProfileAddressManagementScreen(
     modifier: Modifier,
     state: NotWhatAppState,
     onBack: () -> Unit,
-    onOpenSettings: () -> Unit,
     onOpenSupport: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenAbout: () -> Unit,
+) {
+    val bg = NotWhatColors.background
+    val surface = NotWhatColors.surface
+    val text = NotWhatColors.onSurface
+    val muted = NotWhatColors.onSurfaceVariant
+    val accent = NotWhatAuthTokens.accent
+    val profileName = state.currentSession?.name ?: "NotWhat User"
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onBack) { Text("Back", color = accent) }
+                Text("Profile", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                Spacer(modifier = Modifier.width(56.dp))
+            }
+        }
+
+        item {
+            Surface(color = surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ProfileImage(
+                        url = "",
+                        contentDescription = profileName,
+                        modifier = Modifier.size(80.dp),
+                        shape = RoundedCornerShape(40.dp),
+                    )
+                    Text(profileName, color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        item {
+            Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    ProfileActionTile(
+                        title = "Contact Support",
+                        subtitle = "Raise ticket, chat, or call support",
+                        onClick = onOpenSupport,
+                        accent = accent,
+                    )
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                    ProfileActionTile(
+                        title = "Privacy Policy",
+                        subtitle = "How we use your data",
+                        onClick = onOpenPrivacy,
+                        accent = accent,
+                    )
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                    ProfileActionTile(
+                        title = "About NotWhat",
+                        subtitle = "Vision, version, and legal info",
+                        onClick = onOpenAbout,
+                        accent = accent,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddressesOnlyScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -123,15 +209,9 @@ private fun ProfileAddressManagementScreen(
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
     val scope = rememberCoroutineScope()
-    val ordersErrorMessage = state.transaction.ordersErrorMessage
-    val addressesErrorMessage = state.transaction.addressesErrorMessage
     val sessionToken = state.currentSession?.authToken
 
-    var addresses by remember(state.transaction.addresses) {
-        mutableStateOf(
-            state.transaction.addresses,
-        )
-    }
+    var addresses by remember(state.transaction.addresses) { mutableStateOf(state.transaction.addresses) }
     var showAddForm by remember { mutableStateOf(false) }
     var newLabel by remember { mutableStateOf("Other") }
     var newName by remember { mutableStateOf(state.currentSession?.name ?: "") }
@@ -139,17 +219,6 @@ private fun ProfileAddressManagementScreen(
     var newLine1 by remember { mutableStateOf("") }
     var newLine2 by remember { mutableStateOf("") }
     var newCityPin by remember { mutableStateOf("") }
-
-    val stats =
-        DemoProfileStats(
-            orders =
-                state.transaction.orders.size
-                    .toString(),
-            saved = "—",
-            reviews = "—",
-            following = "—",
-        )
-    val profileName = state.currentSession?.name ?: "Arjun Sharma"
 
     Box(modifier = modifier.fillMaxSize().background(bg)) {
         LazyColumn(
@@ -164,133 +233,22 @@ private fun ProfileAddressManagementScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(onClick = onBack) { Text("Back", color = accent) }
-                    Text("Profile", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                    TextButton(onClick = { showAddForm = true }) { Text("Add Address", color = accent) }
+                    Text("Addresses", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    TextButton(onClick = { showAddForm = true }) { Text("Add", color = accent) }
                 }
             }
 
-            if (!ordersErrorMessage.isNullOrBlank()) {
+            if (addresses.isEmpty()) {
                 item {
-                    Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Orders unavailable", color = text, fontWeight = FontWeight.Bold)
-                            Text(ordersErrorMessage, color = muted, style = MaterialTheme.typography.bodySmall)
-                            TextButton(
-                                onClick = {
-                                    val token = sessionToken ?: return@TextButton
-                                    scope.launch { state.transaction.loadOrders(token) }
-                                },
-                            ) {
-                                Text("Retry orders fetch", color = accent)
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!addressesErrorMessage.isNullOrBlank()) {
-                item {
-                    Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Addresses unavailable", color = text, fontWeight = FontWeight.Bold)
-                            Text(addressesErrorMessage, color = muted, style = MaterialTheme.typography.bodySmall)
-                            TextButton(
-                                onClick = {
-                                    val token = sessionToken ?: return@TextButton
-                                    scope.launch { state.transaction.loadAddresses(token) }
-                                },
-                            ) {
-                                Text("Retry address fetch", color = accent)
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Surface(color = surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        ProfileImage(
-                            url = "",
-                            contentDescription = profileName,
-                            modifier = Modifier.size(96.dp),
-                            shape = RoundedCornerShape(48.dp),
-                        )
-                        Text(profileName, color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("@arjun_vibe", color = accent, style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            "Hunting for the rarest street drops. Bargain king.",
-                            color = muted,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            }
-
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    listOf(
-                        "Orders" to stats.orders,
-                        "Saved" to stats.saved,
-                        "Reviews" to stats.reviews,
-                        "Following" to stats.following,
-                    ).forEach { (label, value) ->
-                        Surface(color = surface, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f)) {
-                            Column(modifier = Modifier.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(value, color = accent, fontWeight = FontWeight.Black)
-                                Text(label, color = muted, style = MaterialTheme.typography.labelSmall)
-                            }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("No address added", style = MaterialTheme.typography.titleMedium, color = muted)
+                            Text("Tap Add to save a delivery address", color = muted, style = MaterialTheme.typography.bodySmall)
                         }
                     }
-                }
-            }
-
-            item {
-                Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ProfileActionTile(
-                            title = "Settings & Help Center",
-                            subtitle = "Notifications, language, FAQ, and help",
-                            onClick = onOpenSettings,
-                            accent = accent,
-                        )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        ProfileActionTile(
-                            title = "Contact Support",
-                            subtitle = "Raise ticket, chat, or call support",
-                            onClick = onOpenSupport,
-                            accent = accent,
-                        )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        ProfileActionTile(
-                            title = "Privacy Policy",
-                            subtitle = "How we use your data",
-                            onClick = onOpenPrivacy,
-                            accent = accent,
-                        )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        ProfileActionTile(
-                            title = "About NotWhat",
-                            subtitle = "Vision, version, and legal info",
-                            onClick = onOpenAbout,
-                            accent = accent,
-                        )
-                    }
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("My Addresses", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${addresses.size} saved", color = muted, style = MaterialTheme.typography.labelSmall)
                 }
             }
 
@@ -309,15 +267,9 @@ private fun ProfileAddressManagementScreen(
                                     shape = RoundedCornerShape(8.dp),
                                 ) {
                                     Text(
-                                        address.type.replaceFirstChar {
-                                            it.uppercaseChar()
-                                        },
+                                        address.type.replaceFirstChar { it.uppercaseChar() },
                                         color = if (address.isDefault) accent else text,
-                                        modifier =
-                                            Modifier.padding(
-                                                horizontal = 8.dp,
-                                                vertical = 4.dp,
-                                            ),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                         style = MaterialTheme.typography.labelSmall,
                                     )
                                 }
@@ -354,18 +306,10 @@ private fun ProfileAddressManagementScreen(
 
         if (showAddForm) {
             Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.68f))
-                        .clickable { showAddForm = false },
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.68f)).clickable { showAddForm = false },
             )
             Surface(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(560.dp),
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(560.dp),
                 color = bg.copy(alpha = 0.98f),
                 shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
             ) {
@@ -482,6 +426,7 @@ private fun SettingsHelpCenterScreen(
     onOpenSupport: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenAbout: () -> Unit,
+    onSignOut: () -> Unit = {},
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -589,6 +534,23 @@ private fun SettingsHelpCenterScreen(
                         onClick = onOpenAbout,
                         accent = accent,
                     )
+                }
+            }
+        }
+
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth().clickable { onSignOut() },
+                shape = RoundedCornerShape(14.dp),
+                color = NotWhatColors.surfaceContainerHigh,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Sign Out", fontWeight = FontWeight.Bold, color = NotWhatColors.primary)
+                    Text("Leave", color = NotWhatColors.primary, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -814,7 +776,7 @@ private fun ProfileActionTile(
     accent: Color,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -822,7 +784,7 @@ private fun ProfileActionTile(
             Text(title, color = NotWhatColors.onSurface, fontWeight = FontWeight.Bold)
             Text(subtitle, color = NotWhatColors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
-        Text("Open", color = accent, fontWeight = FontWeight.Bold)
+        Text("›", color = accent, style = MaterialTheme.typography.titleLarge)
     }
 }
 
@@ -862,10 +824,27 @@ private fun ProfileImage(
     modifier: Modifier,
     shape: RoundedCornerShape,
 ) {
-    AsyncImage(
-        model = url,
-        contentDescription = contentDescription,
-        modifier = modifier.clip(shape),
-        contentScale = ContentScale.Crop,
-    )
+    if (url.isBlank()) {
+        val initials =
+            contentDescription
+                .split(" ")
+                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                .take(2)
+                .joinToString("")
+        Box(modifier = modifier.clip(shape).background(NotWhatAuthTokens.accent.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+            Text(
+                initials.ifEmpty { "?" },
+                fontWeight = FontWeight.Bold,
+                color = NotWhatAuthTokens.accent,
+                style = MaterialTheme.typography.titleLarge,
+            )
+        }
+    } else {
+        AsyncImage(
+            model = url,
+            contentDescription = contentDescription,
+            modifier = modifier.clip(shape),
+            contentScale = ContentScale.Crop,
+        )
+    }
 }

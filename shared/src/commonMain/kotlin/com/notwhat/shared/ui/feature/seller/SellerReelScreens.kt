@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -219,15 +220,7 @@ internal fun SellerReelListScreen(
                     TextButton(onClick = onBack) {
                         Text("←", color = muted, fontWeight = FontWeight.SemiBold)
                     }
-                    Column {
-                        Text("MY REELS", color = muted, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Text(
-                            "${reels.size} reels",
-                            color = text,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                        )
-                    }
+                    Text("MY REELS", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                 }
                 Button(
                     onClick = onUploadReel,
@@ -254,24 +247,20 @@ internal fun SellerReelListScreen(
 
         if (reels.isEmpty()) {
             item {
-                Surface(
-                    color = surface,
-                    shape = SellerUiTokens.radiusCard,
-                    modifier = Modifier.fillMaxWidth(),
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(40.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         Text("No reels yet", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
-                            "Upload your first reel to start showcasing products on the buyer feed.",
+                            "Upload your first reel to start showcasing\nproducts on the buyer feed.",
                             color = muted,
                             style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
                         )
                         Button(
                             onClick = onUploadReel,
@@ -585,7 +574,7 @@ internal fun ReelProductTagSheet(
                         fontWeight = FontWeight.Black,
                     )
                     Text(
-                        reel.title,
+                        reel.title.ifBlank { reel.caption }.ifBlank { "Reel" },
                         color = muted,
                         style = MaterialTheme.typography.labelSmall,
                         maxLines = 1,

@@ -5,7 +5,7 @@ actual object PlatformImagePicker {
 
     actual fun launch(onResult: (imageUri: String?) -> Unit) = IosImagePickerBridgeRegistry.launch(onResult)
 
-    fun isMultiAvailable(): Boolean = IosImagePickerBridgeRegistry.isMultiRegistered()
+    actual fun isMultiAvailable(): Boolean = IosImagePickerBridgeRegistry.isMultiRegistered()
 
-    fun launchMulti(onResult: (List<String>) -> Unit) = IosImagePickerBridgeRegistry.launchMulti(onResult)
+    actual fun launchMulti(onResult: (List<String>) -> Unit) = IosImagePickerBridgeRegistry.launchMulti(onResult)
 }

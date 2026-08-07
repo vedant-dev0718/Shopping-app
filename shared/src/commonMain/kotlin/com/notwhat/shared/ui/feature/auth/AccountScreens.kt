@@ -1,17 +1,18 @@
 package com.notwhat.shared.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,39 +34,49 @@ internal fun AccountScreen(
     onOpenProduct: (com.notwhat.shared.catalog.ProductDto) -> Unit,
     onOpenSellerDashboard: () -> Unit,
     onOpenProfile: () -> Unit,
+    onOpenAddresses: () -> Unit,
     onOpenCart: () -> Unit,
     onOpenBuyerReturns: () -> Unit,
+    onSignOut: () -> Unit = {},
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Surface(shape = RoundedCornerShape(20.dp), color = NotWhatColors.surfaceContainer) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(state.currentSession?.name ?: "NotWhat", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(
-                    state.currentSession?.headline ?: "Buy, bid, and browse regional fashion in one place.",
-                    color = NotWhatColors.onSurfaceVariant,
-                )
+        // Tapping the profile card opens address + profile management
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = NotWhatColors.surfaceContainer,
+            modifier = Modifier.fillMaxWidth().clickable { onOpenProfile() },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 AccountImage(
                     url =
                         state.content.stores
                             .firstOrNull()
-                            ?.displayImageUrl ?: "",
-                    contentDescription = state.currentSession?.name ?: "NotWhat profile",
-                    modifier = Modifier.fillMaxWidth().height(140.dp),
-                    shape = RoundedCornerShape(16.dp),
+                            ?.profileImageUrl ?: "",
+                    contentDescription = state.currentSession?.name ?: "Profile",
+                    modifier = Modifier.size(64.dp),
+                    shape = RoundedCornerShape(32.dp),
                 )
-                HorizontalDivider(color = NotWhatColors.outline)
-                Text(
-                    text =
-                        when (state.uiRole) {
-                            UserRole.Seller -> "Seller operations are now routed through a dedicated dashboard shell for sprint 6 expansion."
-                            UserRole.Admin -> "Admin checks stay mocked so navigation and hierarchy can be reviewed without backend dependencies."
-                            else -> "Buyer discovery stays mocked so product, reel, and bargain browsing can be reviewed end-to-end."
-                        },
-                    color = NotWhatColors.onSurface,
-                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        state.currentSession?.name ?: "NotWhat User",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = NotWhatColors.onSurface,
+                    )
+                    Text(
+                        "View profile",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NotWhatColors.onSurfaceVariant,
+                    )
+                }
+                Text("›", style = MaterialTheme.typography.titleLarge, color = NotWhatColors.primary)
             }
         }
 
@@ -81,92 +91,37 @@ internal fun AccountScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column {
-                        Text("Seller Dashboard & Insights", fontWeight = FontWeight.Bold, color = NotWhatColors.onSurface)
-                        Text("Track performance, operations, and next sprint stubs", color = NotWhatColors.onSurfaceVariant)
-                    }
+                    Text("Seller Dashboard", fontWeight = FontWeight.Bold, color = NotWhatColors.onSurface)
                     Text("Open", color = NotWhatColors.primary, fontWeight = FontWeight.Bold)
                 }
             }
         } else {
+            // Buyer quick-action tiles
             Surface(
-                modifier = Modifier.fillMaxWidth().clickable { onOpenProfile() },
                 shape = RoundedCornerShape(16.dp),
                 color = NotWhatColors.surfaceContainerHigh,
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column {
-                        Text("Profile & Addresses", fontWeight = FontWeight.Bold, color = NotWhatColors.onSurface)
-                        Text("Manage identity, stats and shipping addresses", color = NotWhatColors.onSurfaceVariant)
-                    }
-                    Text("Open", color = NotWhatColors.primary, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        Surface(
-            modifier = Modifier.fillMaxWidth().clickable { onOpenCart() },
-            shape = RoundedCornerShape(16.dp),
-            color = NotWhatColors.primaryContainer,
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text("Cart & Saved Payments", fontWeight = FontWeight.Bold, color = NotWhatColors.onPrimaryContainer)
-                    Text("Start Sprint 4 checkout journey", color = NotWhatColors.onPrimaryContainer)
-                }
-                Text("Open", color = NotWhatColors.onPrimaryContainer, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        if (state.uiRole == UserRole.Buyer) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().clickable { onOpenBuyerReturns() },
-                shape = RoundedCornerShape(16.dp),
-                color = NotWhatColors.surfaceContainerHigh,
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column {
-                        Text("My Returns", fontWeight = FontWeight.Bold, color = NotWhatColors.onSurface)
-                        Text("Track requests, seller decisions, and closure", color = NotWhatColors.onSurfaceVariant)
-                    }
-                    Text("Open", color = NotWhatColors.primary, fontWeight = FontWeight.Bold)
+                    AccountTile(
+                        label = "My Orders",
+                        subtitle = "Track and manage your orders",
+                        onClick = onOpenBuyerReturns,
+                    )
+                    HorizontalDivider(color = NotWhatColors.outline.copy(alpha = 0.3f))
+                    AccountTile(
+                        label = "Addresses",
+                        subtitle = "Add or edit delivery addresses",
+                        onClick = onOpenAddresses,
+                    )
+                    HorizontalDivider(color = NotWhatColors.outline.copy(alpha = 0.3f))
+                    AccountTile(
+                        label = "Sign Out",
+                        subtitle = "Log out of your account",
+                        onClick = onSignOut,
+                    )
                 }
             }
         }
-
-        state.content.products
-            .take(2)
-            .forEach { product ->
-                Card(
-                    modifier = Modifier.clickable { onOpenProduct(product) },
-                    colors = CardDefaults.cardColors(containerColor = NotWhatColors.surfaceContainer),
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        AccountImage(
-                            url = product.displayImageUrl,
-                            contentDescription = product.displayTitle,
-                            modifier = Modifier.size(72.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        )
-                        Column {
-                            Text(product.displayTitle, fontWeight = FontWeight.SemiBold)
-                            Text(product.displayStoreName, color = NotWhatColors.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
     }
 }
 
@@ -177,10 +132,49 @@ private fun AccountImage(
     modifier: Modifier,
     shape: RoundedCornerShape,
 ) {
-    AsyncImage(
-        model = url,
-        contentDescription = contentDescription,
-        modifier = modifier.clip(shape),
-        contentScale = ContentScale.Crop,
-    )
+    if (url.isBlank()) {
+        // Initials placeholder when no image URL
+        val initials =
+            contentDescription
+                .split(" ")
+                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                .take(2)
+                .joinToString("")
+        Box(modifier = modifier.clip(shape).background(NotWhatColors.primaryContainer), contentAlignment = Alignment.Center) {
+            Text(
+                initials.ifEmpty {
+                    "?"
+                },
+                fontWeight = FontWeight.Bold,
+                color = NotWhatColors.onPrimaryContainer,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+    } else {
+        AsyncImage(
+            model = url,
+            contentDescription = contentDescription,
+            modifier = modifier.clip(shape),
+            contentScale = ContentScale.Crop,
+        )
+    }
+}
+
+@Composable
+private fun AccountTile(
+    label: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, fontWeight = FontWeight.SemiBold, color = NotWhatColors.onSurface)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = NotWhatColors.onSurfaceVariant)
+        }
+        Text("›", style = MaterialTheme.typography.titleLarge, color = NotWhatColors.primary)
+    }
 }

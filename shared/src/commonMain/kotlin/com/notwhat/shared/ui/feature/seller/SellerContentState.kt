@@ -145,7 +145,7 @@ internal class SellerContentState(
 internal fun com.notwhat.shared.catalog.ReelDto.toDemoSellerReel(): DemoSellerReel =
     DemoSellerReel(
         id = id,
-        title = caption ?: "Untitled Reel",
+        title = caption?.takeIf { it.isNotBlank() } ?: category.ifBlank { "Untitled Reel" },
         caption = caption ?: "",
         thumbnailUrl = thumbnailUrl,
         duration = "${duration.toInt()}s",

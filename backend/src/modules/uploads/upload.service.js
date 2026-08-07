@@ -6,6 +6,7 @@ const streamifier = require('streamifier');
 
 const env = require('../../config/env');
 const AppError = require('../../utils/AppError');
+const uploadHLSService = require('./uploadHLS.service');
 
 cloudinary.config({
   cloud_name: env.cloudinaryCloudName,
@@ -236,25 +237,22 @@ const uploadVideo = async ({ file, sellerId }) => {
 
   try {
     if (isS3Configured()) {
-      const result = await uploadToS3({
-        file,
-        sellerId,
-        folder: `notwhat/sellers/${sellerId}/reels`,
-        contentType: file.mimetype
-      });
-
+      const hls = await uploadHLSService.uploadRawVideoForTranscoding({ file, sellerId });
+      // objectKey → manifestKey so withMediaProxyUrls rewrites videoUrl to the backend proxy
       return {
-        videoUrl: result.url,
-        thumbnailUrl: result.url,
-        publicId: result.objectKey,
-        objectKey: result.objectKey,
+        videoUrl: hls.hlsManifestUrl || hls.sourceUrl || '',
+        thumbnailUrl: hls.hlsManifestUrl || hls.sourceUrl || '',
+        objectKey: hls.manifestKey,
         storageProvider: 's3',
-        duration: 0,
+        transcodingJobId: hls.transcodingJobId,
+        mediaRecordId: hls.mediaRecordId,
+        jobStatus: hls.jobStatus,
         fileSize: file.size,
         mimeType: file.mimetype
       };
     }
 
+    // Fallback to Cloudinary for non-S3 storage
     const result = await uploadVideoBufferToCloudinary(file, sellerId);
     const eagerThumbnail = result.eager && result.eager[0] && result.eager[0].secure_url;
 

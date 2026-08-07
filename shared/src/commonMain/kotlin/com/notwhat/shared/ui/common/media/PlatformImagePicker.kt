@@ -5,4 +5,8 @@ expect object PlatformImagePicker {
     fun isAvailable(): Boolean
 
     fun launch(onResult: (imageUri: String?) -> Unit)
+
+    fun isMultiAvailable(): Boolean
+
+    fun launchMulti(onResult: (List<String>) -> Unit)
 }

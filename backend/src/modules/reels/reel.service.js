@@ -290,7 +290,8 @@ const getTaggedProductsForSeller = async (taggedProductIds, sellerId, storeId) =
 
 const createSellerReel = async (user, data) => {
   const store = await findSellerStore(user.id, data.storeId);
-  const taggedProducts = await getTaggedProductsForSeller(data.taggedProductIds, user.id, store._id);
+  const taggedProductIds = data.taggedProductIds || [];
+  const taggedProducts = await getTaggedProductsForSeller(taggedProductIds, user.id, store._id);
 
   return Reel.create({
     sellerId: user.id,

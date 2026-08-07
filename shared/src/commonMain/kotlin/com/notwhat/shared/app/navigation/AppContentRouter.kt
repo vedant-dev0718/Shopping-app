@@ -108,6 +108,7 @@ internal fun AppContentRouter(
             route = flow.profileRoute,
             onBackToAccount = { flow.onEvent(AppNavEvent.CloseCurrent) },
             onRouteChange = { profileRoute -> flow.onEvent(AppNavEvent.ChangeProfileRoute(profileRoute)) },
+            onSignOut = state::signOut,
         )
         return
     }
@@ -185,6 +186,7 @@ internal fun AppContentRouter(
             store = route.store,
             onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
             onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+            onOpenReel = { flow.onEvent(AppNavEvent.OpenReel(it)) },
         )
         return
     }
@@ -192,6 +194,13 @@ internal fun AppContentRouter(
     when (state.activeTab) {
         NotWhatTab.Home -> {
             homeCoordinator.Screen(
+                modifier = Modifier.padding(padding),
+                state = state,
+            )
+        }
+
+        NotWhatTab.Reels -> {
+            reelsCoordinator.FeedScreen(
                 modifier = Modifier.padding(padding),
                 state = state,
             )
@@ -205,9 +214,10 @@ internal fun AppContentRouter(
         }
 
         NotWhatTab.Bargains -> {
-            reelsCoordinator.FeedScreen(
+            BargainProductsScreen(
                 modifier = Modifier.padding(padding),
                 state = state,
+                onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
             )
         }
 
@@ -218,8 +228,10 @@ internal fun AppContentRouter(
                 onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
                 onOpenSellerDashboard = { flow.onEvent(AppNavEvent.OpenSellerDashboard) },
                 onOpenProfile = { flow.onEvent(AppNavEvent.OpenProfile) },
+                onOpenAddresses = { flow.onEvent(AppNavEvent.OpenAddresses) },
                 onOpenCart = { flow.onEvent(AppNavEvent.OpenCart) },
                 onOpenBuyerReturns = { flow.onEvent(AppNavEvent.OpenBuyerReturns) },
+                onSignOut = state::signOut,
             )
         }
     }
