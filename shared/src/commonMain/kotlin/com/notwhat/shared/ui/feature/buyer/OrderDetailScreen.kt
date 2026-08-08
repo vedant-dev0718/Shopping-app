@@ -69,7 +69,11 @@ internal fun OrderDetailScreen(
     val canShowTracking = order.status.lowercase() in setOf("shipped", "delivered")
     val statusStyle = orderDetailStatusStyle(order.status)
     val normalizedOrderStatus = order.status.lowercase()
-    val normalizedReturnInfoStatus = order.returnInfo?.returnStatus?.lowercase().orEmpty()
+    val normalizedReturnInfoStatus =
+        order.returnInfo
+            ?.returnStatus
+            ?.lowercase()
+            .orEmpty()
     val normalizedItemReturnStatus =
         order.items
             .asSequence()
@@ -84,18 +88,37 @@ internal fun OrderDetailScreen(
 
     val effectiveReturnStatus =
         when {
-            normalizedOrderStatus in setOf("return_requested", "return_approved", "return_rejected", "returned", "refunded") -> normalizedOrderStatus
-            normalizedReturnInfoStatus == "requested" -> "return_requested"
-            normalizedReturnInfoStatus == "approved" -> "return_approved"
-            normalizedReturnInfoStatus == "rejected" -> "return_rejected"
-            normalizedReturnInfoStatus in setOf("in_transit", "received", "completed") ->
+            normalizedOrderStatus in setOf("return_requested", "return_approved", "return_rejected", "returned", "refunded") -> {
+                normalizedOrderStatus
+            }
+
+            normalizedReturnInfoStatus == "requested" -> {
+                "return_requested"
+            }
+
+            normalizedReturnInfoStatus == "approved" -> {
+                "return_approved"
+            }
+
+            normalizedReturnInfoStatus == "rejected" -> {
+                "return_rejected"
+            }
+
+            normalizedReturnInfoStatus in setOf("in_transit", "received", "completed") -> {
                 when (normalizedReturnInfoStatus) {
                     "in_transit" -> "return_approved"
                     "received" -> "returned"
                     else -> "refunded"
                 }
-            !normalizedItemReturnStatus.isNullOrBlank() -> normalizedItemReturnStatus
-            else -> null
+            }
+
+            !normalizedItemReturnStatus.isNullOrBlank() -> {
+                normalizedItemReturnStatus
+            }
+
+            else -> {
+                null
+            }
         }
 
     val isDelivered = normalizedOrderStatus == "delivered"
@@ -539,22 +562,28 @@ internal fun OrderDetailScreen(
                                     }
 
                                     // Resolve reason: prefer in-session selection, then persisted return
-                                    val returnReasonLabel = run {
-                                        val inSessionReason = if (returnSuccess) selectedReason else null
-                                        val rawReason = inSessionReason?.name
-                                            ?: state.buyerReturns.firstOrNull { it.orderId == order.id }?.reason
-                                            ?: order.returnInfo?.returnReason?.takeIf { it.isNotBlank() }
-                                        when (rawReason) {
-                                            "wrong_item" -> "Wrong item received"
-                                            "damaged" -> "Item arrived damaged"
-                                            "not_as_described" -> "Not as described"
-                                            "changed_mind" -> "Changed my mind"
-                                            else -> rawReason
+                                    val returnReasonLabel =
+                                        run {
+                                            val inSessionReason = if (returnSuccess) selectedReason else null
+                                            val rawReason =
+                                                inSessionReason?.name
+                                                    ?: state.buyerReturns.firstOrNull { it.orderId == order.id }?.reason
+                                                    ?: order.returnInfo?.returnReason?.takeIf { it.isNotBlank() }
+                                            when (rawReason) {
+                                                "wrong_item" -> "Wrong item received"
+                                                "damaged" -> "Item arrived damaged"
+                                                "not_as_described" -> "Not as described"
+                                                "changed_mind" -> "Changed my mind"
+                                                else -> rawReason
+                                            }
                                         }
-                                    }
-                                    val returnDesc = if (returnSuccess) returnDescription.ifBlank { null }
-                                        else state.buyerReturns.firstOrNull { it.orderId == order.id }?.description
-                                            ?: order.returnInfo?.returnDescription?.takeIf { it.isNotBlank() }
+                                    val returnDesc =
+                                        if (returnSuccess) {
+                                            returnDescription.ifBlank { null }
+                                        } else {
+                                            state.buyerReturns.firstOrNull { it.orderId == order.id }?.description
+                                                ?: order.returnInfo?.returnDescription?.takeIf { it.isNotBlank() }
+                                        }
                                     if (!returnReasonLabel.isNullOrBlank()) {
                                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(
