@@ -134,10 +134,18 @@ internal fun BargainProductsScreen(
         isLoading = false
     }
 
-    val scheduleByProductId = activeSchedules.associateBy { it.productId }
+    val scheduleByProductId =
+        activeSchedules
+            .filter { it.status.equals("active", ignoreCase = true) }
+            .associateBy { it.productId }
     val bargainProducts =
         state.content.products
-            .filter { it.bargainEnabled }
+            .filter { product ->
+                product.bargainEnabled &&
+                    product.status.equals("active", ignoreCase = true) &&
+                    product.stock > 0 &&
+                    scheduleByProductId.containsKey(product.id)
+            }
             .sortedBy { scheduleByProductId[it.id]?.endDate ?: "9999-12-31T23:59:59.000Z" }
     val acceptedBids = myBids.filter { it.canProceedToPayment && it.product != null }
     val pendingBids = myBids.filter { it.status.lowercase() in setOf("active", "pending_seller_decision") }

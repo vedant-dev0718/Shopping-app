@@ -7,6 +7,19 @@ import UniformTypeIdentifiers
 @MainActor
 final class ThumbnailPickerCoordinator: NSObject, PHPickerViewControllerDelegate {
 
+    // Scales to max 1200 px on the long edge and encodes at 0.75 quality (~200–400 KB typical).
+    private static func compressForUpload(_ image: UIImage) -> Data? {
+        let maxDimension: CGFloat = 1200
+        let size = image.size
+        let scale = min(maxDimension / max(size.width, size.height), 1.0)
+        let targetSize = scale < 1.0
+            ? CGSize(width: (size.width * scale).rounded(), height: (size.height * scale).rounded())
+            : size
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        let resized = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: targetSize)) }
+        return resized.jpegData(compressionQuality: 0.75)
+    }
+
     private var completion: ((String?) -> Void)?
     private var multiCompletion: (([String]) -> Void)?
 
@@ -58,7 +71,7 @@ final class ThumbnailPickerCoordinator: NSObject, PHPickerViewControllerDelegate
                         return
                     }
 
-                    guard let jpegData = image.jpegData(compressionQuality: 0.92) else {
+                    guard let jpegData = ThumbnailPickerCoordinator.compressForUpload(image) else {
                         return
                     }
 
@@ -80,16 +93,19 @@ final class ThumbnailPickerCoordinator: NSObject, PHPickerViewControllerDelegate
 
             provider.loadFileRepresentation(forTypeIdentifier: imageType) { url, error in
                 defer { group.leave() }
-                guard let sourceURL = url, error == nil else {
+                // Load as UIImage so HEIC/HEIF is decoded and we can compress consistently
+                guard let sourceURL = url, error == nil,
+                      let image = UIImage(contentsOfFile: sourceURL.path),
+                      let jpegData = ThumbnailPickerCoordinator.compressForUpload(image) else {
                     return
                 }
 
                 let destination = FileManager.default.temporaryDirectory
                     .appendingPathComponent("notwhat_thumb_\(UUID().uuidString)")
-                    .appendingPathExtension(sourceURL.pathExtension)
+                    .appendingPathExtension("jpg")
 
                 do {
-                    try FileManager.default.copyItem(at: sourceURL, to: destination)
+                    try jpegData.write(to: destination, options: .atomic)
                     copiedUrlsLock.lock()
                     copiedURLs.append(destination.absoluteString)
                     copiedUrlsLock.unlock()

@@ -3,6 +3,7 @@ const path = require('path');
 const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { v2: cloudinary } = require('cloudinary');
 const streamifier = require('streamifier');
+const sharp = require('sharp');
 
 const env = require('../../config/env');
 const AppError = require('../../utils/AppError');
@@ -85,6 +86,28 @@ const toPublicS3Url = (objectKey) => {
       avatars/      ← buyer profile photo
   ─────────────────────────────────────────────────────────
 */
+
+// Resize to max 1200×1500 and encode as progressive JPEG 80 before S3/Cloudinary transfer.
+const compressImage = async (file) => {
+  const input = file.path || file.buffer;
+  return sharp(input)
+    .resize({ width: 1200, height: 1500, fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 80, progressive: true })
+    .toBuffer();
+};
+
+const uploadBufferToS3 = async ({ buffer, folder }) => {
+  const objectKey = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+  const command = new PutObjectCommand({
+    Bucket: env.awsS3Bucket,
+    Key: objectKey,
+    Body: buffer,
+    ContentType: 'image/jpeg',
+    CacheControl: 'public, max-age=31536000'
+  });
+  await getS3Client().send(command);
+  return { objectKey, url: toPublicS3Url(objectKey) };
+};
 
 const uploadToS3 = async ({ file, sellerId, folder, contentType }) => {
   const extension = path.extname(file.originalname || file.filename || '');
@@ -278,32 +301,31 @@ const uploadImage = async ({ file, sellerId }) => {
   }
 
   try {
-    if (isS3Configured()) {
-      const result = await uploadToS3({
-        file,
-        sellerId,
-        folder: `notwhat/sellers/${sellerId}/products`,
-        contentType: file.mimetype
-      });
+    const compressed = await compressImage(file);
 
+    if (isS3Configured()) {
+      const result = await uploadBufferToS3({
+        buffer: compressed,
+        folder: `notwhat/sellers/${sellerId}/products`
+      });
       return {
         imageUrl: result.url,
         publicId: result.objectKey,
         objectKey: result.objectKey,
         storageProvider: 's3',
-        fileSize: file.size,
-        mimeType: file.mimetype
+        fileSize: compressed.length,
+        mimeType: 'image/jpeg'
       };
     }
 
-    const result = await uploadImageBufferToCloudinary(file, sellerId);
-
+    // Pre-compress before Cloudinary so we upload fewer bytes (Cloudinary still transforms server-side)
+    const result = await uploadImageBufferToCloudinary({ buffer: compressed }, sellerId);
     return {
       imageUrl: result.secure_url,
       publicId: result.public_id,
       storageProvider: 'cloudinary',
-      fileSize: file.size,
-      mimeType: file.mimetype
+      fileSize: compressed.length,
+      mimeType: 'image/jpeg'
     };
   } finally {
     await cleanupTempFile(file);
@@ -320,17 +342,15 @@ const uploadProductImages = async ({ files, sellerId }) => {
   try {
     const results = await Promise.all(
       files.map(async (file) => {
+        const compressed = await compressImage(file);
         if (isS3Configured()) {
-          const result = await uploadToS3({
-            file,
-            sellerId,
-            folder: `notwhat/sellers/${sellerId}/products`,
-            contentType: file.mimetype
+          const result = await uploadBufferToS3({
+            buffer: compressed,
+            folder: `notwhat/sellers/${sellerId}/products`
           });
-          return result;
+          return { url: result.url, objectKey: result.objectKey };
         }
-
-        const result = await uploadImageBufferToCloudinary(file, sellerId);
+        const result = await uploadImageBufferToCloudinary({ buffer: compressed }, sellerId);
         return { url: result.secure_url, objectKey: null };
       })
     );

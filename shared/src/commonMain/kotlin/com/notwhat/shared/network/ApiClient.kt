@@ -8,6 +8,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
@@ -152,6 +153,8 @@ class ApiClient(
                         },
                 ) {
                     header(HttpHeaders.Authorization, "Bearer $bearerToken")
+                    // socket idle timeout (300 s) guards against hung connections; no hard cap on body transfer
+                    timeout { requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS }
                 }
             return unwrap(httpResponse.body<ApiEnvelope<R>>())
         } catch (e: AppError) {
@@ -196,13 +199,13 @@ class ApiClient(
                     encodeDefaults = true
                 }
             return createPlatformHttpClient {
-                    install(ContentNegotiation) { json(json) }
-                    install(HttpTimeout) {
-                        requestTimeoutMillis = 60_000
-                        connectTimeoutMillis = 15_000
-                        socketTimeoutMillis = 300_000 // allow time for large media uploads
-                    }
+                install(ContentNegotiation) { json(json) }
+                install(HttpTimeout) {
+                    requestTimeoutMillis = 60_000
+                    connectTimeoutMillis = 15_000
+                    socketTimeoutMillis = 300_000 // allow time for large media uploads
                 }
+            }
         }
     }
 }

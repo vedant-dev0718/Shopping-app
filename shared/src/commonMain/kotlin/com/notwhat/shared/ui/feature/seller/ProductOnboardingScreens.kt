@@ -46,7 +46,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.notwhat.shared.catalog.CreateProductRequestDto
 import com.notwhat.shared.core.NetworkResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // Sample data for categories and regions (in production, these would come from the backend)
 val PRODUCT_CATEGORIES =
@@ -251,38 +253,41 @@ internal fun ProductOnboardingScreen(
                                             val uploadedUrls = mutableListOf<String>()
                                             val failedUris = mutableListOf<String>()
 
-                                            for (uri in uris) {
-                                                val imageBytes = PlatformMediaFileReader.readBytes(uri)
-                                                if (imageBytes == null) {
-                                                    failedUris.add(uri)
-                                                    submitError = "Could not read one or more images. Continuing with valid selections."
-                                                    continue
-                                                }
-
-                                                val uploadResult =
-                                                    state.sellerContent.uploadImage(
-                                                        data = imageBytes,
-                                                        fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
-                                                        bearerToken = token,
-                                                        mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
-                                                    )
-
-                                                when (uploadResult) {
-                                                    is NetworkResult.Success -> {
-                                                        uploadedUrls.add(uploadResult.data.imageUrl)
-                                                    }
-
-                                                    is NetworkResult.Failure -> {
+                                            try {
+                                                for (uri in uris) {
+                                                    // read file bytes off the main thread to avoid freezing Compose UI
+                                                    val imageBytes =
+                                                        withContext(Dispatchers.Default) { PlatformMediaFileReader.readBytes(uri) }
+                                                    if (imageBytes == null) {
                                                         failedUris.add(uri)
-                                                        if (submitError == null) submitError = uploadResult.error.userMessage()
+                                                        submitError = "Could not read one or more images. Continuing with valid selections."
+                                                        continue
+                                                    }
+
+                                                    val uploadResult =
+                                                        state.sellerContent.uploadImage(
+                                                            data = imageBytes,
+                                                            fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
+                                                            bearerToken = token,
+                                                            mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
+                                                        )
+
+                                                    when (uploadResult) {
+                                                        is NetworkResult.Success -> {
+                                                            uploadedUrls.add(uploadResult.data.imageUrl)
+                                                        }
+
+                                                        is NetworkResult.Failure -> {
+                                                            failedUris.add(uri)
+                                                            if (submitError == null) submitError = uploadResult.error.userMessage()
+                                                        }
                                                     }
                                                 }
+                                            } finally {
+                                                isUploadingImage = false
+                                                imagePreviewUrls = imagePreviewUrls.filter { it !in failedUris }
+                                                imageUrls = imageUrls + uploadedUrls
                                             }
-
-                                            isUploadingImage = false
-                                            // remove failed previews, add uploaded URLs
-                                            imagePreviewUrls = imagePreviewUrls.filter { it !in failedUris }
-                                            imageUrls = imageUrls + uploadedUrls
                                         }
                                     }
                                 } else {
@@ -291,38 +296,39 @@ internal fun ProductOnboardingScreen(
                                         if (!uri.isNullOrBlank()) {
                                             // show preview immediately
                                             imagePreviewUrls = imagePreviewUrls + uri
-                                            scope.launch uploadLaunch@{
+                                            scope.launch {
                                                 isUploadingImage = true
                                                 submitError = null
 
-                                                val imageBytes = PlatformMediaFileReader.readBytes(uri)
-                                                if (imageBytes == null) {
-                                                    isUploadingImage = false
-                                                    imagePreviewUrls = imagePreviewUrls.filter { it != uri }
-                                                    submitError = "Could not read the selected image. Please try again."
-                                                    return@uploadLaunch
-                                                }
-
-                                                val uploadResult =
-                                                    state.sellerContent.uploadImage(
-                                                        data = imageBytes,
-                                                        fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
-                                                        bearerToken = token,
-                                                        mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
-                                                    )
-
-                                                isUploadingImage = false
-                                                when (uploadResult) {
-                                                    is NetworkResult.Success -> {
-                                                        imageUrls = imageUrls + uploadResult.data.imageUrl
-                                                        // preview already added above
-                                                    }
-
-                                                    is NetworkResult.Failure -> {
-                                                        // remove failed preview
+                                                try {
+                                                    val imageBytes =
+                                                        withContext(Dispatchers.Default) { PlatformMediaFileReader.readBytes(uri) }
+                                                    if (imageBytes == null) {
                                                         imagePreviewUrls = imagePreviewUrls.filter { it != uri }
-                                                        submitError = uploadResult.error.userMessage()
+                                                        submitError = "Could not read the selected image. Please try again."
+                                                        return@launch
                                                     }
+
+                                                    val uploadResult =
+                                                        state.sellerContent.uploadImage(
+                                                            data = imageBytes,
+                                                            fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
+                                                            bearerToken = token,
+                                                            mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
+                                                        )
+
+                                                    when (uploadResult) {
+                                                        is NetworkResult.Success -> {
+                                                            imageUrls = imageUrls + uploadResult.data.imageUrl
+                                                        }
+
+                                                        is NetworkResult.Failure -> {
+                                                            imagePreviewUrls = imagePreviewUrls.filter { it != uri }
+                                                            submitError = uploadResult.error.userMessage()
+                                                        }
+                                                    }
+                                                } finally {
+                                                    isUploadingImage = false
                                                 }
                                             }
                                         }

@@ -2,8 +2,10 @@ package com.notwhat.shared.ui
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithText
 import com.notwhat.app.HostComposeTestActivity
 import com.notwhat.shared.bargain.BargainScheduleDto
 import com.notwhat.shared.bargain.BuyerBidDto
@@ -83,6 +85,39 @@ class BargainProductsScreenUiTest {
         }
 
         composeRule.onAllNodesWithTag("bargain_timer_product-timer", useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun soldOutBargainProduct_isHiddenFromBuyerList() {
+        val state = NotWhatAppState()
+        val soldOutProduct = sampleBargainProduct(id = "product-sold").copy(stock = 0, status = "sold_out")
+        val schedule =
+            BargainScheduleDto(
+                id = "schedule-sold",
+                productId = soldOutProduct.id,
+                sellerId = "seller-1",
+                startDate = "2026-08-08T09:00:00Z",
+                endDate = "2026-08-08T11:00:00Z",
+                reservePrice = 0.0,
+                status = "active",
+            )
+
+        state.content.products = listOf(soldOutProduct)
+
+        composeRule.setContent {
+            BargainProductsScreen(
+                modifier = Modifier,
+                state = state,
+                onOpenProduct = {},
+                onOpenCart = {},
+                previewActiveSchedules = listOf(schedule),
+                previewMyBids = emptyList(),
+                debugNowMs = 1_754_651_200_000L,
+            )
+        }
+
+        composeRule.onNodeWithText("Sample Saree").assertDoesNotExist()
+        composeRule.onAllNodesWithTag("bargain_timer_product-sold", useUnmergedTree = true).assertCountEquals(0)
     }
 }
 

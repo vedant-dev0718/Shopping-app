@@ -402,32 +402,13 @@ internal fun ReelDetailScreen(
                                 Text(item.displayPrice, color = accent, fontWeight = FontWeight.Bold)
                                 Text(item.category, color = muted, style = MaterialTheme.typography.labelSmall)
                             }
-                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Surface(
-                                    color = if (item.isSaved) accent.copy(alpha = 0.2f) else bg,
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.clickable { toggleSavedProduct(item) },
-                                ) {
-                                    Text(
-                                        if (item.isSaved) "Saved" else "Save",
-                                        color = if (item.isSaved) accent else muted,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        style = MaterialTheme.typography.labelMedium,
-                                    )
-                                }
-                                Surface(
-                                    color = accent,
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.clickable { openTrackedProduct(item) },
-                                ) {
-                                    Text(
-                                        "View",
-                                        color = Color.White,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        style = MaterialTheme.typography.labelMedium,
-                                    )
-                                }
-                            }
+                            Text(
+                                "→",
+                                color = accent,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
                         }
                     }
                 }

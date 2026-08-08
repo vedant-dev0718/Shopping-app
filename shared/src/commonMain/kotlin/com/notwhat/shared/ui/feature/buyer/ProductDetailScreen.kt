@@ -488,7 +488,7 @@ internal fun ProductDetailScreen(
                         surfaceColor = detailSurface,
                         chipColor = detailSurfaceHigh,
                     )
-                } else {
+                } else if (resolvedProduct.bargainEnabled) {
                     MakeOfferCard(
                         modifier = Modifier.fillMaxWidth().testTag("product_offer_card"),
                         title = bargainCardTitle,

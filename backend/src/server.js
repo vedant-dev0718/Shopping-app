@@ -42,6 +42,11 @@ const startServer = async () => {
     console.log(`NotWhat API listening on port ${env.port}`);
   });
 
+  // Prevent Node from closing keepalive connections while a multipart upload is
+  // in flight. iOS Darwin reuses TCP connections; the 5 s default triggers -1005.
+  httpServer.keepAliveTimeout = 65_000;
+  httpServer.headersTimeout = 70_000;
+
   httpServer.on('error', (error) => {
     if (error.code === 'EADDRINUSE') {
       console.error(`Port ${env.port} is already in use. Stop the other backend instance and retry.`);
