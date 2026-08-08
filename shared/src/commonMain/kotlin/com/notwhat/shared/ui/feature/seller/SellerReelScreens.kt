@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -559,20 +560,42 @@ internal fun ReelProductTagSheet(
                 .fillMaxSize()
                 .background(bg),
     ) {
-        // Header
         Surface(color = surface, modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                TextButton(onClick = onDismiss) {
-                    Text("Cancel", color = muted, fontWeight = FontWeight.SemiBold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel", color = muted, fontWeight = FontWeight.SemiBold)
+                    }
+                    Button(
+                        onClick = {
+                            val picked = allProducts.filter { selectedIds.contains(it.id) }
+                            onSave(picked)
+                        },
+                        shape = SellerUiTokens.radiusButton,
+                        colors = ButtonDefaults.buttonColors(containerColor = accent),
+                        enabled = selectedIds.size in 1..3,
+                    ) {
+                        Text(
+                            "Save ${selectedIds.size}/3",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
                     Text(
                         "TAG PRODUCTS",
                         color = text,
@@ -582,66 +605,53 @@ internal fun ReelProductTagSheet(
                     Text(
                         reel.title.ifBlank { reel.caption }.ifBlank { "Reel" },
                         color = muted,
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Button(
-                    onClick = {
-                        val picked = allProducts.filter { selectedIds.contains(it.id) }
-                        onSave(picked)
-                    },
-                    shape = SellerUiTokens.radiusButton,
-                    colors = ButtonDefaults.buttonColors(containerColor = accent),
-                    enabled = selectedIds.size in 1..3,
+
+                Surface(
+                    color = surfaceHigh,
+                    shape = SellerUiTokens.radiusInnerCard,
+                    border = BorderStroke(1.dp, border.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        "Save (${selectedIds.size}/3)",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.labelMedium,
+                        "Select 1 to 3 products. Tagged products appear in the buyer feed when this reel is shared.",
+                        color = muted,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                     )
                 }
             }
         }
 
-        HorizontalDivider(color = border.copy(alpha = 0.4f))
-
-        // Max-count helper
-        Surface(
-            color = Color(0xFF1A1A0A),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                "Select 1 to 3 products. Selected products will appear in the buyer feed when this reel is shared.",
-                color = muted,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            )
-        }
+        HorizontalDivider(color = border.copy(alpha = 0.35f))
 
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(allProducts, key = { it.id }) { product ->
                 val isSelected = selectedIds.contains(product.id)
                 val atLimit = selectedIds.size >= 3 && !isSelected
+                val isOutOfStock = product.stock == 0
+                val isDisabled = atLimit
 
                 Surface(
-                    color = if (isSelected) Color(0xFF2C1F0A) else surface,
+                    color = if (isSelected) accent.copy(alpha = 0.1f) else surface,
                     shape = SellerUiTokens.radiusInnerCard,
                     border =
                         BorderStroke(
                             1.dp,
-                            if (isSelected) accent else border.copy(alpha = 0.5f),
+                            if (isSelected) accent else border.copy(alpha = 0.45f),
                         ),
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = !atLimit) {
+                            .clickable(enabled = !isDisabled) {
                                 if (isSelected) {
                                     selectedIds.remove(product.id)
                                 } else {
@@ -653,7 +663,7 @@ internal fun ReelProductTagSheet(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(horizontal = 12.dp, vertical = 11.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -662,43 +672,51 @@ internal fun ReelProductTagSheet(
                             contentDescription = product.displayTitle,
                             modifier =
                                 Modifier
-                                    .size(52.dp)
-                                    .clip(RoundedCornerShape(10.dp)),
+                                    .size(60.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
                             contentScale = ContentScale.Crop,
                         )
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             Text(
                                 product.displayTitle,
-                                color = if (atLimit) muted.copy(alpha = 0.5f) else text,
-                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isDisabled) muted.copy(alpha = 0.5f) else text,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
                                     product.displayPrice,
-                                    color = if (atLimit) accent.copy(alpha = 0.4f) else accent,
-                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isDisabled) accent.copy(alpha = 0.45f) else accent,
+                                    style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                 )
                                 Text(
                                     product.category,
-                                    color = muted.copy(alpha = if (atLimit) 0.4f else 1f),
+                                    color = muted.copy(alpha = if (isDisabled) 0.45f else 1f),
                                     style = MaterialTheme.typography.labelSmall,
                                 )
                                 Text(
-                                    if (product.stock == 0) "Out of stock" else "${product.stock} in stock",
-                                    color = if (product.stock == 0) Color(0xFFE53935) else muted.copy(alpha = if (atLimit) 0.4f else 0.8f),
+                                    if (isOutOfStock) "Out of stock" else "${product.stock} in stock",
+                                    color = if (isOutOfStock) Color(0xFFE53935) else muted.copy(alpha = if (isDisabled) 0.45f else 0.85f),
                                     style = MaterialTheme.typography.labelSmall,
                                 )
                             }
                         }
-                        // Checkbox indicator
+
+                        val indicatorColor =
+                            when {
+                                isSelected -> accent
+                                isDisabled -> muted.copy(alpha = 0.25f)
+                                else -> border.copy(alpha = 0.8f)
+                            }
+
                         Surface(
-                            color = if (isSelected) accent else surfaceHigh,
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.size(24.dp),
+                            color = if (isSelected) accent else Color.Transparent,
+                            shape = CircleShape,
+                            border = BorderStroke(1.5.dp, indicatorColor),
+                            modifier = Modifier.size(28.dp),
                         ) {
                             if (isSelected) {
                                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {

@@ -37,6 +37,8 @@
 	<string>public.app-category.shopping</string>
 	<key>APP_ROLE</key>
 	<string>$(APP_ROLE)</string>
+	<key>NOTWHAT_API_BASE_URL</key>
+	<string>$(API_BASE_URL)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>

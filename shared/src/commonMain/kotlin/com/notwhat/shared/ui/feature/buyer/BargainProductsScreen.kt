@@ -43,10 +43,10 @@ import com.notwhat.shared.bargain.BuyerBidDto
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.session.UserRole
-import com.notwhat.shared.util.getCurrentTimeMillis
 import kotlin.math.absoluteValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 @Composable
@@ -72,14 +72,14 @@ internal fun BargainProductsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var loadError by remember { mutableStateOf<String?>(null) }
     var paymentActionNote by remember { mutableStateOf<String?>(null) }
-    var nowMs by remember { mutableLongStateOf(debugNowMs ?: getCurrentTimeMillis()) }
+    var nowMs by remember { mutableLongStateOf(debugNowMs ?: Clock.System.now().toEpochMilliseconds()) }
 
     LaunchedEffect(debugNowMs) {
         if (debugNowMs != null) {
             nowMs = debugNowMs
         } else {
             while (true) {
-                nowMs = getCurrentTimeMillis()
+                nowMs = Clock.System.now().toEpochMilliseconds()
                 delay(1000)
             }
         }
@@ -141,8 +141,7 @@ internal fun BargainProductsScreen(
     val bargainProducts =
         state.content.products
             .filter { product ->
-                product.bargainEnabled &&
-                    product.status.equals("active", ignoreCase = true) &&
+                product.status.equals("active", ignoreCase = true) &&
                     product.stock > 0 &&
                     scheduleByProductId.containsKey(product.id)
             }

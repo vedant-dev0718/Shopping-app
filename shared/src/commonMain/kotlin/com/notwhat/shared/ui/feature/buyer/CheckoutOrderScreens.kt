@@ -59,6 +59,7 @@ internal fun CheckoutConfirmationScreen(
     state: NotWhatAppState,
     draft: CheckoutDraft,
     onBack: () -> Unit,
+    onChangeAddress: () -> Unit,
     onPlaceOrder: (CheckoutOrderSummary) -> Unit,
 ) {
     val bg = NotWhatColors.background
@@ -92,7 +93,16 @@ internal fun CheckoutConfirmationScreen(
             item {
                 Surface(color = surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Deliver To", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text("Deliver To", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            TextButton(onClick = onChangeAddress) {
+                                Text("Change", color = accent, style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
                         Text(draft.shippingAddress, color = muted)
                     }
                 }
@@ -947,4 +957,111 @@ private fun CheckoutImage(
         modifier = modifier.clip(shape),
         contentScale = ContentScale.Crop,
     )
+}
+
+@Composable
+internal fun CheckoutAddressSelectorScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    draft: CheckoutDraft,
+    onBack: () -> Unit,
+    onAddressSelected: (CheckoutDraft) -> Unit,
+) {
+    val bg = NotWhatColors.background
+    val surface = NotWhatColors.surface
+    val surfaceHigh = NotWhatColors.surfaceContainerHigh
+    val text = NotWhatColors.onSurface
+    val muted = NotWhatColors.onSurfaceVariant
+    val accent = NotWhatAuthTokens.accent
+
+    val addresses = state.transaction.addresses
+    val currentAddressId =
+        draft.selectedAddressId
+            ?: state.transaction.selectedDeliveryAddressId
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onBack) { Text("Back", color = accent) }
+                Text(
+                    "Delivery Address",
+                    color = text,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                )
+                Spacer(modifier = Modifier.width(56.dp))
+            }
+        }
+
+        if (addresses.isEmpty()) {
+            item {
+                Surface(color = surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "No saved addresses. Add one from your profile.",
+                        color = muted,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
+        } else {
+            items(addresses) { address ->
+                val isSelected =
+                    address.id == currentAddressId ||
+                        (currentAddressId == null && address.isDefault)
+                Surface(
+                    color = if (isSelected) accent.copy(alpha = 0.12f) else surfaceHigh,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                state.transaction.selectDeliveryAddress(address.id)
+                                val newAddress = "${address.addressLine1}, ${address.city}, ${address.state} ${address.pincode}"
+                                onAddressSelected(
+                                    draft.copy(
+                                        shippingAddress = newAddress,
+                                        selectedAddressId = address.id,
+                                    ),
+                                )
+                            },
+                ) {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(address.fullName, color = text, fontWeight = FontWeight.SemiBold)
+                            Text(address.phone, color = muted, style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                buildString {
+                                    append(address.addressLine1)
+                                    address.addressLine2?.takeIf { it.isNotBlank() }?.let { append(", $it") }
+                                    append(", ${address.city}, ${address.state} ${address.pincode}")
+                                },
+                                color = muted,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                        if (isSelected) {
+                            Surface(color = accent, shape = RoundedCornerShape(50.dp)) {
+                                Text("✓", color = Color.White, modifier = Modifier.padding(6.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

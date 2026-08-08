@@ -16,11 +16,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,6 +43,7 @@ import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.StoreDto
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BargainsScreen(
     modifier: Modifier,
@@ -50,14 +54,24 @@ internal fun BargainsScreen(
     val bg = NotWhatColors.background
     val accent = NotWhatAuthTokens.accent
     val activeReels = state.content.reels
-    val scope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
+    val pullState = rememberPullToRefreshState()
+    if (pullState.isRefreshing) {
+        LaunchedEffect(Unit) {
+            isRefreshing = true
+            state.content.load(state.currentSession?.authToken)
+            isRefreshing = false
+            pullState.endRefresh()
+        }
+    }
 
     fun findStore(reel: com.notwhat.shared.catalog.ReelDto): StoreDto? =
         state.content.stores.firstOrNull { it.id == reel.storeId?.id }
             ?: state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
 
-    Box(modifier = modifier.fillMaxSize().background(bg)) {
+    Box(
+        modifier = modifier.fillMaxSize().background(bg).nestedScroll(pullState.nestedScrollConnection),
+    ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().background(bg),
             contentPadding = PaddingValues(0.dp),
@@ -172,40 +186,12 @@ internal fun BargainsScreen(
                     }
                 }
             }
-
-            // Refresh button at the bottom of the list
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(color = accent, strokeWidth = 2.dp)
-                    } else {
-                        Surface(
-                            color = accent.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(20.dp),
-                            modifier =
-                                Modifier.clickable {
-                                    scope.launch {
-                                        isRefreshing = true
-                                        state.content.load(state.currentSession?.authToken)
-                                        isRefreshing = false
-                                    }
-                                },
-                        ) {
-                            Text(
-                                "↻  Refresh",
-                                color = accent,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                            )
-                        }
-                    }
-                }
-            }
         }
-    } // end Box
+        PullToRefreshContainer(
+            state = pullState,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+    }
 }
 
 @Composable

@@ -139,6 +139,18 @@ internal fun AppContentRouter(
         return
     }
 
+    if (flow.route is AppRoute.AddressSelectorRoute) {
+        val route = flow.route as AppRoute.AddressSelectorRoute
+        CheckoutAddressSelectorScreen(
+            modifier = Modifier.padding(padding),
+            state = state,
+            draft = route.draft,
+            onBack = { flow.onEvent(AppNavEvent.AddressSelected(route.draft)) },
+            onAddressSelected = { updatedDraft -> flow.onEvent(AppNavEvent.AddressSelected(updatedDraft)) },
+        )
+        return
+    }
+
     if (flow.route is AppRoute.CheckoutDraftRoute) {
         val route = flow.route as AppRoute.CheckoutDraftRoute
         CheckoutConfirmationScreen(
@@ -146,6 +158,7 @@ internal fun AppContentRouter(
             state = state,
             draft = route.draft,
             onBack = { flow.onEvent(AppNavEvent.OpenCart) },
+            onChangeAddress = { flow.onEvent(AppNavEvent.OpenAddressSelector(route.draft)) },
             onPlaceOrder = { summary -> flow.onEvent(AppNavEvent.PlaceOrder(summary)) },
         )
         return

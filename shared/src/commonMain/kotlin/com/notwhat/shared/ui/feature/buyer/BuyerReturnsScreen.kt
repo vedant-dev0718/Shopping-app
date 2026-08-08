@@ -17,12 +17,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.core.NetworkResult
@@ -46,6 +50,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuyerReturnsContentScreen(
     modifier: Modifier,
@@ -74,6 +79,22 @@ fun BuyerReturnsContentScreen(
 
     val eligibleOrders = state.transaction.orders.filter { it.status.lowercase() in setOf("delivered", "completed") }
     val selectedReturn = state.buyerReturns.firstOrNull { it.id == selectedReturnId } ?: state.buyerReturns.firstOrNull()
+    val pullState = rememberPullToRefreshState()
+    if (pullState.isRefreshing) {
+        LaunchedEffect(Unit) {
+            val result = state.loadBuyerReturns()
+            if (result is NetworkResult.Success) {
+                emitStatusDiffs(
+                    items = result.data,
+                    previousStatusByReturnId = previousStatusByReturnId,
+                    previousRawStatusByReturnId = previousRawStatusByReturnId,
+                    analytics = analytics,
+                    analyticsContext = analyticsContext,
+                )
+            }
+            pullState.endRefresh()
+        }
+    }
 
     LaunchedEffect(state.currentSession?.authToken) {
         analytics.returnsScreenViewed(analyticsContext)
@@ -99,303 +120,296 @@ fun BuyerReturnsContentScreen(
         }
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize().background(bg),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+    Box(
+        modifier = modifier.fillMaxSize().background(bg).nestedScroll(pullState.nestedScrollConnection),
     ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(onClick = onBack) { Text("Back", color = accent) }
-                Text("My Returns", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                Text("${state.buyerReturns.size}", color = muted, style = MaterialTheme.typography.labelSmall)
-            }
-        }
-
-        localError?.let { message ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().background(bg),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
             item {
-                Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(message, color = text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                        Text(
-                            "Retry",
-                            color = accent,
-                            fontWeight = FontWeight.Bold,
-                            modifier =
-                                Modifier.clickable {
-                                    analytics.returnsActionRetryTapped(
-                                        context = analyticsContext,
-                                        orderId = selectedOrderId,
-                                        returnId = selectedReturnId,
-                                        errorCode = "RETRY_TAPPED",
-                                    )
-                                    scope.launch { state.loadBuyerReturns() }
-                                },
-                        )
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onBack) { Text("Back", color = accent) }
+                    Text("My Returns", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text("${state.buyerReturns.size}", color = muted, style = MaterialTheme.typography.labelSmall)
                 }
             }
-        }
 
-        if (!ordersErrorMessage.isNullOrBlank()) {
-            item {
-                Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Orders unavailable", color = text, fontWeight = FontWeight.Bold)
-                        Text(ordersErrorMessage, color = muted, style = MaterialTheme.typography.bodySmall)
-                        TextButton(
-                            onClick = {
-                                val token = state.currentSession?.authToken ?: return@TextButton
-                                scope.launch { state.transaction.loadOrders(token) }
-                            },
+            localError?.let { message ->
+                item {
+                    Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("Retry orders fetch", color = accent)
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Request Return", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Select an eligible delivered order and submit your reason.", color = muted)
-
-                    if (eligibleOrders.isEmpty()) {
-                        Text("No delivered orders are currently eligible for return.", color = muted)
-                    } else {
-                        eligibleOrders.forEach { order ->
-                            EligibleOrderTile(
-                                order = order,
-                                selected = selectedOrderId == order.id,
-                                accent = accent,
-                                text = text,
-                                muted = muted,
-                                onSelect = {
-                                    selectedOrderId = order.id
-                                    analytics.returnsRequestStarted(analyticsContext, orderId = order.id)
-                                },
+                            Text(message, color = text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                            Text(
+                                "Retry",
+                                color = accent,
+                                fontWeight = FontWeight.Bold,
+                                modifier =
+                                    Modifier.clickable {
+                                        analytics.returnsActionRetryTapped(
+                                            context = analyticsContext,
+                                            orderId = selectedOrderId,
+                                            returnId = selectedReturnId,
+                                            errorCode = "RETRY_TAPPED",
+                                        )
+                                        scope.launch { state.loadBuyerReturns() }
+                                    },
                             )
                         }
                     }
+                }
+            }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        ReturnReason.values().forEach { reason ->
-                            val active = selectedReason == reason
-                            Surface(
-                                modifier = Modifier.clickable { selectedReason = reason },
-                                color = if (active) accent.copy(alpha = 0.2f) else surfaceHigh,
-                                shape = RoundedCornerShape(10.dp),
+            if (!ordersErrorMessage.isNullOrBlank()) {
+                item {
+                    Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Orders unavailable", color = text, fontWeight = FontWeight.Bold)
+                            Text(ordersErrorMessage, color = muted, style = MaterialTheme.typography.bodySmall)
+                            TextButton(
+                                onClick = {
+                                    val token = state.currentSession?.authToken ?: return@TextButton
+                                    scope.launch { state.transaction.loadOrders(token) }
+                                },
                             ) {
-                                Text(
-                                    text = reason.name.replace('_', ' '),
-                                    color = if (active) accent else text,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
+                                Text("Retry orders fetch", color = accent)
                             }
                         }
                     }
-
-                    OutlinedTextField(
-                        value = returnNote,
-                        onValueChange = { returnNote = it },
-                        label = { Text("Optional notes") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-
-                    Button(
-                        onClick = {
-                            val orderId = selectedOrderId
-                            if (orderId == null) {
-                                localError = "Select a delivered order before requesting a return."
-                                return@Button
-                            }
-                            scope.launch {
-                                val result = state.submitBuyerReturnRequest(orderId, selectedReason, returnNote)
-                                when (result) {
-                                    is NetworkResult.Success -> {
-                                        val created = state.buyerReturns.firstOrNull { it.orderId == orderId }
-                                        selectedReturnId = created?.id
-                                        localError = null
-                                        analytics.returnsRequestSubmitted(
-                                            context = analyticsContext,
-                                            orderId = orderId,
-                                            returnId = created?.id,
-                                            returnReason = selectedReason.name,
-                                            paymentMethod = "unknown",
-                                            latencyMs = null,
-                                        )
-                                    }
-
-                                    is NetworkResult.Failure -> {
-                                        localError = result.error.userMessage()
-                                        analytics.returnsRequestFailed(
-                                            context = analyticsContext,
-                                            orderId = orderId,
-                                            returnReason = selectedReason.name,
-                                            errorCode = "REQUEST_FAILED",
-                                            errorMessage = result.error.userMessage(),
-                                        )
-                                    }
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = accent),
-                    ) {
-                        Text("SUBMIT RETURN REQUEST", color = Color.White, fontWeight = FontWeight.Black)
-                    }
                 }
             }
-        }
 
-        item {
-            Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("Return Timeline", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            item {
+                Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Request Return", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Select an eligible delivered order and submit your reason.", color = muted)
+
+                        if (eligibleOrders.isEmpty()) {
+                            Text("No delivered orders are currently eligible for return.", color = muted)
+                        } else {
+                            eligibleOrders.forEach { order ->
+                                EligibleOrderTile(
+                                    order = order,
+                                    selected = selectedOrderId == order.id,
+                                    accent = accent,
+                                    text = text,
+                                    muted = muted,
+                                    onSelect = {
+                                        selectedOrderId = order.id
+                                        analytics.returnsRequestStarted(analyticsContext, orderId = order.id)
+                                    },
+                                )
+                            }
+                        }
+
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(
-                                onClick = {
-                                    scope.launch {
-                                        val result = state.loadBuyerReturns()
-                                        if (result is NetworkResult.Success) {
-                                            emitStatusDiffs(
-                                                items = result.data,
-                                                previousStatusByReturnId = previousStatusByReturnId,
-                                                previousRawStatusByReturnId = previousRawStatusByReturnId,
-                                                analytics = analytics,
-                                                analyticsContext = analyticsContext,
+                            ReturnReason.values().forEach { reason ->
+                                val active = selectedReason == reason
+                                Surface(
+                                    modifier = Modifier.clickable { selectedReason = reason },
+                                    color = if (active) accent.copy(alpha = 0.2f) else surfaceHigh,
+                                    shape = RoundedCornerShape(10.dp),
+                                ) {
+                                    Text(
+                                        text = reason.name.replace('_', ' '),
+                                        color = if (active) accent else text,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = returnNote,
+                            onValueChange = { returnNote = it },
+                            label = { Text("Optional notes") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        Button(
+                            onClick = {
+                                val orderId = selectedOrderId
+                                if (orderId == null) {
+                                    localError = "Select a delivered order before requesting a return."
+                                    return@Button
+                                }
+                                scope.launch {
+                                    val result = state.submitBuyerReturnRequest(orderId, selectedReason, returnNote)
+                                    when (result) {
+                                        is NetworkResult.Success -> {
+                                            val created = state.buyerReturns.firstOrNull { it.orderId == orderId }
+                                            selectedReturnId = created?.id
+                                            localError = null
+                                            analytics.returnsRequestSubmitted(
+                                                context = analyticsContext,
+                                                orderId = orderId,
+                                                returnId = created?.id,
+                                                returnReason = selectedReason.name,
+                                                paymentMethod = "unknown",
+                                                latencyMs = null,
+                                            )
+                                        }
+
+                                        is NetworkResult.Failure -> {
+                                            localError = result.error.userMessage()
+                                            analytics.returnsRequestFailed(
+                                                context = analyticsContext,
+                                                orderId = orderId,
+                                                returnReason = selectedReason.name,
+                                                errorCode = "REQUEST_FAILED",
+                                                errorMessage = result.error.userMessage(),
                                             )
                                         }
                                     }
-                                },
-                            ) {
-                                Text("Refresh", color = accent)
-                            }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = accent),
+                        ) {
+                            Text("SUBMIT RETURN REQUEST", color = Color.White, fontWeight = FontWeight.Black)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "Return Timeline",
+                                color = text,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
                             if (state.isBuyerReturnsLoading) {
                                 CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.height(18.dp), color = accent)
                             }
                         }
-                    }
 
-                    if (state.buyerReturns.isEmpty()) {
-                        Text(state.buyerReturnsErrorMessage ?: "No return requests yet.", color = muted)
+                        if (state.buyerReturns.isEmpty()) {
+                            Text(state.buyerReturnsErrorMessage ?: "No return requests yet.", color = muted)
+                        }
                     }
                 }
             }
-        }
 
-        items(state.buyerReturns) { request ->
-            val canonical = request.canonicalStatus
-            val statusTone = canonical.badgeColor()
-            val isSelected = selectedReturn?.id == request.id
+            items(state.buyerReturns) { request ->
+                val canonical = request.canonicalStatus
+                val statusTone = canonical.badgeColor()
+                val isSelected = selectedReturn?.id == request.id
 
-            Surface(
-                modifier =
-                    Modifier.fillMaxWidth().clickable {
-                        selectedReturnId = request.id
-                        analytics.returnsTimelineViewed(
-                            context = analyticsContext,
-                            orderId = request.orderId,
-                            returnId = request.id,
-                            statusTo = canonical.name,
-                        )
-                    },
-                color = surface,
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("Order ${request.orderId}", color = text, fontWeight = FontWeight.Bold)
-                        Surface(color = statusTone.copy(alpha = 0.18f), shape = RoundedCornerShape(8.dp)) {
-                            Text(
-                                canonical.readableLabel(),
-                                color = statusTone,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
+                Surface(
+                    modifier =
+                        Modifier.fillMaxWidth().clickable {
+                            selectedReturnId = request.id
+                            analytics.returnsTimelineViewed(
+                                context = analyticsContext,
+                                orderId = request.orderId,
+                                returnId = request.id,
+                                statusTo = canonical.name,
                             )
-                        }
-                    }
-
-                    Text("Reason: ${request.reason.replace('_', ' ')}", color = muted, style = MaterialTheme.typography.bodySmall)
-
-                    if (isSelected) {
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        Surface(
-                            color = surfaceHigh,
-                            shape = RoundedCornerShape(10.dp),
+                        },
+                    color = surface,
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                request.canonicalStatus.buyerStatusMessage(),
-                                color = text,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                            )
-                        }
-                        ReturnTimelineBlock(currentStatus = canonical, text = text, muted = muted, accent = accent)
-
-                        if (canonical == ReturnCanonicalStatus.rejected && !request.rejectionReason.isNullOrBlank()) {
-                            Surface(color = surfaceHigh, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text("Seller rejection reason", color = text, fontWeight = FontWeight.Bold)
-                                    Text(request.rejectionReason, color = muted, style = MaterialTheme.typography.bodySmall)
-                                    TextButton(
-                                        onClick = {
-                                            analytics.returnsRejectionReasonViewed(
-                                                context = analyticsContext,
-                                                orderId = request.orderId,
-                                                returnId = request.id,
-                                                sellerDecisionReason = request.rejectionReason,
-                                            )
-                                        },
-                                    ) {
-                                        Text("Viewed", color = accent)
-                                    }
-                                }
+                            Text("Order ${request.orderId}", color = text, fontWeight = FontWeight.Bold)
+                            Surface(color = statusTone.copy(alpha = 0.18f), shape = RoundedCornerShape(8.dp)) {
+                                Text(
+                                    canonical.readableLabel(),
+                                    color = statusTone,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                )
                             }
+                        }
 
-                            Button(
-                                onClick = {
-                                    analytics.returnsEscalationCtaTapped(
-                                        context = analyticsContext,
-                                        orderId = request.orderId,
-                                        returnId = request.id,
-                                        statusTo = canonical.name,
-                                    )
-                                },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = surfaceHigh),
+                        Text("Reason: ${request.reason.replace('_', ' ')}", color = muted, style = MaterialTheme.typography.bodySmall)
+
+                        if (isSelected) {
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                            Surface(
+                                color = surfaceHigh,
+                                shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
-                                Text("ESCALATE TO SUPPORT", color = text, fontWeight = FontWeight.Bold)
+                                Text(
+                                    request.canonicalStatus.buyerStatusMessage(),
+                                    color = text,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                )
+                            }
+                            ReturnTimelineBlock(currentStatus = canonical, text = text, muted = muted, accent = accent)
+
+                            if (canonical == ReturnCanonicalStatus.rejected && !request.rejectionReason.isNullOrBlank()) {
+                                Surface(color = surfaceHigh, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text("Seller rejection reason", color = text, fontWeight = FontWeight.Bold)
+                                        Text(request.rejectionReason, color = muted, style = MaterialTheme.typography.bodySmall)
+                                        TextButton(
+                                            onClick = {
+                                                analytics.returnsRejectionReasonViewed(
+                                                    context = analyticsContext,
+                                                    orderId = request.orderId,
+                                                    returnId = request.id,
+                                                    sellerDecisionReason = request.rejectionReason,
+                                                )
+                                            },
+                                        ) {
+                                            Text("Viewed", color = accent)
+                                        }
+                                    }
+                                }
+
+                                Button(
+                                    onClick = {
+                                        analytics.returnsEscalationCtaTapped(
+                                            context = analyticsContext,
+                                            orderId = request.orderId,
+                                            returnId = request.id,
+                                            statusTo = canonical.name,
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = surfaceHigh),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("ESCALATE TO SUPPORT", color = text, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        PullToRefreshContainer(
+            state = pullState,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
     }
 }
 

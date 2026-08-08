@@ -39,7 +39,7 @@ const PAYMENT_STATUSES = [
 const SELLER_STATUS_UPDATES = ['confirmed', 'processing'];
 
 const orderIdValidation = [
-  param('orderId').isMongoId().withMessage('A valid order id is required')
+  param('orderId').notEmpty().withMessage('Order id is required')
 ];
 
 const listSellerOrdersValidation = [

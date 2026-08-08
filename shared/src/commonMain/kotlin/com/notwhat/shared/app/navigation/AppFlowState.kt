@@ -54,6 +54,14 @@ internal class AppFlowState {
                 route = AppRoute.CheckoutSummaryRoute(event.summary)
             }
 
+            is AppNavEvent.OpenAddressSelector -> {
+                route = AppRoute.AddressSelectorRoute(event.draft)
+            }
+
+            is AppNavEvent.AddressSelected -> {
+                route = AppRoute.CheckoutDraftRoute(event.draft)
+            }
+
             AppNavEvent.OpenProfile -> {
                 profileRoute = ProfileShellRoute.ProfileAddress
                 route = AppRoute.ProfileShellRouteEntry(profileRoute)

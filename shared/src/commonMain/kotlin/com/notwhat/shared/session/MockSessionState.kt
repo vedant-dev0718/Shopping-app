@@ -38,29 +38,38 @@ data class UserSession(
 )
 
 /** Produces a seeded [UserSession] for the given role (used in mock mode and tests). */
-fun seedSessionForRole(role: UserRole): UserSession = when (role) {
-    UserRole.Buyer -> UserSession(
-        role = role,
-        name = "Aanya",
-        headline = "Saved picks from Jaipur, Benaras, and Lucknow.",
-        email = "buyer@example.com",
-        authToken = "mock-token-buyer",
-    )
-    UserRole.Seller -> UserSession(
-        role = role,
-        name = "Jaipur Looms",
-        headline = "7 reels live, 12 products active, 4 bargain-day bids today.",
-        email = "seller@example.com",
-        authToken = "mock-token-seller",
-    )
-    UserRole.Admin -> UserSession(
-        role = role,
-        name = "Operations Desk",
-        headline = "Marketplace health, search quality, and seller readiness snapshot.",
-        email = "admin@example.com",
-        authToken = "mock-token-admin",
-    )
-}
+fun seedSessionForRole(role: UserRole): UserSession =
+    when (role) {
+        UserRole.Buyer -> {
+            UserSession(
+                role = role,
+                name = "Aanya",
+                headline = "Saved picks from Jaipur, Benaras, and Lucknow.",
+                email = "buyer@notwhat.test",
+                authToken = "mock-token-buyer",
+            )
+        }
+
+        UserRole.Seller -> {
+            UserSession(
+                role = role,
+                name = "Jaipur Looms",
+                headline = "7 reels live, 12 products active, 4 bargain-day bids today.",
+                email = "seller@notwhat.test",
+                authToken = "mock-token-seller",
+            )
+        }
+
+        UserRole.Admin -> {
+            UserSession(
+                role = role,
+                name = "Operations Desk",
+                headline = "Marketplace health, search quality, and seller readiness snapshot.",
+                email = "admin@example.com",
+                authToken = "mock-token-admin",
+            )
+        }
+    }
 
 // ---------------------------------------------------------------------------
 // Backward-compat type aliases — remove once all call sites are migrated.

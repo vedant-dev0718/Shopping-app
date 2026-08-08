@@ -13,6 +13,7 @@ import com.notwhat.shared.domain.catalog.CatalogUseCase
 import com.notwhat.shared.order.OrderDto
 import com.notwhat.shared.seller.SellerOrderRepository
 import com.notwhat.shared.seller.ShipOrderRequestDto
+import com.notwhat.shared.seller.seedSellerOrders
 
 class SellerUseCase(
     private val config: AppConfig,
@@ -58,7 +59,12 @@ class SellerUseCase(
     ): NetworkResult<ReelDto> = catalogUseCase.updateReel(id, request, bearerToken)
 
     // Orders
-    suspend fun listOrders(bearerToken: String): NetworkResult<List<OrderDto>> = sellerOrderRepository.listOrders(bearerToken)
+    suspend fun listOrders(bearerToken: String): NetworkResult<List<OrderDto>> =
+        if (config.isMock) {
+            NetworkResult.Success(seedSellerOrders())
+        } else {
+            sellerOrderRepository.listOrders(bearerToken)
+        }
 
     suspend fun acceptOrder(
         orderId: String,

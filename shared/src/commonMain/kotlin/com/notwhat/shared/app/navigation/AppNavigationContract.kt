@@ -38,6 +38,10 @@ internal sealed interface AppRoute {
         val summary: CheckoutOrderSummary,
     ) : AppRoute
 
+    data class AddressSelectorRoute(
+        val draft: CheckoutDraft,
+    ) : AppRoute
+
     data class ProfileShellRouteEntry(
         val route: ProfileShellRoute,
     ) : AppRoute
@@ -77,6 +81,14 @@ internal sealed interface AppNavEvent {
 
     data class PlaceOrder(
         val summary: CheckoutOrderSummary,
+    ) : AppNavEvent
+
+    data class OpenAddressSelector(
+        val draft: CheckoutDraft,
+    ) : AppNavEvent
+
+    data class AddressSelected(
+        val draft: CheckoutDraft,
     ) : AppNavEvent
 
     data object OpenProfile : AppNavEvent

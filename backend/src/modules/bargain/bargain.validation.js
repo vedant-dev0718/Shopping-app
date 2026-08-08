@@ -25,7 +25,7 @@ const placeBidValidation = [
   body('quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1').toInt(),
   body('shippingInfo').isObject().withMessage('Shipping info is required'),
   body('shippingInfo.name').trim().notEmpty().withMessage('Shipping name is required'),
-  body('shippingInfo.email').trim().isEmail().withMessage('A valid shipping email is required').normalizeEmail(),
+  body('shippingInfo.email').optional({ nullable: true, checkFalsy: true }).trim().isEmail().withMessage('A valid shipping email is required').normalizeEmail(),
   body('shippingInfo.phone').trim().notEmpty().withMessage('Shipping phone is required'),
   body('shippingInfo.address').trim().notEmpty().withMessage('Shipping address is required'),
   body('shippingInfo.city').trim().notEmpty().withMessage('Shipping city is required'),

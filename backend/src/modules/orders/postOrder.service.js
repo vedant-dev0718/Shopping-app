@@ -374,14 +374,12 @@ const requestOrderReturn = async (buyerId, orderId, { reason, description = '', 
 };
 
 const listReturnsForSeller = async (sellerId) => ReturnRequest.find({ sellerId })
-  .populate('orderId', 'orderNumber orderStatus returnInfo refundStatus refundInfo finalTotal createdAt')
   .populate('buyerId', 'name email')
   .sort({ createdAt: -1, requestedAt: -1 })
   .lean();
 
 const getReturnForSeller = async (sellerId, returnId) => {
   const returnRequest = await ReturnRequest.findOne({ _id: returnId, sellerId })
-    .populate('orderId', 'orderNumber orderStatus returnInfo refundStatus refundInfo finalTotal shippingInfo createdAt')
     .populate('buyerId', 'name email')
     .lean();
 

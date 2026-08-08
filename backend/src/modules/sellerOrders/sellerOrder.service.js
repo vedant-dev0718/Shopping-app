@@ -2,6 +2,7 @@ const AppError = require('../../utils/AppError');
 const env = require('../../config/env');
 const { releaseAuthorization, safeCapturePaymentOnce } = require('../../utils/razorpay');
 const Order = require('../orders/order.model');
+const mongoose = require('mongoose');
 const postOrderService = require('../orders/postOrder.service');
 const analyticsService = require('../analytics/analytics.service');
 const financeService = require('../finance/finance.service');
@@ -506,10 +507,11 @@ const getSellerOrderById = async (sellerId, orderId) => {
 };
 
 const findSellerOrderForUpdate = async (sellerId, orderId) => {
-  const order = await Order.findOne({
-    _id: orderId,
-    ...sellerOrderBaseQuery(sellerId)
-  });
+  // Accept either a MongoDB ObjectId or an orderNumber (e.g. NW-…) from the client
+  const query = mongoose.isValidObjectId(orderId)
+    ? { _id: orderId, ...sellerOrderBaseQuery(sellerId) }
+    : { orderNumber: orderId, ...sellerOrderBaseQuery(sellerId) };
+  const order = await Order.findOne(query);
 
   if (!order) {
     throw new AppError('Order not found', 404);

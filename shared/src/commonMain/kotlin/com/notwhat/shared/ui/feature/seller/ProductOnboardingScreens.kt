@@ -31,6 +31,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -113,7 +114,60 @@ internal fun ProductOnboardingScreen(
     var isLoading by remember { mutableStateOf(false) }
     var isUploadingImage by remember { mutableStateOf(false) }
     var submitError by remember { mutableStateOf<String?>(null) }
+    // URIs queued by the native picker; LaunchedEffect drives the actual upload
+    var pendingUploadUris by remember { mutableStateOf<List<String>>(emptyList()) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(pendingUploadUris) {
+        val uris = pendingUploadUris
+        if (uris.isEmpty()) return@LaunchedEffect
+        val token = state.currentSession?.authToken
+        if (token.isNullOrBlank()) {
+            submitError = "Please sign in again to upload product images."
+            pendingUploadUris = emptyList()
+            return@LaunchedEffect
+        }
+
+        isUploadingImage = true
+        submitError = null
+        val uploadedUrls = mutableListOf<String>()
+        val failedUris = mutableListOf<String>()
+
+        try {
+            for (uri in uris) {
+                val imageBytes = withContext(Dispatchers.Default) { PlatformMediaFileReader.readBytes(uri) }
+                if (imageBytes == null) {
+                    failedUris.add(uri)
+                    if (submitError == null) submitError = "Could not read one or more images."
+                    continue
+                }
+                val uploadResult =
+                    state.sellerContent.uploadImage(
+                        data = imageBytes,
+                        fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
+                        bearerToken = token,
+                        mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
+                    )
+                when (uploadResult) {
+                    is NetworkResult.Success -> {
+                        uploadedUrls.add(uploadResult.data.imageUrl)
+                    }
+
+                    is NetworkResult.Failure -> {
+                        failedUris.add(uri)
+                        if (submitError == null) submitError = uploadResult.error.userMessage()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            if (submitError == null) submitError = "Upload failed: ${e.message ?: "Unknown error"}"
+        } finally {
+            isUploadingImage = false
+            imagePreviewUrls = imagePreviewUrls.filter { it !in failedUris }
+            imageUrls = imageUrls + uploadedUrls
+            pendingUploadUris = emptyList()
+        }
+    }
 
     val stepTitles = listOf("Basic Info", "Media", "Pricing & Stock", "Review & Submit")
     val isStepValid =
@@ -241,96 +295,18 @@ internal fun ProductOnboardingScreen(
                                     return@ProductOnboardingMediaStep
                                 }
 
-                                // Use multi-image picker if available, otherwise fall back to single
+                                // Both paths just queue URIs; the LaunchedEffect above drives the actual upload
                                 if (PlatformImagePicker.isMultiAvailable()) {
                                     PlatformImagePicker.launchMulti { uris: List<String> ->
                                         if (uris.isEmpty()) return@launchMulti
-                                        // show previews immediately so user sees selection
                                         imagePreviewUrls = (imagePreviewUrls + uris).toList()
-                                        scope.launch {
-                                            isUploadingImage = true
-                                            submitError = null
-                                            val uploadedUrls = mutableListOf<String>()
-                                            val failedUris = mutableListOf<String>()
-
-                                            try {
-                                                for (uri in uris) {
-                                                    // read file bytes off the main thread to avoid freezing Compose UI
-                                                    val imageBytes =
-                                                        withContext(Dispatchers.Default) { PlatformMediaFileReader.readBytes(uri) }
-                                                    if (imageBytes == null) {
-                                                        failedUris.add(uri)
-                                                        submitError = "Could not read one or more images. Continuing with valid selections."
-                                                        continue
-                                                    }
-
-                                                    val uploadResult =
-                                                        state.sellerContent.uploadImage(
-                                                            data = imageBytes,
-                                                            fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
-                                                            bearerToken = token,
-                                                            mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
-                                                        )
-
-                                                    when (uploadResult) {
-                                                        is NetworkResult.Success -> {
-                                                            uploadedUrls.add(uploadResult.data.imageUrl)
-                                                        }
-
-                                                        is NetworkResult.Failure -> {
-                                                            failedUris.add(uri)
-                                                            if (submitError == null) submitError = uploadResult.error.userMessage()
-                                                        }
-                                                    }
-                                                }
-                                            } finally {
-                                                isUploadingImage = false
-                                                imagePreviewUrls = imagePreviewUrls.filter { it !in failedUris }
-                                                imageUrls = imageUrls + uploadedUrls
-                                            }
-                                        }
+                                        pendingUploadUris = uris
                                     }
                                 } else {
-                                    // Fallback to single image picker
                                     PlatformImagePicker.launch { uri ->
                                         if (!uri.isNullOrBlank()) {
-                                            // show preview immediately
                                             imagePreviewUrls = imagePreviewUrls + uri
-                                            scope.launch {
-                                                isUploadingImage = true
-                                                submitError = null
-
-                                                try {
-                                                    val imageBytes =
-                                                        withContext(Dispatchers.Default) { PlatformMediaFileReader.readBytes(uri) }
-                                                    if (imageBytes == null) {
-                                                        imagePreviewUrls = imagePreviewUrls.filter { it != uri }
-                                                        submitError = "Could not read the selected image. Please try again."
-                                                        return@launch
-                                                    }
-
-                                                    val uploadResult =
-                                                        state.sellerContent.uploadImage(
-                                                            data = imageBytes,
-                                                            fileName = PlatformMediaFileReader.fileName(uri, "product-image.jpg"),
-                                                            bearerToken = token,
-                                                            mimeType = PlatformMediaFileReader.guessMimeType(uri, "image/jpeg"),
-                                                        )
-
-                                                    when (uploadResult) {
-                                                        is NetworkResult.Success -> {
-                                                            imageUrls = imageUrls + uploadResult.data.imageUrl
-                                                        }
-
-                                                        is NetworkResult.Failure -> {
-                                                            imagePreviewUrls = imagePreviewUrls.filter { it != uri }
-                                                            submitError = uploadResult.error.userMessage()
-                                                        }
-                                                    }
-                                                } finally {
-                                                    isUploadingImage = false
-                                                }
-                                            }
+                                            pendingUploadUris = listOf(uri)
                                         }
                                     }
                                 }

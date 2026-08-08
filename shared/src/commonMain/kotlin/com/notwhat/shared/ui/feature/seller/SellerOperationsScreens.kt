@@ -520,8 +520,13 @@ internal fun OrderOperationsScreen(
                                     onClick = {
                                         isActing = true
                                         scope.launch {
-                                            state.sellerContent.shipOrder(order.id, "MANUAL", token ?: "")
-                                            actionNote = "Order marked as Shipped."
+                                            val shipResult = state.sellerContent.shipOrder(order.id, "MANUAL", token ?: "")
+                                            actionNote = if (shipResult is com.notwhat.shared.core.NetworkResult.Success) {
+                                                "Order marked as Shipped."
+                                            } else {
+                                                (shipResult as? com.notwhat.shared.core.NetworkResult.Failure)
+                                                    ?.error?.userMessage() ?: "Could not mark order as shipped."
+                                            }
                                             isActing = false
                                         }
                                     },
@@ -540,6 +545,10 @@ internal fun OrderOperationsScreen(
                                 }
                                 Button(
                                     onClick = {
+                                        if (order.id.isBlank()) {
+                                            actionNote = "Order data is incomplete. Please pull to refresh and try again."
+                                            return@Button
+                                        }
                                         isActing = true
                                         scope.launch {
                                             val result = state.sellerContent.markDelivered(order.id, token ?: "")

@@ -645,6 +645,9 @@ private fun SellerProfileScreen(
     val text = NotWhatColors.onSurface
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
+    val products = state.sellerContent.products
+    val orders = state.sellerContent.orders
+    val reels = state.sellerContent.reels
 
     val name = state.currentSession?.name ?: "Urban Edge"
     val email = state.currentSession?.email ?: ""
@@ -654,9 +657,6 @@ private fun SellerProfileScreen(
             .mapNotNull { it.firstOrNull()?.uppercaseChar() }
             .take(2)
             .joinToString("")
-    val products = state.sellerContent.products.size
-    val reels = state.sellerContent.reels.size
-    val orders = state.sellerContent.orders.count { it.status == "delivered" }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(bg),
@@ -675,7 +675,6 @@ private fun SellerProfileScreen(
             }
         }
 
-        // Avatar + store name + email
         item {
             Surface(color = surface, shape = SellerUiTokens.radiusCard, modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -690,7 +689,7 @@ private fun SellerProfileScreen(
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Text(
-                                initials.ifEmpty { "S" },
+                                initials.ifBlank { "S" },
                                 fontWeight = FontWeight.Black,
                                 color = accent,
                                 style = MaterialTheme.typography.headlineMedium,
@@ -705,13 +704,12 @@ private fun SellerProfileScreen(
             }
         }
 
-        // Store stats
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 listOf(
-                    "Products" to products.toString(),
-                    "Reels" to reels.toString(),
-                    "Completed" to orders.toString(),
+                    "Products" to products.size.toString(),
+                    "Reels" to reels.size.toString(),
+                    "Completed" to orders.count { it.status == "delivered" }.toString(),
                 ).forEach { (label, value) ->
                     Surface(color = surface, shape = SellerUiTokens.radiusChip, modifier = Modifier.weight(1f)) {
                         Column(
@@ -727,7 +725,6 @@ private fun SellerProfileScreen(
             }
         }
 
-        // Options
         item {
             Surface(color = surface, shape = SellerUiTokens.radiusCard, modifier = Modifier.fillMaxWidth()) {
                 Column {
@@ -742,7 +739,6 @@ private fun SellerProfileScreen(
             }
         }
 
-        // Sign Out
         item {
             Surface(
                 modifier = Modifier.fillMaxWidth().clickable { onSignOut() },
@@ -1002,9 +998,9 @@ internal fun SellerBargainCreateScreen(
                             isSubmitting = true
                             submitError = null
                             // Compute ISO-8601 timestamps
-                            val nowMs = Clock.System.now().toEpochMilliseconds()
-                            val endMs = nowMs + (durationH * 3_600_000)
-                            val startDate = toIso8601(nowMs)
+                            val currentNowMs = Clock.System.now().toEpochMilliseconds()
+                            val endMs = currentNowMs + (durationH * 3_600_000)
+                            val startDate = toIso8601(currentNowMs)
                             val endDate = toIso8601(endMs)
                             val errorMsg =
                                 state.sellerContent.scheduleBargain(
@@ -1066,6 +1062,7 @@ internal fun SellerBargainCreateScreen(
         }
 
         item {
+                        submitSuccess = false
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -1134,7 +1131,11 @@ internal fun SellerBargainCreateScreen(
                 Surface(
                     color = if (selected) accent.copy(alpha = 0.15f) else surface,
                     shape = SellerUiTokens.radiusInnerCard,
-                    modifier = Modifier.fillMaxWidth().clickable { selectedProductId = product.id },
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        selectedProductId = product.id
+                        submitSuccess = false
+                        submitError = null
+                    },
                 ) {
                     Row(
                         modifier = Modifier.padding(14.dp),

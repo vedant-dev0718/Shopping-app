@@ -505,7 +505,7 @@ const inventoryReservationSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'confirmed', 'released', 'expired'],
+    enum: ['active', 'confirmed', 'released', 'expired', 'consumed'],
     default: 'active',
     index: true
   }

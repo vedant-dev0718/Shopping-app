@@ -78,6 +78,14 @@ data class DeliveryAddressSnapshotDto(
     val country: String = "India",
 )
 
+@Serializable
+data class ReturnInfoSnapshotDto(
+    val returnStatus: String = "none",
+    val returnReason: String? = null,
+    val returnDescription: String? = null,
+    val rejectionReason: String? = null,
+)
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class OrderDto(
@@ -95,6 +103,7 @@ data class OrderDto(
     val paymentMethod: String? = null,
     val razorpayOrderId: String? = null,
     @JsonNames("deliveryAddress", "shippingAddressSnapshot") val deliveryAddress: DeliveryAddressSnapshotDto? = null,
+    val returnInfo: ReturnInfoSnapshotDto? = null,
     val cancelReason: String? = null,
     val refundAmount: Double? = null,
     val refundStatus: String? = null,

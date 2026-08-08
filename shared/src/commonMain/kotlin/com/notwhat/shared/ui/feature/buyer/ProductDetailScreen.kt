@@ -148,7 +148,7 @@ internal fun ProductDetailScreen(
     }
 
     LaunchedEffect(isSellerView, resolvedProduct.id, state.currentSession?.authToken) {
-        if (isSellerView || !resolvedProduct.bargainEnabled) {
+        if (isSellerView) {
             buyerBids = emptyList()
             buyerBidError = null
             isBuyerBidsLoading = false
@@ -179,12 +179,7 @@ internal fun ProductDetailScreen(
         isBuyerBidsLoading = false
     }
 
-    LaunchedEffect(resolvedProduct.id, resolvedProduct.bargainEnabled) {
-        if (!resolvedProduct.bargainEnabled) {
-            hasActiveBargainSchedule = null
-            return@LaunchedEffect
-        }
-
+    LaunchedEffect(resolvedProduct.id) {
         when (val result = state.bargainUseCase.getActiveBargains()) {
             is NetworkResult.Success -> {
                 hasActiveBargainSchedule = result.data.any { it.productId == resolvedProduct.id }
@@ -196,6 +191,8 @@ internal fun ProductDetailScreen(
         }
     }
 
+    val hasBargainContext = resolvedProduct.bargainEnabled || hasActiveBargainSchedule == true
+
     val acceptedBidForProduct =
         buyerBids.firstOrNull {
             it.productId == resolvedProduct.id && it.canProceedToPayment
@@ -204,19 +201,19 @@ internal fun ProductDetailScreen(
         buyerBids.firstOrNull {
             it.productId == resolvedProduct.id && it.status.lowercase() in setOf("active", "pending_seller_decision")
         }
-    val requiresAcceptedBid = !isSellerView && resolvedProduct.bargainEnabled
+    val requiresAcceptedBid = !isSellerView && hasBargainContext
     val canAddToCart = !requiresAcceptedBid || acceptedBidForProduct != null
     val acceptedQuantity = acceptedBidForProduct?.quantity
     val bidsForProduct = buyerBids.filter { it.productId == resolvedProduct.id }
     val highestBuyerBidForProduct = bidsForProduct.maxByOrNull { it.amount }
     val recentBuyerBidsForProduct = bidsForProduct.sortedByDescending { it.createdAt ?: "" }.take(3)
-    val isBargainScheduleClosed = hasActiveBargainSchedule == false
+    val isBargainScheduleClosed = hasBargainContext && hasActiveBargainSchedule == false
     val bargainCardTitle =
         when {
             acceptedBidForProduct != null -> "Bid Accepted"
             pendingBidForProduct != null -> "Bid Pending"
             isBargainScheduleClosed -> "Bargain Closed"
-            resolvedProduct.bargainEnabled -> "Place a Bid"
+            hasBargainContext -> "Place a Bid"
             else -> bargainScenario.headline
         }
     val bargainCardSubtitle =
@@ -224,7 +221,7 @@ internal fun ProductDetailScreen(
             acceptedBidForProduct != null -> "Proceed to checkout during your payment window"
             pendingBidForProduct != null -> "Seller will review your bid soon"
             isBargainScheduleClosed -> "This product is not accepting new bids right now"
-            resolvedProduct.bargainEnabled -> "Submit your offer to unlock checkout"
+            hasBargainContext -> "Submit your offer to unlock checkout"
             else -> bargainScenario.subheadline
         }
     val bargainCardBadge =
@@ -232,7 +229,7 @@ internal fun ProductDetailScreen(
             acceptedBidForProduct != null -> "ACCEPTED"
             pendingBidForProduct != null -> "PENDING"
             isBargainScheduleClosed -> "CLOSED"
-            resolvedProduct.bargainEnabled -> "OPEN"
+            hasBargainContext -> "OPEN"
             else -> bargainScenario.state.label
         }
     val bargainCardStats = if (bidsForProduct.isNotEmpty()) "${bidsForProduct.size} Bids" else "No bids yet"
@@ -336,7 +333,7 @@ internal fun ProductDetailScreen(
                             Text(it, color = Color(0xFFFFC9C9), style = MaterialTheme.typography.bodySmall)
                         }
 
-                        if (!isSellerView && resolvedProduct.bargainEnabled) {
+                        if (!isSellerView && hasBargainContext) {
                             val statusMessage =
                                 when {
                                     isBuyerBidsLoading -> "Checking your bid status..."
@@ -488,7 +485,7 @@ internal fun ProductDetailScreen(
                         surfaceColor = detailSurface,
                         chipColor = detailSurfaceHigh,
                     )
-                } else if (resolvedProduct.bargainEnabled) {
+                } else if (hasBargainContext) {
                     MakeOfferCard(
                         modifier = Modifier.fillMaxWidth().testTag("product_offer_card"),
                         title = bargainCardTitle,
@@ -579,7 +576,7 @@ internal fun ProductDetailScreen(
                                     shape = RoundedCornerShape(10.dp),
                                     color = detailAccent,
                                     modifier = Modifier.size(34.dp).clickable(enabled = acceptedQuantity == null) {
-                                        val maxAllowed = acceptedQuantity ?: 10
+                                        val maxAllowed = acceptedQuantity ?: resolvedProduct.stock
                                         if (selectedQuantity < maxAllowed) selectedQuantity++
                                     },
                                 ) {
@@ -721,6 +718,7 @@ internal fun ProductDetailScreen(
                 isSubmitting = isPlacingBid,
                 highestBidLabel = highestBuyerBidForProduct?.amount?.toSellerRupeeLabel() ?: "No bids yet",
                 bidGuidance = "Bid amount must be lower than listed product price.",
+                actionNote = bidActionNote,
                 recentBidLines =
                     if (recentBuyerBidsForProduct.isNotEmpty()) {
                         recentBuyerBidsForProduct.map { bid ->
@@ -950,6 +948,7 @@ internal fun BoxScope.BidBottomSheet(
     isSubmitting: Boolean,
     highestBidLabel: String,
     bidGuidance: String,
+    actionNote: String?,
     recentBidLines: List<String>,
     backgroundColor: Color,
     surfaceColor: Color,
@@ -1005,6 +1004,9 @@ internal fun BoxScope.BidBottomSheet(
             )
 
             Text(bidGuidance, color = mutedColor, style = MaterialTheme.typography.bodySmall)
+            actionNote?.takeIf { it.isNotBlank() }?.let { note ->
+                Text(note, color = Color(0xFF8B2C2C), style = MaterialTheme.typography.bodySmall)
+            }
             Text("Your Recent Bids", color = textColor, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 recentBidLines.forEach { bid ->

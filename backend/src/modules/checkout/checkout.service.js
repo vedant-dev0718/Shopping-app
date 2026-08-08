@@ -7,6 +7,7 @@ const analyticsService = require('../analytics/analytics.service');
 const financeService = require('../finance/finance.service');
 const Product = require('../products/product.model');
 const User = require('../users/user.model');
+const Bid = require('../bargain/bid.model');
 const cartService = require('../cart/cart.service');
 const Order = require('../orders/order.model');
 const addressService = require('../addresses/address.service');
@@ -120,6 +121,84 @@ const validateCartForCheckout = async (cart, options = {}) => {
   }
 
   return orderItems;
+};
+
+const mapOrderPaymentStatusToBidPaymentStatus = (orderPaymentStatus) => {
+  const normalized = String(orderPaymentStatus || '').toLowerCase();
+
+  if (normalized === 'paid') {
+    return 'captured';
+  }
+
+  if (normalized === 'authorized') {
+    return 'authorized';
+  }
+
+  if (normalized === 'failed') {
+    return 'failed';
+  }
+
+  if (normalized === 'pending') {
+    return 'pending';
+  }
+
+  return 'authorized';
+};
+
+const syncBargainBidsForOrder = async ({ cart, buyerId, order, session }) => {
+  const bargainBidIds = [...new Set(
+    cart.items
+      .map((item) => item.bargainBidId)
+      .filter(Boolean)
+      .map((value) => value.toString())
+  )];
+
+  if (bargainBidIds.length === 0) {
+    return;
+  }
+
+  const bids = await Bid.find({
+    _id: { $in: bargainBidIds },
+    buyerId
+  }).session(session || null);
+  const bidById = new Map(bids.map((bid) => [bid._id.toString(), bid]));
+  const now = new Date();
+  const nextBidPaymentStatus = mapOrderPaymentStatusToBidPaymentStatus(order.paymentStatus);
+
+  for (const cartItem of cart.items) {
+    if (!cartItem.bargainBidId) {
+      continue;
+    }
+
+    const bid = bidById.get(cartItem.bargainBidId.toString());
+    if (!bid) {
+      continue;
+    }
+
+    if (bid.orderId && bid.orderId.toString() !== order._id.toString()) {
+      throw new AppError('Accepted bid is already linked to another order', 409);
+    }
+
+    bid.orderId = order._id;
+    bid.bidStatus = 'won';
+    bid.paymentStatus = nextBidPaymentStatus;
+    bid.sellerDecision = {
+      ...(bid.sellerDecision || {}),
+      decision: 'accepted',
+      decidedAt: bid.sellerDecision?.decidedAt || now,
+      messageToBuyer: 'Order placed from accepted bid.'
+    };
+    bid.razorpay = {
+      ...(bid.razorpay || {}),
+      capturedAt: nextBidPaymentStatus === 'captured' ? (bid.razorpay?.capturedAt || now) : bid.razorpay?.capturedAt,
+      captureAmount: nextBidPaymentStatus === 'captured'
+        ? Math.round(((Number(cartItem.priceSnapshot) || 0) * (Number(cartItem.quantity) || 0)) * 100)
+        : (bid.razorpay?.captureAmount || 0),
+      captureFailureReason: ''
+    };
+
+    await bid.save({ session });
+  }
 };
 
 const validatePaymentAmountMatchesCart = (payment, cart) => {
@@ -432,6 +511,13 @@ const verifyAndPlaceOrder = async (
       emailSent: false
     }], { session });
 
+    await syncBargainBidsForOrder({
+      cart,
+      buyerId,
+      order: createdOrder,
+      session
+    });
+
     await cartService.clearCart(buyerId, { session });
     order = createdOrder;
   });
@@ -553,6 +639,13 @@ const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
       gstRate: GST_RATE,
       emailSent: false
     }], { session });
+
+    await syncBargainBidsForOrder({
+      cart,
+      buyerId,
+      order: createdOrder,
+      session
+    });
 
     await cartService.clearCart(buyerId, { session });
     order = createdOrder;

@@ -10,6 +10,7 @@
     "seed": "node src/database/seed.js",
     "seed:pickup-addresses": "node scripts/backfill-pickup-addresses.js",
     "migrate:media-proxy": "node scripts/backfill-media-proxy-urls.js",
+    "migrate:bargain-bid-links": "node scripts/backfill-bargain-bid-order-links.js",
     "seed:admin": "node scripts/seed-admin.js",
     "smoke:product-reel-contract": "node scripts/product-reel-contract-smoke.js",
     "smoke:signup-flows": "node scripts/signup-flow-smoke.js",

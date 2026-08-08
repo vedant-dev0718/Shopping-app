@@ -53,6 +53,7 @@ internal data class CheckoutDraft(
     val shipping: String,
     val total: String,
     val shippingAddress: String,
+    val selectedAddressId: String? = null,
 )
 
 internal data class CheckoutOrderSummary(

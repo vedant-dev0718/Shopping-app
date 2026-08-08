@@ -76,6 +76,51 @@ const createBargainFixture = async () => {
   return { buyer, seller, product, bid };
 };
 
+describe('bargainService.scheduleBargain', () => {
+  it('enables the product and creates an active bargain schedule', async () => {
+    const seller = await createUser('seller', 'schedule-seller@example.com');
+    const store = await Store.create({
+      sellerId: seller._id,
+      storeName: 'Schedule Store',
+      category: 'Craft',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      region: 'West',
+      description: 'Schedule test store'
+    });
+    const product = await Product.create({
+      sellerId: seller._id,
+      storeId: store._id,
+      title: 'Schedule Tote',
+      description: 'Test bargain product',
+      category: 'Bags',
+      region: 'West',
+      price: 1200,
+      stock: 2,
+      status: 'active',
+      bargainEnabled: false,
+      imageUrls: ['https://example.com/tote.jpg']
+    });
+
+    const schedule = await bargainService.scheduleBargain(
+      { id: seller._id },
+      product._id,
+      {
+        startDate: new Date(Date.now() - 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 25 * 60 * 60 * 1000),
+        reservePrice: 400
+      }
+    );
+
+    const persistedProduct = await Product.findById(product._id).lean();
+    const persistedSchedule = await BargainSchedule.findById(schedule._id).lean();
+
+    expect(persistedProduct.bargainEnabled).toBe(true);
+    expect(persistedSchedule.status).toBe('active');
+    expect(persistedSchedule.productId.toString()).toBe(product._id.toString());
+  });
+});
+
 describe('bargainService.closeBargain', () => {
   it('creates and links an order for the winning bid before reducing stock', async () => {
     const { buyer, seller, product, bid } = await createBargainFixture();

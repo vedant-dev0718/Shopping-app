@@ -228,12 +228,12 @@ private fun LoginAuthCard(authState: AuthState) {
                 ) {
                     Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            "Buyer: buyer@example.com / Password123!",
+                            "Buyer: buyer@notwhat.test / Test@1234",
                             color = NotWhatAuthTokens.accent,
                             style = MaterialTheme.typography.labelSmall,
                         )
                         Text(
-                            "Seller: seller@example.com / Password123!",
+                            "Seller: seller@notwhat.test / Test@1234",
                             color = NotWhatAuthTokens.accent,
                             style = MaterialTheme.typography.labelSmall,
                         )
@@ -248,6 +248,7 @@ private fun LoginAuthCard(authState: AuthState) {
                     label = { Text("Password") },
                     placeholder = { Text("••••••••") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         TextButton(onClick = { showPassword = !showPassword }) {

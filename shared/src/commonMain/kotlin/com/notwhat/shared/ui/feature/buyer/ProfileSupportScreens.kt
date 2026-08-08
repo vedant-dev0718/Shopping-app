@@ -71,9 +71,7 @@ internal fun ProfileShellScreen(
                 modifier = modifier,
                 state = state,
                 onBack = onBackToAccount,
-                onOpenSupport = { onRouteChange(ProfileShellRoute.ContactSupport) },
-                onOpenPrivacy = { onRouteChange(ProfileShellRoute.PrivacyPolicy) },
-                onOpenAbout = { onRouteChange(ProfileShellRoute.AboutNotWhat) },
+                onOpenSettings = { onRouteChange(ProfileShellRoute.SettingsHelp) },
             )
         }
 
@@ -125,9 +123,7 @@ private fun ProfileAddressManagementScreen(
     modifier: Modifier,
     state: NotWhatAppState,
     onBack: () -> Unit,
-    onOpenSupport: () -> Unit,
-    onOpenPrivacy: () -> Unit,
-    onOpenAbout: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -174,23 +170,9 @@ private fun ProfileAddressManagementScreen(
             Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
                 Column {
                     ProfileActionTile(
-                        title = "Contact Support",
-                        subtitle = "Raise ticket, chat, or call support",
-                        onClick = onOpenSupport,
-                        accent = accent,
-                    )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                    ProfileActionTile(
-                        title = "Privacy Policy",
-                        subtitle = "How we use your data",
-                        onClick = onOpenPrivacy,
-                        accent = accent,
-                    )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                    ProfileActionTile(
-                        title = "About NotWhat",
-                        subtitle = "Vision, version, and legal info",
-                        onClick = onOpenAbout,
+                        title = "Settings",
+                        subtitle = "Preferences, help center, and more",
+                        onClick = onOpenSettings,
                         accent = accent,
                     )
                 }

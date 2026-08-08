@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,16 +69,37 @@ internal fun OrderDetailScreen(
     val canShowTracking = order.status.lowercase() in setOf("shipped", "delivered")
     val statusStyle = orderDetailStatusStyle(order.status)
     val normalizedOrderStatus = order.status.lowercase()
+    val normalizedReturnInfoStatus = order.returnInfo?.returnStatus?.lowercase().orEmpty()
+    val normalizedItemReturnStatus =
+        order.items
+            .asSequence()
+            .mapNotNull { item ->
+                val status = item.status.lowercase()
+                when {
+                    status.startsWith("return_") || status in setOf("returned", "refunded") -> status
+                    !item.returnStatus.isNullOrBlank() -> item.returnStatus.lowercase()
+                    else -> null
+                }
+            }.firstOrNull()
+
+    val effectiveReturnStatus =
+        when {
+            normalizedOrderStatus in setOf("return_requested", "return_approved", "return_rejected", "returned", "refunded") -> normalizedOrderStatus
+            normalizedReturnInfoStatus == "requested" -> "return_requested"
+            normalizedReturnInfoStatus == "approved" -> "return_approved"
+            normalizedReturnInfoStatus == "rejected" -> "return_rejected"
+            normalizedReturnInfoStatus in setOf("in_transit", "received", "completed") ->
+                when (normalizedReturnInfoStatus) {
+                    "in_transit" -> "return_approved"
+                    "received" -> "returned"
+                    else -> "refunded"
+                }
+            !normalizedItemReturnStatus.isNullOrBlank() -> normalizedItemReturnStatus
+            else -> null
+        }
+
     val isDelivered = normalizedOrderStatus == "delivered"
-    val alreadyReturnRequested =
-        normalizedOrderStatus in
-            setOf(
-                "return_requested",
-                "return_approved",
-                "return_rejected",
-                "returned",
-                "refunded",
-            )
+    val alreadyReturnRequested = !effectiveReturnStatus.isNullOrBlank()
 
     var showReturnSheet by remember { mutableStateOf(false) }
     var selectedReason by remember { mutableStateOf<ReturnReason?>(null) }
@@ -96,6 +118,12 @@ internal fun OrderDetailScreen(
             ReturnReason.not_as_described to "Not as described",
             ReturnReason.changed_mind to "Changed my mind",
         )
+
+    LaunchedEffect(order.id, alreadyReturnRequested) {
+        if (alreadyReturnRequested && state.buyerReturns.none { it.orderId == order.id }) {
+            state.loadBuyerReturns()
+        }
+    }
 
     // Return request bottom sheet
     if (showReturnSheet) {
@@ -489,7 +517,7 @@ internal fun OrderDetailScreen(
                             when {
                                 returnSuccess || alreadyReturnRequested -> {
                                     val buyerReturnMessage =
-                                        when (normalizedOrderStatus) {
+                                        when (effectiveReturnStatus ?: normalizedOrderStatus) {
                                             "return_approved" -> "Return approved. Your order will be picked up shortly."
                                             "return_rejected" -> "Return request was rejected. You can contact support for help."
                                             "returned" -> "Return received by seller. Refund will be processed shortly."
@@ -508,6 +536,47 @@ internal fun OrderDetailScreen(
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.SemiBold,
                                         )
+                                    }
+
+                                    // Resolve reason: prefer in-session selection, then persisted return
+                                    val returnReasonLabel = run {
+                                        val inSessionReason = if (returnSuccess) selectedReason else null
+                                        val rawReason = inSessionReason?.name
+                                            ?: state.buyerReturns.firstOrNull { it.orderId == order.id }?.reason
+                                            ?: order.returnInfo?.returnReason?.takeIf { it.isNotBlank() }
+                                        when (rawReason) {
+                                            "wrong_item" -> "Wrong item received"
+                                            "damaged" -> "Item arrived damaged"
+                                            "not_as_described" -> "Not as described"
+                                            "changed_mind" -> "Changed my mind"
+                                            else -> rawReason
+                                        }
+                                    }
+                                    val returnDesc = if (returnSuccess) returnDescription.ifBlank { null }
+                                        else state.buyerReturns.firstOrNull { it.orderId == order.id }?.description
+                                            ?: order.returnInfo?.returnDescription?.takeIf { it.isNotBlank() }
+                                    if (!returnReasonLabel.isNullOrBlank()) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(
+                                                "Return Reason",
+                                                color = text,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                            Text(
+                                                returnReasonLabel,
+                                                color = muted,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                            )
+                                            if (!returnDesc.isNullOrBlank()) {
+                                                Text(
+                                                    returnDesc,
+                                                    color = muted,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                )
+                                            }
+                                        }
                                     }
                                 }
 

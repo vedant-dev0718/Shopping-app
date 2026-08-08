@@ -230,15 +230,22 @@ const scheduleBargain = async (seller, productId, { startDate, endDate, reserveP
     throw new AppError('This product already has an active bargain schedule', 409);
   }
 
-  return BargainSchedule.create({
-    productId: product._id,
-    sellerId: seller.id,
-    startDate,
-    endDate,
-    reservePrice,
-    status: 'active',
-    winningBidId: null
-  });
+  product.bargainEnabled = true;
+
+  const [schedule] = await Promise.all([
+    BargainSchedule.create({
+      productId: product._id,
+      sellerId: seller.id,
+      startDate,
+      endDate,
+      reservePrice,
+      status: 'active',
+      winningBidId: null
+    }),
+    product.save()
+  ]);
+
+  return schedule;
 };
 
 const createBidOrder = async (buyer, productId, { amount, quantity = 1 }) => {
@@ -314,7 +321,11 @@ const placeBid = async (buyer, productId, { amount, quantity = 1, razorpayPaymen
     throw new AppError('Bargain schedule is not currently active', 400);
   }
 
-  const cleanedShippingInfo = cleanShippingInfo(shippingInfo);
+  const fallbackBuyerEmail = String(buyer?.email || '').trim().toLowerCase();
+  const cleanedShippingInfo = cleanShippingInfo({
+    ...(shippingInfo || {}),
+    email: shippingInfo?.email || fallbackBuyerEmail
+  });
 
   if (!shippingInfoIsComplete(cleanedShippingInfo)) {
     throw new AppError('Complete shipping details before placing the bid', 400);
@@ -588,7 +599,7 @@ const toBidderLabel = (buyerId) => {
 const getProductBidSummary = async (_buyer, productId) => {
   const product = await Product.findById(productId).select('status stock bargainEnabled').lean();
 
-  if (!product || product.status !== 'active' || product.stock <= 0 || !product.bargainEnabled) {
+  if (!product || product.status !== 'active' || product.stock <= 0) {
     throw new AppError('Product is not available for bidding', 400);
   }
 
@@ -1009,6 +1020,25 @@ const getBuyerBids = async (buyer) => {
     .sort({ createdAt: -1 })
     .lean();
 
+  const razorpayOrderIds = [...new Set(
+    buyerBids
+      .map((bid) => bid.razorpayOrderId || bid.razorpay?.orderId || '')
+      .filter(Boolean)
+  )];
+
+  const relatedOrders = razorpayOrderIds.length > 0
+    ? await Order.find({
+      buyerId: buyer.id,
+      razorpayOrderId: { $in: razorpayOrderIds }
+    })
+      .select('_id razorpayOrderId paymentStatus')
+      .lean()
+    : [];
+
+  const orderByRazorpayOrderId = new Map(
+    relatedOrders.map((order) => [String(order.razorpayOrderId || ''), order])
+  );
+
   const productIds = [...new Set(
     buyerBids
       .map((bid) => bid.productId?._id || bid.productId)
@@ -1033,8 +1063,13 @@ const getBuyerBids = async (buyer) => {
     const productId = product?._id?.toString() || bid.productId?.toString() || '';
     const schedule = latestScheduleByProductId.get(productId);
     const paymentWindowEndsAt = bid.razorpay?.authorizationExpiresAt || null;
+    const linkedOrder = bid.orderId
+      ? { _id: bid.orderId, paymentStatus: null }
+      : orderByRazorpayOrderId.get(String(bid.razorpayOrderId || bid.razorpay?.orderId || ''));
+    const hasOrderLinked = Boolean(linkedOrder?._id);
     const canProceedToPayment =
       ['accepted', 'won'].includes(bid.bidStatus)
+      && !hasOrderLinked
       && !['captured', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())
       && (!paymentWindowEndsAt || new Date(paymentWindowEndsAt) > now);
 
