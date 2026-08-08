@@ -57,6 +57,7 @@ internal fun SellerReelListScreen(
     state: NotWhatAppState,
     onBack: () -> Unit,
     onUploadReel: () -> Unit,
+    onPreviewReel: (SellerReelPreviewRoute) -> Unit = {},
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -286,6 +287,16 @@ internal fun SellerReelListScreen(
                 border = border,
                 onDelete = { pendingDeleteId = reel.id },
                 onTagProducts = { tagPickerReelId = reel.id },
+                onPreview = {
+                    onPreviewReel(
+                        SellerReelPreviewRoute(
+                            reelId = reel.id,
+                            videoUrl = reel.videoUrl,
+                            thumbnailUrl = reel.thumbnailUrl,
+                            caption = reel.caption,
+                        )
+                    )
+                },
                 onEditCaption = { newCaption ->
                     val token = state.currentSession?.authToken
                     if (token.isNullOrBlank()) {
@@ -327,6 +338,7 @@ private fun SellerReelCard(
     border: Color,
     onDelete: () -> Unit,
     onTagProducts: () -> Unit,
+    onPreview: () -> Unit,
     onEditCaption: (String) -> Unit,
 ) {
     var isEditingCaption by remember { mutableStateOf(false) }
@@ -360,22 +372,6 @@ private fun SellerReelCard(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                     )
-                    // Duration badge
-                    Surface(
-                        color = Color.Black.copy(alpha = 0.62f),
-                        shape = RoundedCornerShape(6.dp),
-                        modifier =
-                            Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(4.dp),
-                    ) {
-                        Text(
-                            reel.duration,
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
-                        )
-                    }
                 }
 
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -410,11 +406,6 @@ private fun SellerReelCard(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             )
                         }
-                        Text(
-                            "${reel.viewCount} views",
-                            color = muted,
-                            style = MaterialTheme.typography.labelSmall,
-                        )
                         Text(
                             "${reel.taggedProducts.size} products",
                             color = accent,
@@ -475,6 +466,24 @@ private fun SellerReelCard(
             }
 
             // Action row: Edit Caption | Edit/Tag Products
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                OutlinedButton(
+                    onClick = onPreview,
+                    modifier = Modifier.weight(1f),
+                    shape = SellerUiTokens.radiusButton,
+                    border = BorderStroke(1.dp, accent),
+                ) {
+                    Text(
+                        "▶  Preview",
+                        color = accent,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),

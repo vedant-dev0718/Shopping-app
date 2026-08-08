@@ -112,7 +112,13 @@ internal fun ProductLifecycleScreen(
     }
 
     val filteredProducts = products.filter { product ->
-        val matchesFilter = filter == "All" || product.status == filter
+        val matchesFilter = when (filter) {
+            "All" -> true
+            "Live" -> product.status == "active"
+            "Drafts" -> product.status == "draft" || product.status == "inactive"
+            "Discarded" -> product.status == "discarded" || product.status == "deleted"
+            else -> true
+        }
         val matchesSearch = searchQuery.isBlank() || product.title.contains(searchQuery, ignoreCase = true) || product.category.contains(searchQuery, ignoreCase = true)
         matchesFilter && matchesSearch
     }
@@ -142,7 +148,7 @@ internal fun ProductLifecycleScreen(
 
         item {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(SellerUiTokens.chipGap)) {
-                items(listOf("All", "Live", "Drafts", "Paused")) { chip ->
+                items(listOf("All", "Live", "Drafts", "Discarded")) { chip ->
                     SellerFilterChip(
                         label = chip,
                         selected = filter == chip,

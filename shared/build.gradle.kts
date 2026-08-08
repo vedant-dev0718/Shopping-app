@@ -65,6 +65,10 @@ kotlin {
                 implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
                 implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
                 implementation("io.ktor:ktor-client-okhttp:2.3.12")
+                implementation("androidx.media3:media3-exoplayer:1.3.1")
+                implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
+                implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
+                implementation("androidx.media3:media3-ui:1.3.1")
             }
         }
 

@@ -192,6 +192,7 @@ class ApiClient(
                 Json {
                     ignoreUnknownKeys = true
                     explicitNulls = false
+                    encodeDefaults = true
                 }
             return createPlatformHttpClient { install(ContentNegotiation) { json(json) } }
         }

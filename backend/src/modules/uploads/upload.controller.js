@@ -118,8 +118,8 @@ const streamMediaObject = asyncHandler(async (req, res, next) => {
   const contentType = isManifest
     ? 'application/vnd.apple.mpegurl'
     : isSegment
-    ? 'video/MP2T'
-    : media.contentType;
+      ? 'video/MP2T'
+      : media.contentType;
 
   res.setHeader('Content-Type', contentType);
   res.setHeader('Cache-Control', cacheControl);

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,8 +20,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 internal enum class SellerShellRoute {
     Dashboard,
@@ -43,11 +48,15 @@ internal enum class SellerShellRoute {
     ProductOnboarding,
     ProductLifecycleStub,
     OrderOperationsStub,
+    SellerOrderList,
     ReturnsRefunds,
     SellerReelList,
     UploadReel,
     SellerProfile,
+    SellerBargainCreate,
 }
+
+internal data class SellerReelPreviewRoute(val reelId: String, val videoUrl: String, val thumbnailUrl: String, val caption: String?)
 
 @Composable
 internal fun SellerShellScreen(
@@ -67,6 +76,27 @@ internal fun SellerShellScreen(
     var autoCounterEnabled by remember { mutableStateOf(true) }
     var selectedTimeRange by remember { mutableStateOf("7d") }
     var selectedDrillDownTitle by remember { mutableStateOf<String?>(null) }
+    var previewRoute by remember { mutableStateOf<SellerReelPreviewRoute?>(null) }
+
+    // Full-screen reel preview for seller
+    previewRoute?.let { preview ->
+        Box(modifier = modifier.fillMaxSize().background(NotWhatColors.background)) {
+            val isPlayable = preview.videoUrl.isNotBlank() && !preview.videoUrl.contains("example.com") && preview.videoUrl.startsWith("http")
+            if (isPlayable) {
+                NativeVideoPlayer(uri = preview.videoUrl, modifier = Modifier.fillMaxSize())
+            } else {
+                DemoImage(url = preview.thumbnailUrl, contentDescription = "Preview", modifier = Modifier.fillMaxSize(), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp))
+            }
+            if (!preview.caption.isNullOrBlank()) {
+                Text(preview.caption, color = Color.White, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.BottomStart).padding(16.dp))
+            }
+            androidx.compose.material3.TextButton(
+                onClick = { previewRoute = null },
+                modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+            ) { Text("✕ Close", color = Color.White, fontWeight = FontWeight.Bold) }
+        }
+        return
+    }
 
     // KPIs derived from live seller content
     val products = state.sellerContent.products
@@ -121,6 +151,24 @@ internal fun SellerShellScreen(
         return
     }
 
+    if (route == SellerShellRoute.SellerOrderList) {
+        OrderOperationsScreen(
+            modifier = modifier,
+            state = state,
+            onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+        )
+        return
+    }
+
+    if (route == SellerShellRoute.SellerBargainCreate) {
+        SellerBargainCreateScreen(
+            modifier = modifier,
+            state = state,
+            onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+        )
+        return
+    }
+
     if (route == SellerShellRoute.OrderOperationsStub) {
         OrderOperationsScreen(
             modifier = modifier,
@@ -146,6 +194,7 @@ internal fun SellerShellScreen(
             state = state,
             onBack = { onRouteChange(SellerShellRoute.Dashboard) },
             onUploadReel = { onRouteChange(SellerShellRoute.UploadReel) },
+            onPreviewReel = { previewRoute = it },
         )
         return
     }
@@ -277,9 +326,21 @@ internal fun SellerShellScreen(
                         text = text,
                     )
                 }
+                item {
+                    SellerRouteChip(
+                        label = "Bargain Day",
+                        selected = route == SellerShellRoute.SellerBargainCreate,
+                        onClick = { onRouteChange(SellerShellRoute.SellerBargainCreate) },
+                        accent = accent,
+                        surface = surface,
+                        text = text,
+                    )
+                }
             }
         }
 
+        // Performance time-range picker shown only on Dashboard
+        if (route == SellerShellRoute.Dashboard) {
         item {
             Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -310,6 +371,7 @@ internal fun SellerShellScreen(
                 }
             }
         }
+        } // end performance card if-Dashboard
 
         if (route == SellerShellRoute.Dashboard) {
             item {
@@ -380,13 +442,10 @@ internal fun SellerShellScreen(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             Button(
                                 onClick = {
-                                    selectedDrillDownTitle = insight.title
-                                    if (insight.title.contains("bargain", ignoreCase = true) ||
-                                        insight.title.contains("fulfillment", ignoreCase = true)
-                                    ) {
-                                        onRouteChange(SellerShellRoute.OrderOperationsStub)
-                                    } else {
+                                    if (insight.title.contains("stock", ignoreCase = true)) {
                                         onRouteChange(SellerShellRoute.ProductLifecycleStub)
+                                    } else {
+                                        onRouteChange(SellerShellRoute.SellerOrderList)
                                     }
                                 },
                                 shape = SellerUiTokens.radiusButton,
@@ -671,5 +730,173 @@ private fun SellerProfileTile(
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = muted)
         }
         Text("›", color = accent, style = MaterialTheme.typography.titleLarge)
+    }
+}
+
+@Composable
+internal fun SellerBargainCreateScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
+) {
+    val bg = NotWhatColors.background
+    val surface = NotWhatColors.surface
+    val text = NotWhatColors.onSurface
+    val muted = NotWhatColors.onSurfaceVariant
+    val accent = NotWhatAuthTokens.accent
+    val danger = Color(0xFFD32F2F)
+    val scope = rememberCoroutineScope()
+
+    val products = state.sellerContent.products.filter { it.status == "active" }
+    var selectedProductId by remember { mutableStateOf<String?>(null) }
+    var reservePrice by remember { mutableStateOf("") }
+    var durationHours by remember { mutableStateOf("24") }
+    var buyWindowHours by remember { mutableStateOf("24") }
+    var isSubmitting by remember { mutableStateOf(false) }
+    var submitError by remember { mutableStateOf<String?>(null) }
+    var submitSuccess by remember { mutableStateOf(false) }
+
+    val selectedProduct = products.firstOrNull { it.id == selectedProductId }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+    ) {
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onBack) { Text("Back", color = accent) }
+                Text("Bargain Day", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                Spacer(modifier = Modifier.width(56.dp))
+            }
+        }
+
+        if (submitSuccess) {
+            item {
+                Surface(color = Color(0xFF1A3A28), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "✓ Bargain Day is now live! Buyers can start bidding.",
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
+        }
+
+        submitError?.let { err ->
+            item {
+                Surface(color = danger.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(err, color = danger, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
+        item {
+            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Select Product", color = text, fontWeight = FontWeight.Bold)
+                    if (products.isEmpty()) {
+                        Text("No live products. Publish a product first.", color = muted, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        products.forEach { product ->
+                            val selected = product.id == selectedProductId
+                            Surface(
+                                color = if (selected) accent.copy(alpha = 0.15f) else NotWhatColors.surfaceContainerHigh,
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.fillMaxWidth().clickable { selectedProductId = product.id },
+                            ) {
+                                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    DemoImage(url = product.displayImageUrl, contentDescription = product.displayTitle, modifier = Modifier.size(48.dp), shape = RoundedCornerShape(8.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(product.displayTitle, color = text, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(product.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
+                                    }
+                                    if (selected) Text("✓", color = accent, fontWeight = FontWeight.Black)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Auction Settings", color = text, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = reservePrice,
+                        onValueChange = { reservePrice = it.filter { c -> c.isDigit() || c == '.' } },
+                        label = { Text("Reserve Price (₹)") },
+                        placeholder = { Text("Minimum bid to win") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = durationHours,
+                        onValueChange = { durationHours = it.filter { c -> c.isDigit() } },
+                        label = { Text("Auction Duration (hours)") },
+                        placeholder = { Text("e.g. 24, 48, 72") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = buyWindowHours,
+                        onValueChange = { buyWindowHours = it.filter { c -> c.isDigit() } },
+                        label = { Text("Winner Buy Window (hours)") },
+                        placeholder = { Text("Time winner has to purchase") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "If the winner doesn't purchase within the buy window, the next highest bidder gets the chance.",
+                        color = muted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        }
+
+        item {
+            Button(
+                onClick = {
+                    val token = state.currentSession?.authToken
+                    val productId = selectedProductId
+                    if (token.isNullOrBlank()) { submitError = "Please sign in again."; return@Button }
+                    if (productId == null) { submitError = "Select a product to run a Bargain Day."; return@Button }
+                    val reserve = reservePrice.toDoubleOrNull() ?: 0.0
+                    val durationH = durationHours.toLongOrNull() ?: 24L
+                    scope.launch {
+                        isSubmitting = true
+                        submitError = null
+                        // Send relative duration; backend computes absolute timestamps
+                        val startDate = "now"
+                        val endDate = "+${durationH}h"
+                        val result = state.sellerContent.scheduleBargain(
+                            productId = productId,
+                            startDate = startDate,
+                            endDate = endDate,
+                            reservePrice = reserve,
+                            bearerToken = token,
+                        )
+                        isSubmitting = false
+                        if (result) {
+                            submitSuccess = true
+                            submitError = null
+                        } else {
+                            submitError = "Failed to create Bargain Day. Please try again."
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = SellerUiTokens.radiusButton,
+                colors = ButtonDefaults.buttonColors(containerColor = accent),
+                enabled = !isSubmitting && selectedProductId != null,
+            ) {
+                if (isSubmitting) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("🏷  Launch Bargain Day", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }

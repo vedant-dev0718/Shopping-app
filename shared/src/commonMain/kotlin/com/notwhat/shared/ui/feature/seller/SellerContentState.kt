@@ -3,6 +3,8 @@ package com.notwhat.shared.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.notwhat.shared.bargain.BargainRepository
+import com.notwhat.shared.bargain.ScheduleBargainRequestDto
 import com.notwhat.shared.catalog.CreateProductRequestDto
 import com.notwhat.shared.catalog.CreateReelRequestDto
 import com.notwhat.shared.catalog.DeleteResponseDto
@@ -23,6 +25,7 @@ import com.notwhat.shared.uploads.VideoUploadResponseDto
 internal class SellerContentState(
     private val sellerUseCase: SellerUseCase,
     private val uploadRepository: UploadRepository,
+    private val bargainRepository: BargainRepository? = null,
 ) {
     var products by mutableStateOf<List<ProductDto>>(emptyList())
         private set
@@ -139,6 +142,22 @@ internal class SellerContentState(
         }
         return result
     }
+
+    suspend fun scheduleBargain(
+        productId: String,
+        startDate: String,
+        endDate: String,
+        reservePrice: Double,
+        bearerToken: String,
+    ): Boolean {
+        val repo = bargainRepository ?: return false
+        val result = repo.scheduleBargain(
+            productId = productId,
+            request = ScheduleBargainRequestDto(startDate = startDate, endDate = endDate, reservePrice = reservePrice),
+            bearerToken = bearerToken,
+        )
+        return result is NetworkResult.Success
+    }
 }
 
 // Bridge: DemoSellerReel rendering still used by SellerReelListScreen components
@@ -148,6 +167,7 @@ internal fun com.notwhat.shared.catalog.ReelDto.toDemoSellerReel(): DemoSellerRe
         title = caption?.takeIf { it.isNotBlank() } ?: category.ifBlank { "Untitled Reel" },
         caption = caption ?: "",
         thumbnailUrl = thumbnailUrl,
+        videoUrl = videoUrl,
         duration = "${duration.toInt()}s",
         viewCount = viewCount.toString(),
         isShared = status == "active",

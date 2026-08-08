@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -41,6 +44,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import com.notwhat.shared.catalog.ProductDto
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ProductDetailScreen(
     modifier: Modifier,
@@ -65,6 +69,7 @@ internal fun ProductDetailScreen(
     var addedToCart by remember(resolvedProduct.id) { mutableStateOf(false) }
     var isAddingToCart by remember(resolvedProduct.id) { mutableStateOf(false) }
     var cartError by remember(resolvedProduct.id) { mutableStateOf<String?>(null) }
+    var selectedQuantity by remember(resolvedProduct.id) { mutableStateOf(1) }
     var saveMessage by remember(resolvedProduct.id) { mutableStateOf<String?>(null) }
     var isSaving by remember(resolvedProduct.id) { mutableStateOf(false) }
 
@@ -99,24 +104,33 @@ internal fun ProductDetailScreen(
             }
 
             item {
+                val imageList = resolvedProduct.imageUrls.ifEmpty { listOf(resolvedProduct.displayImageUrl) }
+                val pagerState = rememberPagerState { imageList.size }
                 Box(modifier = Modifier.fillMaxWidth().height(360.dp)) {
-                    DemoImage(
-                        url = resolvedProduct.displayImageUrl,
-                        contentDescription = resolvedProduct.displayTitle,
+                    HorizontalPager(
+                        state = pagerState,
                         modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(16.dp),
-                    )
-                    Row(
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        repeat(3) { dot ->
-                            Box(
-                                modifier = Modifier
-                                    .width(if (dot == 0) 24.dp else 8.dp)
-                                    .height(4.dp)
-                                    .background(if (dot == 0) detailAccent else Color.White.copy(alpha = 0.35f), RoundedCornerShape(4.dp)),
-                            )
+                    ) { page ->
+                        DemoImage(
+                            url = imageList[page],
+                            contentDescription = resolvedProduct.displayTitle,
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                    }
+                    if (imageList.size > 1) {
+                        Row(
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            repeat(imageList.size) { dot ->
+                                Box(
+                                    modifier = Modifier
+                                        .width(if (dot == pagerState.currentPage) 24.dp else 8.dp)
+                                        .height(4.dp)
+                                        .background(if (dot == pagerState.currentPage) detailAccent else Color.White.copy(alpha = 0.35f), RoundedCornerShape(4.dp)),
+                                )
+                            }
                         }
                     }
                 }
@@ -234,14 +248,46 @@ internal fun ProductDetailScreen(
         }
 
         Surface(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(), color = detailBg.copy(alpha = 0.94f)) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Column {
-                    Text("Total", color = detailMuted, style = MaterialTheme.typography.labelSmall)
-                    Text(resolvedProduct.displayPrice, color = detailText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Total", color = detailMuted, style = MaterialTheme.typography.labelSmall)
+                        Text(resolvedProduct.displayPrice, color = detailText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.background(detailSurface, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text("Qty", color = detailMuted, style = MaterialTheme.typography.labelSmall)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        ) {
+                            TextButton(
+                                onClick = { if (selectedQuantity > 1) selectedQuantity-- },
+                                modifier = Modifier.size(24.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text("-", color = detailText)
+                            }
+                            Text(selectedQuantity.toString(), color = detailText, style = MaterialTheme.typography.titleSmall)
+                            TextButton(
+                                onClick = { if (selectedQuantity < 10) selectedQuantity++ },
+                                modifier = Modifier.size(24.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text("+", color = detailText)
+                            }
+                        }
+                    }
                 }
                 Button(
                     onClick = {
@@ -255,7 +301,7 @@ internal fun ProductDetailScreen(
                                     cartError = null
                                     val result = state.transaction.addCartItem(
                                         productId = resolvedProduct.id,
-                                        quantity = 1,
+                                        quantity = selectedQuantity,
                                         bearerToken = token,
                                     )
                                     if (result is com.notwhat.shared.core.NetworkResult.Success) {
@@ -269,7 +315,7 @@ internal fun ProductDetailScreen(
                             }
                         }
                     },
-                    modifier = Modifier.weight(1f).height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = if (addedToCart) Color(0xFF388E3C) else detailAccent),
                     enabled = !isAddingToCart,

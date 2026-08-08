@@ -125,6 +125,7 @@ internal data class DemoSellerReel(
     val title: String,
     val caption: String,
     val thumbnailUrl: String,
+    val videoUrl: String = "",
     val duration: String,
     val viewCount: String,
     val isShared: Boolean,

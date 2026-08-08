@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -18,9 +21,39 @@ import com.notwhat.shared.auth.AndroidAppContextHolder
 import com.notwhat.shared.auth.AndroidSocialAuthBridgeRegistry
 import com.notwhat.shared.auth.SharedAuthException
 import com.notwhat.shared.auth.SocialAuthPayload
+import com.notwhat.shared.ui.AndroidMediaPickerBridgeRegistry
 import com.notwhat.shared.ui.NotWhatApp
+import com.notwhat.shared.ui.initCoilForAndroid
 
 class MainActivity : ComponentActivity() {
+    private var pendingVideoCallback: ((String?) -> Unit)? = null
+    private var pendingImageCallback: ((String?) -> Unit)? = null
+    private var pendingMultiImageCallback: ((List<String>) -> Unit)? = null
+
+    private val videoPickerLauncher =
+        registerForActivityResult(
+            PickVisualMedia(),
+        ) { uri ->
+            pendingVideoCallback?.invoke(uri?.toString())
+            pendingVideoCallback = null
+        }
+
+    private val imagePickerLauncher =
+        registerForActivityResult(
+            PickVisualMedia(),
+        ) { uri ->
+            pendingImageCallback?.invoke(uri?.toString())
+            pendingImageCallback = null
+        }
+
+    private val multiImagePickerLauncher =
+        registerForActivityResult(
+            PickMultipleVisualMedia(),
+        ) { uris ->
+            pendingMultiImageCallback?.invoke(uris.map { it.toString() })
+            pendingMultiImageCallback = null
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
@@ -28,9 +61,25 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK),
         )
         AndroidAppContextHolder.appContext = applicationContext
+        initCoilForAndroid(applicationContext)
 
         AndroidSocialAuthBridgeRegistry.registerGoogleSignIn { _ ->
             launchGoogleSignIn()
+        }
+
+        AndroidMediaPickerBridgeRegistry.registerVideoPicker { callback ->
+            pendingVideoCallback = callback
+            videoPickerLauncher.launch(PickVisualMediaRequest(PickVisualMedia.VideoOnly))
+        }
+
+        AndroidMediaPickerBridgeRegistry.registerImagePicker { callback ->
+            pendingImageCallback = callback
+            imagePickerLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+        }
+
+        AndroidMediaPickerBridgeRegistry.registerMultiImagePicker { callback ->
+            pendingMultiImageCallback = callback
+            multiImagePickerLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
         }
 
         val forcedRole = appRoleFromBuildConfig(BuildConfig.APP_ROLE)
@@ -43,6 +92,9 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         if (isFinishing) {
             AndroidSocialAuthBridgeRegistry.registerGoogleSignIn(null)
+            pendingVideoCallback = null
+            pendingImageCallback = null
+            pendingMultiImageCallback = null
         }
         super.onDestroy()
     }

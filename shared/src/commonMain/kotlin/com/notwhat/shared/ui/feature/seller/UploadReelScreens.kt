@@ -78,7 +78,16 @@ internal fun UploadReelScreen(
     var uploadStage by remember { mutableStateOf<String?>(null) }
     var tagQuery by remember { mutableStateOf("") }
     var selectedProductIds by remember { mutableStateOf(emptyList<String>()) }
+    var isUploadSuccess by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // Auto-redirect to reel list after successful upload
+    if (isUploadSuccess) {
+        scope.launch {
+            kotlinx.coroutines.delay(2000)
+            onBack()
+        }
+    }
 
     val sellerProducts =
         state.sellerContent.products
@@ -191,6 +200,7 @@ internal fun UploadReelScreen(
 
             if (createResult is NetworkResult.Success) {
                 shareStatus = "Reel uploaded and published to buyer feed."
+                isUploadSuccess = true
             } else if (createResult is NetworkResult.Failure) {
                 shareStatus = createResult.error.userMessage()
             }
@@ -292,7 +302,6 @@ internal fun UploadReelScreen(
                         if (uri != null) videoUri = uri
                     }
                 },
-                onShareReel = shareReel,
             )
         }
 
@@ -402,7 +411,6 @@ private fun VideoPickerCard(
     panel: Color,
     panelSoft: Color,
     onPickVideo: () -> Unit,
-    onShareReel: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(
@@ -411,7 +419,7 @@ private fun VideoPickerCard(
                     .fillMaxWidth()
                     .aspectRatio(9f / 16f)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(panel),
+                    .background(panelSoft),
             contentAlignment = Alignment.Center,
         ) {
             if (videoUri != null) {
@@ -464,32 +472,14 @@ private fun VideoPickerCard(
         }
 
         if (videoUri != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            OutlinedButton(
+                onClick = onPickVideo,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, accent),
+                enabled = !isPickingVideo && !isSharing,
             ) {
-                OutlinedButton(
-                    onClick = onPickVideo,
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, accent),
-                    enabled = !isPickingVideo && !isSharing,
-                ) {
-                    Text("Change Video", color = accent, fontWeight = FontWeight.SemiBold)
-                }
-                Button(
-                    onClick = onShareReel,
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    enabled = !isSharing,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accent),
-                ) {
-                    if (isSharing) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    Text(if (isSharing) "Uploading…" else "Share Reel", color = Color.White, fontWeight = FontWeight.Black)
-                }
+                Text("Change Video", color = accent, fontWeight = FontWeight.SemiBold)
             }
         }
 
