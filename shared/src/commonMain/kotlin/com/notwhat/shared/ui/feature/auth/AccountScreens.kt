@@ -36,6 +36,7 @@ internal fun AccountScreen(
     onOpenProfile: () -> Unit,
     onOpenAddresses: () -> Unit,
     onOpenCart: () -> Unit,
+    onOpenBuyerOrders: () -> Unit,
     onOpenBuyerReturns: () -> Unit,
     onSignOut: () -> Unit = {},
 ) {
@@ -105,7 +106,7 @@ internal fun AccountScreen(
                     AccountTile(
                         label = "My Orders",
                         subtitle = "Track and manage your orders",
-                        onClick = onOpenBuyerReturns,
+                        onClick = onOpenBuyerOrders,
                     )
                     HorizontalDivider(color = NotWhatColors.outline.copy(alpha = 0.3f))
                     AccountTile(

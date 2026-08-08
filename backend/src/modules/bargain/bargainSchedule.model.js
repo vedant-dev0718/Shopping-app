@@ -41,4 +41,15 @@ const bargainScheduleSchema = new mongoose.Schema({
 
 bargainScheduleSchema.index({ productId: 1, status: 1 });
 
+// Ensure ObjectIds are properly serialized to strings
+bargainScheduleSchema.set('toJSON', {
+  transform(doc, ret) {
+    ret.id = ret._id.toString();
+    ret.productId = ret.productId.toString();
+    ret.sellerId = ret.sellerId.toString();
+    if (ret.winningBidId) ret.winningBidId = ret.winningBidId.toString();
+    return ret;
+  }
+});
+
 module.exports = mongoose.model('BargainSchedule', bargainScheduleSchema);

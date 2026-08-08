@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -479,6 +480,39 @@ internal fun CartSavedPaymentsScreen(
     val subtotal = "₹${cart.subtotal.toInt()}"
     val shipping = if (cart.shipping > 0) "₹${cart.shipping.toInt()}" else "Free"
     val total = "₹${cart.finalTotal.toInt()}"
+
+    // Show empty cart state if no items
+    if (cartItems.isEmpty()) {
+        Box(modifier = modifier.fillMaxSize().background(cartBg)) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onBack) { Text("Back", color = cartAccent) }
+                    Text("Cart", color = cartText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text("0 items", color = cartMuted, style = MaterialTheme.typography.labelMedium)
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text("Your cart is empty", color = cartText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Add products to get started", color = cartMuted, style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+        return
+    }
+
     val shippingAddress =
         state.transaction.addresses
             .firstOrNull { it.isDefault }
@@ -586,6 +620,61 @@ internal fun CartSavedPaymentsScreen(
                     TextButton(onClick = onBack) { Text("Back", color = cartAccent) }
                     Text("Cart", color = cartText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                     Text("${cartItems.size} items", color = cartMuted, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+
+            // Address Selection Section
+            item {
+                Surface(color = cartSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            "Delivery Address",
+                            color = cartText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        if (state.transaction.addresses.isEmpty()) {
+                            Text("No addresses available", color = cartMuted, style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            state.transaction.addresses.forEach { address ->
+                                val isSelected = address.id == state.transaction.selectedDeliveryAddressId
+                                Surface(
+                                    color = if (isSelected) cartAccent.copy(alpha = 0.12f) else cartSurfaceHigh,
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier =
+                                        Modifier.fillMaxWidth().clickable {
+                                            state.transaction.selectDeliveryAddress(address.id)
+                                        },
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(address.fullName, color = cartText, fontWeight = FontWeight.SemiBold)
+                                                Text(address.phone, color = cartMuted, style = MaterialTheme.typography.bodySmall)
+                                            }
+                                            if (isSelected) {
+                                                Surface(color = cartAccent, shape = RoundedCornerShape(50.dp)) {
+                                                    Text("✓", color = Color.White, modifier = Modifier.padding(6.dp))
+                                                }
+                                            }
+                                        }
+                                        Text(
+                                            "${address.addressLine1}, ${address.addressLine2 ?: ""}, ${address.city}, ${address.state} ${address.pincode}",
+                                            color = cartMuted,
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -782,6 +871,18 @@ internal fun CartSavedPaymentsScreen(
                 Button(
                     onClick = {
                         val selectedPayment = paymentMethods.getOrNull(selectedPaymentIndex) ?: return@Button
+                        // Get the selected address or fall back to default
+                        val selectedAddr =
+                            if (!state.transaction.selectedDeliveryAddressId.isNullOrBlank()) {
+                                state.transaction.addresses.firstOrNull { it.id == state.transaction.selectedDeliveryAddressId }
+                            } else {
+                                state.transaction.addresses.firstOrNull { it.isDefault } ?: state.transaction.addresses.firstOrNull()
+                            }
+                        val finalShippingAddress =
+                            selectedAddr?.let {
+                                "${it.addressLine1}, ${it.city}, ${it.state} ${it.pincode}"
+                            } ?: shippingAddress
+
                         onProceedToCheckout(
                             CheckoutDraft(
                                 items =
@@ -803,13 +904,15 @@ internal fun CartSavedPaymentsScreen(
                                 subtotal = subtotal,
                                 shipping = shipping,
                                 total = total,
-                                shippingAddress = shippingAddress,
+                                shippingAddress = finalShippingAddress,
                             ),
                         )
                     },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(16.dp),
-                    enabled = cartItems.isNotEmpty() && selectedPaymentIndex >= 0 && paymentMethods.isNotEmpty(),
+                    enabled =
+                        cartItems.isNotEmpty() && selectedPaymentIndex >= 0 && paymentMethods.isNotEmpty() &&
+                            state.transaction.addresses.isNotEmpty(),
                     colors = ButtonDefaults.buttonColors(containerColor = cartAccent),
                 ) {
                     Text("PROCEED TO CHECKOUT", color = Color.White, fontWeight = FontWeight.Black)

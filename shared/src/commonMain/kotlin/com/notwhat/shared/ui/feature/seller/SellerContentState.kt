@@ -149,14 +149,18 @@ internal class SellerContentState(
         endDate: String,
         reservePrice: Double,
         bearerToken: String,
-    ): Boolean {
-        val repo = bargainRepository ?: return false
-        val result = repo.scheduleBargain(
-            productId = productId,
-            request = ScheduleBargainRequestDto(startDate = startDate, endDate = endDate, reservePrice = reservePrice),
-            bearerToken = bearerToken,
-        )
-        return result is NetworkResult.Success
+    ): String {
+        val repo = bargainRepository ?: return "Bargain service not available"
+        val result =
+            repo.scheduleBargain(
+                productId = productId,
+                request = ScheduleBargainRequestDto(startDate = startDate, endDate = endDate, reservePrice = reservePrice),
+                bearerToken = bearerToken,
+            )
+        return when (result) {
+            is NetworkResult.Success -> ""  // Empty string means success
+            is NetworkResult.Failure -> result.error.message ?: "Failed to create Bargain Day"
+        }
     }
 }
 

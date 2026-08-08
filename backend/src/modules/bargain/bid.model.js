@@ -187,4 +187,18 @@ const bidSchema = new mongoose.Schema({
 
 bidSchema.index({ productId: 1, amount: -1, createdAt: 1 });
 
+// Ensure ObjectIds are properly serialized to strings
+bidSchema.set('toJSON', {
+  transform(doc, ret) {
+    ret.id = ret._id.toString();
+    ret.productId = ret.productId.toString();
+    ret.buyerId = ret.buyerId.toString();
+    ret.sellerId = ret.sellerId.toString();
+    if (ret.orderId) ret.orderId = ret.orderId.toString();
+    if (ret.scheduleId) ret.scheduleId = ret.scheduleId.toString();
+    if (ret.sellerDecision?.decidedBy) ret.sellerDecision.decidedBy = ret.sellerDecision.decidedBy.toString();
+    return ret;
+  }
+});
+
 module.exports = mongoose.model('Bid', bidSchema);

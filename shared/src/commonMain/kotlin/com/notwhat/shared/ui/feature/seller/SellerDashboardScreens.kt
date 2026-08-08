@@ -40,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.notwhat.shared.util.getCurrentTimeMillis
+import com.notwhat.shared.util.toIso8601
 import kotlinx.coroutines.launch
 
 internal enum class SellerShellRoute {
@@ -54,9 +56,12 @@ internal enum class SellerShellRoute {
     UploadReel,
     SellerProfile,
     SellerBargainCreate,
+    LowStockRestock,
 }
 
-internal data class SellerReelPreviewRoute(val reelId: String, val videoUrl: String, val thumbnailUrl: String, val caption: String?)
+internal data class SellerReelPreviewRoute(
+    val reel: com.notwhat.shared.catalog.ReelDto,
+)
 
 @Composable
 internal fun SellerShellScreen(
@@ -78,23 +83,16 @@ internal fun SellerShellScreen(
     var selectedDrillDownTitle by remember { mutableStateOf<String?>(null) }
     var previewRoute by remember { mutableStateOf<SellerReelPreviewRoute?>(null) }
 
-    // Full-screen reel preview for seller
+    // Phase 2: use the real buyer ReelDetailScreen so preview matches exactly what buyer sees
     previewRoute?.let { preview ->
-        Box(modifier = modifier.fillMaxSize().background(NotWhatColors.background)) {
-            val isPlayable = preview.videoUrl.isNotBlank() && !preview.videoUrl.contains("example.com") && preview.videoUrl.startsWith("http")
-            if (isPlayable) {
-                NativeVideoPlayer(uri = preview.videoUrl, modifier = Modifier.fillMaxSize())
-            } else {
-                DemoImage(url = preview.thumbnailUrl, contentDescription = "Preview", modifier = Modifier.fillMaxSize(), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp))
-            }
-            if (!preview.caption.isNullOrBlank()) {
-                Text(preview.caption, color = Color.White, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.BottomStart).padding(16.dp))
-            }
-            androidx.compose.material3.TextButton(
-                onClick = { previewRoute = null },
-                modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-            ) { Text("✕ Close", color = Color.White, fontWeight = FontWeight.Bold) }
-        }
+        ReelDetailScreen(
+            modifier = modifier,
+            state = state,
+            reel = preview.reel,
+            onBack = { previewRoute = null },
+            onOpenProduct = { /* seller preview — no-op */ },
+            onOpenStore = { /* seller preview — no-op */ },
+        )
         return
     }
 
@@ -147,6 +145,15 @@ internal fun SellerShellScreen(
             state = state,
             onBack = { onRouteChange(SellerShellRoute.Dashboard) },
             onAddProduct = { onRouteChange(SellerShellRoute.ProductOnboarding) },
+        )
+        return
+    }
+
+    if (route == SellerShellRoute.LowStockRestock) {
+        SellerLowStockScreen(
+            modifier = modifier,
+            state = state,
+            onBack = { onRouteChange(SellerShellRoute.Insights) },
         )
         return
     }
@@ -341,36 +348,36 @@ internal fun SellerShellScreen(
 
         // Performance time-range picker shown only on Dashboard
         if (route == SellerShellRoute.Dashboard) {
-        item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                    verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
-                ) {
-                    Text(
-                        "${state.currentSession?.name ?: "Your store"} performance",
-                        color = text,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(SellerUiTokens.chipGap)) {
-                        items(listOf("7d", "30d", "90d")) { label ->
-                            SellerRouteChip(
-                                label = label,
-                                selected = selectedTimeRange == label,
-                                onClick = {
-                                    selectedTimeRange = label
-                                    selectedDrillDownTitle = null
-                                },
-                                accent = accent,
-                                surface = surfaceHigh,
-                                text = text,
-                            )
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
+                        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+                    ) {
+                        Text(
+                            "${state.currentSession?.name ?: "Your store"} performance",
+                            color = text,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(SellerUiTokens.chipGap)) {
+                            items(listOf("7d", "30d", "90d")) { label ->
+                                SellerRouteChip(
+                                    label = label,
+                                    selected = selectedTimeRange == label,
+                                    onClick = {
+                                        selectedTimeRange = label
+                                        selectedDrillDownTitle = null
+                                    },
+                                    accent = accent,
+                                    surface = surfaceHigh,
+                                    text = text,
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
         } // end performance card if-Dashboard
 
         if (route == SellerShellRoute.Dashboard) {
@@ -443,7 +450,7 @@ internal fun SellerShellScreen(
                             Button(
                                 onClick = {
                                     if (insight.title.contains("stock", ignoreCase = true)) {
-                                        onRouteChange(SellerShellRoute.ProductLifecycleStub)
+                                        onRouteChange(SellerShellRoute.LowStockRestock)
                                     } else {
                                         onRouteChange(SellerShellRoute.SellerOrderList)
                                     }
@@ -748,7 +755,10 @@ internal fun SellerBargainCreateScreen(
     val scope = rememberCoroutineScope()
 
     val products = state.sellerContent.products.filter { it.status == "active" }
+    // Step 1 = product select, Step 2 = auction settings
+    var step by remember { mutableStateOf(1) }
     var selectedProductId by remember { mutableStateOf<String?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
     var reservePrice by remember { mutableStateOf("") }
     var durationHours by remember { mutableStateOf("24") }
     var buyWindowHours by remember { mutableStateOf("24") }
@@ -757,144 +767,520 @@ internal fun SellerBargainCreateScreen(
     var submitSuccess by remember { mutableStateOf(false) }
 
     val selectedProduct = products.firstOrNull { it.id == selectedProductId }
+    val filteredProducts = if (searchQuery.isBlank()) {
+        products
+    } else {
+        products.filter { p ->
+            p.displayTitle.contains(searchQuery, ignoreCase = true) ||
+                p.displayPrice.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
+    // ── Step 2: Auction settings ──────────────────────────────────────
+    if (step == 2 && selectedProduct != null) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize().background(bg),
+            contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = {
+                        step = 1
+                        submitError = null
+                    }) { Text("← Back", color = accent) }
+                    Text("Auction Settings", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Spacer(modifier = Modifier.width(56.dp))
+                }
+            }
+
+            // Selected product summary card
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        DemoImage(
+                            url = selectedProduct.displayImageUrl,
+                            contentDescription = selectedProduct.displayTitle,
+                            modifier = Modifier.size(56.dp),
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                selectedProduct.displayTitle,
+                                color = text,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(selectedProduct.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
+                        }
+                        TextButton(onClick = { step = 1 }) { Text("Change", color = muted, style = MaterialTheme.typography.labelSmall) }
+                    }
+                }
+            }
+
+            if (submitSuccess) {
+                item {
+                    Surface(color = Color(0xFF1A3A28), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            "✓ Bargain Day is now live! Buyers can start bidding.",
+                            color = Color(0xFF4CAF50),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    }
+                }
+            }
+            submitError?.let { err ->
+                item {
+                    Surface(color = danger.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text(err, color = danger, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = reservePrice,
+                            onValueChange = { v ->
+                                reservePrice = v.filter { it.isDigit() || it == '.' }
+                            },
+                            label = { Text("Reserve Price (₹)") },
+                            placeholder = { Text("Minimum bid amount") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value = durationHours,
+                            onValueChange = { v -> durationHours = v.filter { it.isDigit() } },
+                            label = { Text("Auction Duration (hours)") },
+                            placeholder = { Text("e.g. 24, 48, 72") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value = buyWindowHours,
+                            onValueChange = { v -> buyWindowHours = v.filter { it.isDigit() } },
+                            label = { Text("Winner Buy Window (hours)") },
+                            placeholder = { Text("Time the winner has to pay") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            "If the winner doesn't pay in time, the next highest bidder gets the opportunity — and so on.",
+                            color = muted,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val token = state.currentSession?.authToken
+                        if (token.isNullOrBlank()) {
+                            submitError = "Please sign in again."
+                            return@Button
+                        }
+                        val reserve = reservePrice.toDoubleOrNull() ?: 0.0
+                        val durationH = durationHours.toLongOrNull() ?: 24L
+                        scope.launch {
+                            isSubmitting = true
+                            submitError = null
+                            // Compute ISO-8601 timestamps
+                            val nowMs = getCurrentTimeMillis()
+                            val endMs = nowMs + (durationH * 3_600_000)
+                            val startDate = toIso8601(nowMs)
+                            val endDate = toIso8601(endMs)
+                            val errorMsg =
+                                state.sellerContent.scheduleBargain(
+                                    productId = selectedProductId!!,
+                                    startDate = startDate,
+                                    endDate = endDate,
+                                    reservePrice = reserve,
+                                    bearerToken = token,
+                                )
+                            isSubmitting = false
+                            if (errorMsg.isBlank()) {
+                                submitSuccess = true
+                            } else {
+                                submitError = errorMsg
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = SellerUiTokens.radiusButton,
+                    colors = ButtonDefaults.buttonColors(containerColor = accent),
+                    enabled = !isSubmitting && !submitSuccess,
+                ) {
+                    if (isSubmitting) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("🏷  Launch Bargain Day", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    // ── Step 1: Product selection ─────────────────────────────────────
     LazyColumn(
         modifier = modifier.fillMaxSize().background(bg),
         contentPadding = PaddingValues(SellerUiTokens.screenPadding),
         verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
     ) {
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 TextButton(onClick = onBack) { Text("Back", color = accent) }
                 Text("Bargain Day", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                 Spacer(modifier = Modifier.width(56.dp))
             }
         }
 
-        if (submitSuccess) {
-            item {
-                Surface(color = Color(0xFF1A3A28), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        "✓ Bargain Day is now live! Buyers can start bidding.",
-                        color = Color(0xFF4CAF50),
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                }
-            }
-        }
-
-        submitError?.let { err ->
-            item {
-                Surface(color = danger.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Text(err, color = danger, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
-                }
-            }
+        item {
+            Text(
+                "Select a product to run a Bargain Day auction",
+                color = muted,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
         }
 
         item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Select Product", color = text, fontWeight = FontWeight.Bold)
-                    if (products.isEmpty()) {
-                        Text("No live products. Publish a product first.", color = muted, style = MaterialTheme.typography.bodySmall)
-                    } else {
-                        products.forEach { product ->
-                            val selected = product.id == selectedProductId
-                            Surface(
-                                color = if (selected) accent.copy(alpha = 0.15f) else NotWhatColors.surfaceContainerHigh,
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.fillMaxWidth().clickable { selectedProductId = product.id },
-                            ) {
-                                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    DemoImage(url = product.displayImageUrl, contentDescription = product.displayTitle, modifier = Modifier.size(48.dp), shape = RoundedCornerShape(8.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(product.displayTitle, color = text, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text(product.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
-                                    }
-                                    if (selected) Text("✓", color = accent, fontWeight = FontWeight.Black)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Auction Settings", color = text, fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        value = reservePrice,
-                        onValueChange = { reservePrice = it.filter { c -> c.isDigit() || c == '.' } },
-                        label = { Text("Reserve Price (₹)") },
-                        placeholder = { Text("Minimum bid to win") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value = durationHours,
-                        onValueChange = { durationHours = it.filter { c -> c.isDigit() } },
-                        label = { Text("Auction Duration (hours)") },
-                        placeholder = { Text("e.g. 24, 48, 72") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value = buyWindowHours,
-                        onValueChange = { buyWindowHours = it.filter { c -> c.isDigit() } },
-                        label = { Text("Winner Buy Window (hours)") },
-                        placeholder = { Text("Time winner has to purchase") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        "If the winner doesn't purchase within the buy window, the next highest bidder gets the chance.",
-                        color = muted,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search products") },
+                placeholder = { Text("By title or price") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
         }
 
         item {
             Button(
                 onClick = {
-                    val token = state.currentSession?.authToken
-                    val productId = selectedProductId
-                    if (token.isNullOrBlank()) { submitError = "Please sign in again."; return@Button }
-                    if (productId == null) { submitError = "Select a product to run a Bargain Day."; return@Button }
-                    val reserve = reservePrice.toDoubleOrNull() ?: 0.0
-                    val durationH = durationHours.toLongOrNull() ?: 24L
-                    scope.launch {
-                        isSubmitting = true
+                    if (selectedProductId != null) {
                         submitError = null
-                        // Send relative duration; backend computes absolute timestamps
-                        val startDate = "now"
-                        val endDate = "+${durationH}h"
-                        val result = state.sellerContent.scheduleBargain(
-                            productId = productId,
-                            startDate = startDate,
-                            endDate = endDate,
-                            reservePrice = reserve,
-                            bearerToken = token,
-                        )
-                        isSubmitting = false
-                        if (result) {
-                            submitSuccess = true
-                            submitError = null
-                        } else {
-                            submitError = "Failed to create Bargain Day. Please try again."
-                        }
+                        step = 2
+                    } else {
+                        submitError = "Please select a product first."
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = SellerUiTokens.radiusButton,
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
-                enabled = !isSubmitting && selectedProductId != null,
+                enabled = selectedProductId != null,
             ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Text("🏷  Launch Bargain Day", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Next →", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (products.isEmpty()) {
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "No live products. Publish a product first.",
+                        color = muted,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
+        } else {
+            items(filteredProducts) { product ->
+                val selected = product.id == selectedProductId
+                Surface(
+                    color = if (selected) accent.copy(alpha = 0.15f) else surface,
+                    shape = SellerUiTokens.radiusInnerCard,
+                    modifier = Modifier.fillMaxWidth().clickable { selectedProductId = product.id },
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        DemoImage(
+                            url = product.displayImageUrl,
+                            contentDescription = product.displayTitle,
+                            modifier = Modifier.size(56.dp),
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                product.displayTitle,
+                                color = text,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(product.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
+                            Text(
+                                "Stock: ${product.stock}",
+                                color =
+                                    if (product.stock <
+                                        5
+                                    ) {
+                                        danger
+                                    } else {
+                                        muted
+                                    },
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                        if (selected) Text("✓", color = accent, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+        }
+
+        submitError?.let { err ->
+            item { Text(err, color = danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 4.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun SellerLowStockScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
+) {
+    val bg = NotWhatColors.background
+    val surface = NotWhatColors.surface
+    val text = NotWhatColors.onSurface
+    val muted = NotWhatColors.onSurfaceVariant
+    val accent = NotWhatAuthTokens.accent
+    val danger = Color(0xFFD32F2F)
+    val scope = rememberCoroutineScope()
+
+    val lowStockProducts = state.sellerContent.products.filter { it.stock < 5 }
+    var editingProductId by remember { mutableStateOf<String?>(null) }
+    var newStock by remember { mutableStateOf("") }
+    var isSaving by remember { mutableStateOf(false) }
+    var saveError by remember { mutableStateOf<String?>(null) }
+    var saveSuccess by remember { mutableStateOf<String?>(null) }
+
+    val editingProduct = lowStockProducts.firstOrNull { it.id == editingProductId }
+
+    // Restock detail screen
+    if (editingProduct != null) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize().background(bg),
+            contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = {
+                        editingProductId = null
+                        saveError = null
+                        saveSuccess = null
+                        newStock = ""
+                    }) { Text("← Back", color = accent) }
+                    Text("Restock", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Spacer(modifier = Modifier.width(56.dp))
+                }
+            }
+
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        DemoImage(
+                            url = editingProduct.displayImageUrl,
+                            contentDescription = editingProduct.displayTitle,
+                            modifier = Modifier.size(64.dp),
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                editingProduct.displayTitle,
+                                color = text,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(editingProduct.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
+                            Surface(color = danger.copy(alpha = 0.12f), shape = RoundedCornerShape(6.dp)) {
+                                Text(
+                                    "Current stock: ${editingProduct.stock}",
+                                    color = danger,
+                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            saveSuccess?.let { msg ->
+                item {
+                    Surface(color = Color(0xFF1A3A28), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text(msg, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
+                    }
+                }
+            }
+            saveError?.let { err ->
+                item {
+                    Surface(color = danger.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text(err, color = danger, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Update Stock Quantity", color = text, fontWeight = FontWeight.Bold)
+                        OutlinedTextField(
+                            value = newStock,
+                            onValueChange = { v -> newStock = v.filter { it.isDigit() } },
+                            label = { Text("New stock quantity") },
+                            placeholder = { Text("Enter new total stock") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val token = state.currentSession?.authToken
+                        val qty = newStock.toIntOrNull()
+                        if (token.isNullOrBlank()) {
+                            saveError = "Please sign in again."
+                            return@Button
+                        }
+                        if (qty == null || qty < 0) {
+                            saveError = "Enter a valid stock quantity."
+                            return@Button
+                        }
+                        scope.launch {
+                            isSaving = true
+                            saveError = null
+                            val request =
+                                com.notwhat.shared.catalog
+                                    .UpdateProductRequestDto(stock = qty)
+                            state.sellerContent.updateProduct(editingProduct.id, request, token)
+                            isSaving = false
+                            saveSuccess = "✓ Stock updated to $qty units."
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = SellerUiTokens.radiusButton,
+                    colors = ButtonDefaults.buttonColors(containerColor = accent),
+                    enabled = !isSaving,
+                ) {
+                    if (isSaving) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("Save Stock Update", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    // Low-stock product list
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onBack) { Text("Back", color = accent) }
+                Text("Low Stock", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                Spacer(modifier = Modifier.width(56.dp))
+            }
+        }
+
+        if (lowStockProducts.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 60.dp), contentAlignment = Alignment.Center) {
+                    Text("All products are well stocked! 🎉", color = muted, style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        } else {
+            item {
+                Text(
+                    "${lowStockProducts.size} product(s) need restocking. Tap any to update stock.",
+                    color = muted,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                )
+            }
+            items(lowStockProducts) { product ->
+                Surface(
+                    color = surface,
+                    shape = SellerUiTokens.radiusInnerCard,
+                    modifier =
+                        Modifier.fillMaxWidth().clickable {
+                            editingProductId = product.id
+                            newStock = product.stock.toString()
+                        },
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        DemoImage(
+                            url = product.displayImageUrl,
+                            contentDescription = product.displayTitle,
+                            modifier = Modifier.size(56.dp),
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                product.displayTitle,
+                                color = text,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(product.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
+                            Surface(color = danger.copy(alpha = 0.12f), shape = RoundedCornerShape(6.dp)) {
+                                Text(
+                                    "Only ${product.stock} left",
+                                    color = danger,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                )
+                            }
+                        }
+                        Text("Restock →", color = accent, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+                    }
                 }
             }
         }

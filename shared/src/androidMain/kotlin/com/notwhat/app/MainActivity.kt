@@ -89,6 +89,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onBackPressed() {
+        // Allow Compose to handle back navigation first
+        // This prevents the app from closing and instead navigates back within the app
+        super.onBackPressed()
+    }
+
     override fun onDestroy() {
         if (isFinishing) {
             AndroidSocialAuthBridgeRegistry.registerGoogleSignIn(null)

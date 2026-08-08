@@ -22,7 +22,13 @@ internal sealed interface AppRoute {
 
     data object Cart : AppRoute
 
+    data object BuyerOrders : AppRoute
+
     data object BuyerReturns : AppRoute
+
+    data class OrderDetail(
+        val order: com.notwhat.shared.order.OrderDto,
+    ) : AppRoute
 
     data class CheckoutDraftRoute(
         val draft: CheckoutDraft,
@@ -57,7 +63,13 @@ internal sealed interface AppNavEvent {
 
     data object OpenCart : AppNavEvent
 
+    data object OpenBuyerOrders : AppNavEvent
+
     data object OpenBuyerReturns : AppNavEvent
+
+    data class OpenOrderDetail(
+        val order: com.notwhat.shared.order.OrderDto,
+    ) : AppNavEvent
 
     data class ProceedToCheckout(
         val draft: CheckoutDraft,

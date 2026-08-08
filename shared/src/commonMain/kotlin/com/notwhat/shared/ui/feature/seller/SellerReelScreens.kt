@@ -288,14 +288,11 @@ internal fun SellerReelListScreen(
                 onDelete = { pendingDeleteId = reel.id },
                 onTagProducts = { tagPickerReelId = reel.id },
                 onPreview = {
-                    onPreviewReel(
-                        SellerReelPreviewRoute(
-                            reelId = reel.id,
-                            videoUrl = reel.videoUrl,
-                            thumbnailUrl = reel.thumbnailUrl,
-                            caption = reel.caption,
-                        )
-                    )
+                    // Look up original ReelDto so preview shows the same view the buyer sees
+                    val originalReel = state.sellerContent.reels.firstOrNull { it.id == reel.id }
+                    if (originalReel != null) {
+                        onPreviewReel(SellerReelPreviewRoute(reel = originalReel))
+                    }
                 },
                 onEditCaption = { newCaption ->
                     val token = state.currentSession?.authToken

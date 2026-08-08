@@ -48,13 +48,17 @@ actual fun NativeVideoPlayer(
                     repeatMode = ExoPlayer.REPEAT_MODE_ONE
                     prepare()
                     playWhenReady = true
-                    addListener(object : Player.Listener {
-                        override fun onPlaybackStateChanged(state: Int) {
-                            isBuffering = state == Player.STATE_BUFFERING || state == Player.STATE_IDLE
-                        }
-                    })
+                    addListener(
+                        object : Player.Listener {
+                            override fun onPlaybackStateChanged(state: Int) {
+                                isBuffering = state == Player.STATE_BUFFERING || state == Player.STATE_IDLE
+                            }
+                        },
+                    )
                 }
-            } catch (_: Exception) { null }
+            } catch (_: Exception) {
+                null
+            }
         }
 
     DisposableEffect(exoPlayer) {

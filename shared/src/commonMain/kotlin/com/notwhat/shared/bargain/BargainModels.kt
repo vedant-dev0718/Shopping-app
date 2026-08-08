@@ -1,6 +1,5 @@
 package com.notwhat.shared.bargain
 
-import com.notwhat.shared.catalog.ProductDto
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
@@ -9,7 +8,7 @@ import kotlinx.serialization.json.JsonNames
 @Serializable
 data class BargainScheduleDto(
     @JsonNames("id", "_id") val id: String = "",
-    val productId: ProductDto? = null,
+    val productId: String = "",
     val sellerId: String = "",
     val startDate: String = "",
     val endDate: String = "",
@@ -44,7 +43,7 @@ fun seedActiveBargains(): List<BargainScheduleDto> {
     return products.take(2).mapIndexed { idx, p ->
         BargainScheduleDto(
             id = "seed-bargain-$idx",
-            productId = p,
+            productId = p.id,
             startDate = "2026-08-01T10:00:00.000Z",
             endDate = "2026-08-03T10:00:00.000Z",
             reservePrice = p.price * 0.7,

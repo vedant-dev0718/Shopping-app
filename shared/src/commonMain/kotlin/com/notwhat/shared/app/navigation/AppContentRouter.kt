@@ -32,6 +32,11 @@ internal fun AppContentRouter(
     sellerCoordinator: SellerNavigationCoordinator,
     adminCoordinator: AdminNavigationCoordinator,
 ) {
+    // Intercept system back on Android; no-op on iOS (handled via swipe)
+    PlatformBackHandler(enabled = flow.isInSubScreen) {
+        flow.onEvent(AppNavEvent.CloseCurrent)
+    }
+
     if (!state.isAuthenticated) {
         when (state.entryStage) {
             AppEntryStage.Splash -> {
@@ -147,6 +152,26 @@ internal fun AppContentRouter(
         return
     }
 
+    if (flow.route is AppRoute.OrderDetail) {
+        val route = flow.route as AppRoute.OrderDetail
+        OrderDetailScreen(
+            modifier = Modifier.padding(padding),
+            order = route.order,
+            onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
+        )
+        return
+    }
+
+    if (flow.route is AppRoute.BuyerOrders) {
+        BuyerOrdersScreen(
+            modifier = Modifier.padding(padding),
+            state = state,
+            onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
+            onOpenOrder = { order -> flow.onEvent(AppNavEvent.OpenOrderDetail(order)) },
+        )
+        return
+    }
+
     if (flow.route is AppRoute.BuyerReturns) {
         BuyerReturnsScreen(
             modifier = Modifier.padding(padding),
@@ -230,11 +255,27 @@ internal fun AppContentRouter(
                 onOpenProfile = { flow.onEvent(AppNavEvent.OpenProfile) },
                 onOpenAddresses = { flow.onEvent(AppNavEvent.OpenAddresses) },
                 onOpenCart = { flow.onEvent(AppNavEvent.OpenCart) },
+                onOpenBuyerOrders = { flow.onEvent(AppNavEvent.OpenBuyerOrders) },
                 onOpenBuyerReturns = { flow.onEvent(AppNavEvent.OpenBuyerReturns) },
                 onSignOut = state::signOut,
             )
         }
     }
+}
+
+@Composable
+private fun BuyerOrdersScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
+    onOpenOrder: (com.notwhat.shared.order.OrderDto) -> Unit,
+) {
+    BuyerOrdersContentScreen(
+        modifier = modifier,
+        state = state,
+        onBack = onBack,
+        onOpenOrder = onOpenOrder,
+    )
 }
 
 @Composable

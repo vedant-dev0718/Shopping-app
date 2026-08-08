@@ -406,8 +406,14 @@ class NotWhatAppState(
         )
     }
 
-    private fun selectedDeliveryAddress(): AddressDto? =
-        transaction.addresses.firstOrNull { it.isDefault } ?: transaction.addresses.firstOrNull()
+    private fun selectedDeliveryAddress(): AddressDto? {
+        // If user has explicitly selected an address, use that
+        if (!transaction.selectedDeliveryAddressId.isNullOrBlank()) {
+            return transaction.addresses.firstOrNull { it.id == transaction.selectedDeliveryAddressId }
+        }
+        // Otherwise, fall back to default or first address
+        return transaction.addresses.firstOrNull { it.isDefault } ?: transaction.addresses.firstOrNull()
+    }
 }
 
 private fun AddressDto.toCheckoutShippingInfo(email: String): CheckoutShippingInfoDto =

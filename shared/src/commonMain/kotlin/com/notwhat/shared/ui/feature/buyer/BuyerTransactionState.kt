@@ -22,6 +22,8 @@ internal class BuyerTransactionState(
         private set
     var addresses by mutableStateOf<List<AddressDto>>(emptyList())
         private set
+    var selectedDeliveryAddressId by mutableStateOf<String?>(null)
+        private set
     var isCartLoading by mutableStateOf(false)
         private set
     var cartErrorMessage by mutableStateOf<String?>(null)
@@ -109,4 +111,12 @@ internal class BuyerTransactionState(
                 .AddCartItemRequestDto(productId, quantity),
             bearerToken,
         )
+
+    fun selectDeliveryAddress(addressId: String) {
+        selectedDeliveryAddressId = addressId
+    }
+
+    fun clearSelectedDeliveryAddress() {
+        selectedDeliveryAddressId = null
+    }
 }
