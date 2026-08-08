@@ -1,6 +1,7 @@
 package com.notwhat.shared.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,12 +9,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BorderStroke
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +49,7 @@ internal fun BuyerOrdersContentScreen(
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
     val surfaceHigh = NotWhatColors.surfaceContainerHigh
+    val outline = NotWhatColors.outline
     val text = NotWhatColors.onSurface
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
@@ -80,7 +82,18 @@ internal fun BuyerOrdersContentScreen(
             ) {
                 TextButton(onClick = onBack) { Text("Back", color = accent) }
                 Text("My Orders", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                Text("${orders.size}", color = muted, style = MaterialTheme.typography.labelSmall)
+                Surface(
+                    color = surface,
+                    shape = RoundedCornerShape(999.dp),
+                    border = BorderStroke(1.dp, outline.copy(alpha = 0.5f)),
+                ) {
+                    Text(
+                        "${orders.size}",
+                        color = muted,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
             }
         }
 
@@ -120,6 +133,7 @@ internal fun BuyerOrdersContentScreen(
             OrderCard(
                 order = order,
                 surface = surface,
+                outline = outline,
                 text = text,
                 muted = muted,
                 accent = accent,
@@ -145,28 +159,41 @@ internal fun BuyerOrdersContentScreen(
 private fun OrderCard(
     order: com.notwhat.shared.order.OrderDto,
     surface: Color,
+    outline: Color,
     text: Color,
     muted: Color,
     accent: Color,
     onOpenOrder: () -> Unit,
 ) {
+    val statusStyle = orderStatusStyle(order.status)
+    val itemCount = order.items.sumOf { it.quantity }
+
     Surface(
         modifier = Modifier.fillMaxWidth().clickable { onOpenOrder() },
         color = surface,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, outline.copy(alpha = 0.42f)),
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
             ) {
-                Text("Order ${order.id.take(8)}", color = text, fontWeight = FontWeight.Bold)
-                Surface(color = getOrderStatusColor(order.status).copy(alpha = 0.18f), shape = RoundedCornerShape(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Order ${order.id.take(8)}", color = text, fontWeight = FontWeight.Bold)
+                    Text("$itemCount item${if (itemCount == 1) "" else "s"}", color = muted, style = MaterialTheme.typography.labelSmall)
+                }
+
+                Surface(
+                    color = statusStyle.color.copy(alpha = 0.14f),
+                    shape = RoundedCornerShape(999.dp),
+                    border = BorderStroke(1.dp, statusStyle.color.copy(alpha = 0.28f)),
+                ) {
                     Text(
-                        order.status.uppercase(),
-                        color = getOrderStatusColor(order.status),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        statusStyle.label,
+                        color = statusStyle.color,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                     )
@@ -180,10 +207,11 @@ private fun OrderCard(
                     item = firstItem,
                     text = text,
                     muted = muted,
+                    accent = accent,
                 )
             }
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+            HorizontalDivider(color = outline.copy(alpha = 0.35f))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -192,7 +220,12 @@ private fun OrderCard(
             ) {
                 Column {
                     Text("Total", color = muted, style = MaterialTheme.typography.labelSmall)
-                    Text("₹${order.totalAmount}", color = text, fontWeight = FontWeight.Bold)
+                    Text(
+                        "₹${formatOrderAmount(order.totalAmount)}",
+                        color = text,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                    )
                 }
                 Text("›", style = MaterialTheme.typography.titleLarge, color = accent)
             }
@@ -205,36 +238,75 @@ private fun OrderItemPreview(
     item: com.notwhat.shared.order.OrderItemDto,
     text: Color,
     muted: Color,
+    accent: Color,
 ) {
+    val displayImage =
+        item.imageSnapshot?.takeIf { it.isNotBlank() }
+            ?: item.productId?.displayImageUrl
+    val displayTitle =
+        item.titleSnapshot.takeIf { it.isNotBlank() }
+            ?: item.productId?.displayTitle ?: "Product"
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (!item.imageSnapshot.isNullOrBlank()) {
+        if (!displayImage.isNullOrBlank()) {
             AsyncImage(
-                model = item.imageSnapshot,
-                contentDescription = item.titleSnapshot,
+                model = displayImage,
+                contentDescription = displayTitle,
                 modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop,
             )
+        } else {
+            Surface(
+                color = accent.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.size(48.dp).border(BorderStroke(1.dp, accent.copy(alpha = 0.25f)), RoundedCornerShape(8.dp)),
+            ) {}
         }
 
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(item.titleSnapshot, color = text, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text("Qty: ${item.quantity} × ₹${item.priceSnapshot}", color = muted, style = MaterialTheme.typography.labelSmall)
+            Text(displayTitle, color = text, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(
+                "Qty: ${item.quantity} x ₹${formatOrderAmount(item.priceSnapshot)}",
+                color = muted,
+                style = MaterialTheme.typography.labelSmall,
+            )
         }
     }
 }
 
-private fun getOrderStatusColor(status: String): Color {
-    return when (status.lowercase()) {
-        "placed" -> NotWhatColors.primary
-        "confirmed" -> NotWhatColors.primary
-        "shipped" -> Color(0xFF4CAF50) // Green
-        "delivered" -> Color(0xFF4CAF50) // Green
-        "cancelled" -> Color(0xFFFF6B6B) // Red
-        "returned" -> Color(0xFFFF9800) // Orange
-        else -> NotWhatColors.onSurfaceVariant
+private data class OrderStatusStyle(
+    val label: String,
+    val color: Color,
+)
+
+private fun orderStatusStyle(status: String): OrderStatusStyle {
+    val normalized = status.lowercase()
+    val color =
+        when (normalized) {
+            "awaiting_seller_acceptance" -> Color(0xFF9A6700)
+            "processing", "confirmed", "placed" -> NotWhatColors.primary
+            "shipped", "delivered" -> Color(0xFF1E7A43)
+            "return_requested", "returned" -> Color(0xFFD97706)
+            "cancelled", "rejected" -> Color(0xFFB42318)
+            else -> NotWhatColors.onSurfaceVariant
+        }
+
+    val label =
+        normalized.replace('_', ' ').split(' ').joinToString(" ") { token ->
+            token.replaceFirstChar { ch -> ch.uppercase() }
+        }
+
+    return OrderStatusStyle(label = label, color = color)
+}
+
+private fun formatOrderAmount(amount: Double): String {
+    val whole = amount.toLong()
+    return if (amount == whole.toDouble()) {
+        whole.toString()
+    } else {
+        amount.toString()
     }
 }

@@ -14,6 +14,8 @@ const targets = [
     { name: "bargains", html: "reels_feed/code.html" },
     { name: "cart", html: "cart/code.html" },
     { name: "store_profile", html: "store_profile/code.html" },
+    { name: "accepted_bid_bargains", html: "active_bargains/code.html" },
+    { name: "accepted_bid_cart", html: "cart/code.html" },
 ];
 
 const browser = await chromium.launch({ headless: true });

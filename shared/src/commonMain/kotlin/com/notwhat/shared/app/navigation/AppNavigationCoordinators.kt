@@ -90,18 +90,25 @@ internal class ReelsNavigationCoordinator(
 }
 
 /** Coordinates product navigation. */
-internal class ProductNavigationCoordinator {
+internal class ProductNavigationCoordinator(
+    private val onOpenStore: (StoreDto) -> Unit,
+) {
     @Composable
     fun DetailScreen(
         modifier: Modifier,
         state: NotWhatAppState,
         product: ProductDto,
+        onSellerEdit: ((ProductDto) -> Unit)? = null,
+        onSellerRestock: ((ProductDto) -> Unit)? = null,
         onBack: () -> Unit,
     ) {
         ProductDetailScreen(
             modifier = modifier,
             state = state,
             product = product,
+            onOpenStore = onOpenStore,
+            onSellerEdit = onSellerEdit,
+            onSellerRestock = onSellerRestock,
             onBack = onBack,
         )
     }
@@ -115,6 +122,7 @@ internal class SellerNavigationCoordinator {
         state: NotWhatAppState,
         route: SellerShellRoute,
         onRouteChange: (SellerShellRoute) -> Unit,
+        onOpenProduct: (ProductDto) -> Unit,
         onBackToAccount: () -> Unit,
     ) {
         SellerShellScreen(
@@ -122,6 +130,7 @@ internal class SellerNavigationCoordinator {
             state = state,
             route = route,
             onRouteChange = onRouteChange,
+            onOpenProduct = onOpenProduct,
             onBackToAccount = onBackToAccount,
         )
     }

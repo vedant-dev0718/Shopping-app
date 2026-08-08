@@ -12,6 +12,7 @@ import com.notwhat.shared.core.AppConfig
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.session.UserRole
 import com.notwhat.shared.session.UserSession
+import com.notwhat.shared.session.seedSessionForRole
 
 /**
  * Domain-layer use-case for authentication flows.
@@ -24,6 +25,8 @@ class AuthUseCase(
     private val config: AppConfig,
     private val repository: AuthRepository,
 ) {
+    private val mockSignupVerificationStore = mutableMapOf<String, PendingSignupVerification>()
+
     // ------------------------------------------------------------------
     // Login
     // ------------------------------------------------------------------
@@ -34,7 +37,13 @@ class AuthUseCase(
         password: String,
         isAdmin: Boolean,
         selectedRole: UserRole,
-    ): NetworkResult<UserSession> = repository.login(email, password, isAdmin)
+    ): NetworkResult<UserSession> {
+        if (config.isMock) {
+            val role = if (isAdmin) UserRole.Admin else selectedRole
+            return NetworkResult.Success(seedSessionForRole(role))
+        }
+        return repository.login(email, password, isAdmin)
+    }
 
     // ------------------------------------------------------------------
     // Social auth
@@ -43,52 +52,124 @@ class AuthUseCase(
     suspend fun continueWithGoogle(
         idToken: String,
         role: UserRole,
-    ): NetworkResult<UserSession> = repository.continueWithGoogle(idToken, role)
+    ): NetworkResult<UserSession> {
+        if (config.isMock) {
+            return NetworkResult.Success(seedSessionForRole(role))
+        }
+        return repository.continueWithGoogle(idToken, role)
+    }
 
     suspend fun continueWithApple(
         identityToken: String,
         fullName: String?,
         role: UserRole,
-    ): NetworkResult<UserSession> = repository.continueWithApple(identityToken, fullName, role)
+    ): NetworkResult<UserSession> {
+        if (config.isMock) {
+            return NetworkResult.Success(seedSessionForRole(role))
+        }
+        return repository.continueWithApple(identityToken, fullName, role)
+    }
 
     // ------------------------------------------------------------------
     // Signup
     // ------------------------------------------------------------------
 
+    private fun buildMockVerificationId(
+        role: UserRole,
+        email: String,
+    ): String = "mock-signup-${role.name.lowercase()}-${email.trim().lowercase()}"
+
     suspend fun startBuyerSignup(request: BuyerSignupRequestDto): NetworkResult<PendingSignupVerification> =
-        repository.startBuyerSignup(request)
+        if (config.isMock) {
+            val verification =
+                PendingSignupVerification(
+                    verificationId = buildMockVerificationId(UserRole.Buyer, request.email),
+                    email = request.email.trim(),
+                    role = UserRole.Buyer,
+                )
+            mockSignupVerificationStore[verification.verificationId] = verification
+            NetworkResult.Success(verification)
+        } else {
+            repository.startBuyerSignup(request)
+        }
 
     suspend fun startSellerSignup(request: SellerSignupRequestDto): NetworkResult<PendingSignupVerification> =
-        repository.startSellerSignup(request)
+        if (config.isMock) {
+            val verification =
+                PendingSignupVerification(
+                    verificationId = buildMockVerificationId(UserRole.Seller, request.email),
+                    email = request.email.trim(),
+                    role = UserRole.Seller,
+                )
+            mockSignupVerificationStore[verification.verificationId] = verification
+            NetworkResult.Success(verification)
+        } else {
+            repository.startSellerSignup(request)
+        }
 
     suspend fun verifySignupEmail(
         verification: PendingSignupVerification,
         otp: String,
-    ): NetworkResult<UserSession> = repository.verifySignupEmail(verification.verificationId, otp)
+    ): NetworkResult<UserSession> {
+        if (config.isMock) {
+            return NetworkResult.Success(seedSessionForRole(verification.role))
+        }
+        return repository.verifySignupEmail(verification.verificationId, otp)
+    }
 
     suspend fun resendSignupCode(verification: PendingSignupVerification): NetworkResult<PendingSignupVerification> =
-        repository.resendSignupCode(verification.verificationId)
+        if (config.isMock) {
+            val stored = mockSignupVerificationStore[verification.verificationId] ?: verification
+            NetworkResult.Success(stored)
+        } else {
+            repository.resendSignupCode(verification.verificationId)
+        }
 
     // ------------------------------------------------------------------
     // Password reset
     // ------------------------------------------------------------------
 
-    suspend fun sendResetCode(email: String): NetworkResult<ForgotPasswordResponseDto> = repository.sendResetCode(email)
+    suspend fun sendResetCode(email: String): NetworkResult<ForgotPasswordResponseDto> =
+        if (config.isMock) {
+            NetworkResult.Success(ForgotPasswordResponseDto(email = email.trim()))
+        } else {
+            repository.sendResetCode(email)
+        }
 
     suspend fun resetPassword(
         email: String,
         otp: String,
         newPassword: String,
-    ): NetworkResult<ResetPasswordResponseDto> = repository.resetPassword(email, otp, newPassword)
+    ): NetworkResult<ResetPasswordResponseDto> =
+        if (config.isMock) {
+            NetworkResult.Success(
+                ResetPasswordResponseDto(
+                    passwordReset = true,
+                    sessionsInvalidated = true,
+                ),
+            )
+        } else {
+            repository.resetPassword(email, otp, newPassword)
+        }
 
     suspend fun completeSellerProfile(
         authToken: String,
         request: CompleteSellerProfileRequestDto,
-    ): NetworkResult<UserSession> = repository.completeSellerProfile(authToken, request)
+    ): NetworkResult<UserSession> {
+        if (config.isMock) {
+            return NetworkResult.Success(seedSessionForRole(UserRole.Seller).copy(requiresSellerProfileSetup = false))
+        }
+        return repository.completeSellerProfile(authToken, request)
+    }
 
     suspend fun changePassword(
         authToken: String,
         currentPassword: String,
         newPassword: String,
-    ): NetworkResult<ChangePasswordResponseDto> = repository.changePassword(authToken, currentPassword, newPassword)
+    ): NetworkResult<ChangePasswordResponseDto> =
+        if (config.isMock) {
+            NetworkResult.Success(ChangePasswordResponseDto(passwordChanged = true))
+        } else {
+            repository.changePassword(authToken, currentPassword, newPassword)
+        }
 }

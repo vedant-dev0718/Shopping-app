@@ -1,6 +1,5 @@
 package com.notwhat.shared.seller
 
-import com.notwhat.shared.catalog.StoreCardDto
 import com.notwhat.shared.order.OrderDto
 import com.notwhat.shared.order.OrderItemDto
 import com.notwhat.shared.order.seedOrders
@@ -34,8 +33,7 @@ fun seedSellerOrders(): List<OrderDto> =
                     listOf(
                         OrderItemDto(
                             id = "seed-si-2",
-                            productId = "seed-product-2",
-                            storeId = StoreCardDto(id = "seed-store-1", storeName = "Jaipur Looms"),
+                            productId = null,
                             titleSnapshot = "Banarasi Silk Saree",
                             quantity = 1,
                             priceSnapshot = 6499.0,

@@ -562,6 +562,7 @@ internal fun CartSavedPaymentsScreen(
             emitPaymentMethodsFailure(code = "PAYMENT_METHODS_AUTH_MISSING", message = paymentMethodsError)
             return@LaunchedEffect
         }
+        state.transaction.loadAddresses(sessionToken)
         paymentMethodsLoading = true
         paymentMethodsError = null
         val liveMethods = state.fetchCheckoutPaymentMethods().orEmpty()

@@ -1,9 +1,19 @@
 package com.notwhat.shared.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -12,16 +22,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import com.notwhat.app.HostComposeTestActivity
 import org.junit.Rule
@@ -33,7 +33,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class BidSheetHostUiTest {
-
     @get:Rule
     val composeRule = createAndroidComposeRule<HostComposeTestActivity>()
 
@@ -106,6 +105,8 @@ private fun ProductBidHarness() {
             scenario = scenario,
             bidInput = bidInput,
             onBidInputChange = { bidInput = it },
+            onConfirm = { showBidSheet = false },
+            isSubmitting = false,
             backgroundColor = Color.Black,
             surfaceColor = Color(0xFF2D1B16),
             textColor = Color.White,
@@ -120,14 +121,15 @@ private fun ProductBidHarness() {
 private fun ReelBidHarness() {
     val reel = PreviewContent.reels.first()
     val scenario = BargainFixtures.forReel(reel)
-    val product = DemoProduct(
-        name = "${reel.creator} Reel Drop",
-        price = reel.price,
-        originalPrice = null,
-        store = reel.creator,
-        category = "Reels",
-        imageUrl = reel.imageUrl,
-    ).toProductDtoStub()
+    val product =
+        DemoProduct(
+            name = "${reel.creator} Reel Drop",
+            price = reel.price,
+            originalPrice = null,
+            store = reel.creator,
+            category = "Reels",
+            imageUrl = reel.imageUrl,
+        ).toProductDtoStub()
     var showBidSheet by remember { mutableStateOf(false) }
     var bidInput by remember { mutableStateOf(scenario.defaultBidInput) }
 
@@ -135,10 +137,11 @@ private fun ReelBidHarness() {
         Surface(
             color = Color(0xFF44302A),
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("reel_active_bargain_card")
-                .clickable { showBidSheet = true },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag("reel_active_bargain_card")
+                    .clickable { showBidSheet = true },
         ) {
             Text(scenario.headline)
         }
@@ -146,10 +149,11 @@ private fun ReelBidHarness() {
         Surface(
             color = Color(0xFF6E4638),
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .testTag("reel_place_bid_button")
-                .clickable { showBidSheet = true },
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .testTag("reel_place_bid_button")
+                    .clickable { showBidSheet = true },
         ) {
             Text("Place Bid")
         }
@@ -161,6 +165,8 @@ private fun ReelBidHarness() {
             scenario = scenario,
             bidInput = bidInput,
             onBidInputChange = { bidInput = it },
+            onConfirm = { showBidSheet = false },
+            isSubmitting = false,
             backgroundColor = Color.Black,
             surfaceColor = Color(0xFF2D1B16),
             textColor = Color.White,

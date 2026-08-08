@@ -1,6 +1,7 @@
 package com.notwhat.shared.address
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
 
@@ -8,31 +9,32 @@ import kotlinx.serialization.json.JsonNames
 @Serializable
 data class AddressDto(
     @JsonNames("id", "_id") val id: String = "",
-    val fullName: String = "",
-    val phone: String = "",
+    @JsonNames("fullName", "contactName", "name") val fullName: String = "",
+    @JsonNames("phone", "contactPhone") val phone: String = "",
     val addressLine1: String = "",
     val addressLine2: String? = null,
     val landmark: String? = null,
     val city: String = "",
     val state: String = "",
-    val pincode: String = "",
+    @JsonNames("pincode", "postalCode") val pincode: String = "",
     val country: String = "India",
     val isDefault: Boolean = false,
     val isVerified: Boolean = false,
-    val type: String = "delivery",   // "delivery" | "pickup"
+    @JsonNames("type", "addressType") val type: String = "home",
 )
 
 @Serializable
 data class AddressRequestDto(
-    val fullName: String,
-    val phone: String,
+    @SerialName("contactName") val fullName: String,
+    @SerialName("contactPhone") val phone: String,
     val addressLine1: String,
     val addressLine2: String? = null,
     val landmark: String? = null,
     val city: String,
     val state: String,
-    val pincode: String,
+    @SerialName("postalCode") val pincode: String,
     val country: String = "India",
+    @SerialName("addressType") val type: String = "home",
 )
 
 @Serializable
@@ -45,16 +47,17 @@ data class AddressValidateResponseDto(
 // Seed data
 // ---------------------------------------------------------------------------
 
-fun seedDeliveryAddresses(): List<AddressDto> = listOf(
-    AddressDto(
-        id = "seed-address-1",
-        fullName = "Aryan Sharma",
-        phone = "9999999999",
-        addressLine1 = "12 MG Road",
-        city = "Jaipur",
-        state = "Rajasthan",
-        pincode = "302001",
-        isDefault = true,
-        isVerified = true,
-    ),
-)
+fun seedDeliveryAddresses(): List<AddressDto> =
+    listOf(
+        AddressDto(
+            id = "seed-address-1",
+            fullName = "Aryan Sharma",
+            phone = "9999999999",
+            addressLine1 = "12 MG Road",
+            city = "Jaipur",
+            state = "Rajasthan",
+            pincode = "302001",
+            isDefault = true,
+            isVerified = true,
+        ),
+    )

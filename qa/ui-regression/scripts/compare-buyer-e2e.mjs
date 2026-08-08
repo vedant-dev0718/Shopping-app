@@ -7,6 +7,8 @@ import sharp from "sharp";
 const rootDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../../..");
 const baselineDir = path.join(rootDir, "qa", "ui-regression", "screenshots", "baseline", "buyer-e2e");
 const currentDir = path.join(rootDir, "qa", "ui-regression", "screenshots", "current", "buyer-e2e");
+const baselineIosAcceptedDir = path.join(rootDir, "qa", "ui-regression", "screenshots", "baseline", "buyer-ios-accepted-bid");
+const currentIosAcceptedDir = path.join(rootDir, "qa", "ui-regression", "screenshots", "current", "buyer-ios-accepted-bid");
 const stitchDir = path.join(rootDir, "qa", "ui-regression", "screenshots", "current", "stitch-buyer-e2e");
 const diffDir = path.join(rootDir, "qa", "ui-regression", "diff", "buyer-e2e");
 const hardGatePct = Number(process.env.BASELINE_THRESHOLD_PCT || "1.0");
@@ -17,6 +19,7 @@ const appCropBottomPx = Number(process.env.APP_CROP_BOTTOM_PX || "120");
 fs.mkdirSync(diffDir, { recursive: true });
 
 const checkpoints = ["auth_login", "home", "search", "bargains", "cart", "store_profile"];
+const iosAcceptedCheckpoints = ["accepted_bid_bargains", "accepted_bid_cart"];
 const pairs = [];
 for (const checkpoint of checkpoints) {
     pairs.push({
@@ -33,9 +36,26 @@ for (const checkpoint of checkpoints) {
     });
 }
 
+for (const checkpoint of iosAcceptedCheckpoints) {
+    pairs.push({
+        name: `buyer_e2e_${checkpoint}_app_vs_baseline`,
+        expected: path.join(baselineIosAcceptedDir, `${checkpoint}.png`),
+        actual: path.join(currentIosAcceptedDir, `${checkpoint}.png`),
+        gate: "hard",
+    });
+    pairs.push({
+        name: `buyer_e2e_${checkpoint}_app_vs_stitch`,
+        expected: path.join(stitchDir, `${checkpoint}.png`),
+        actual: path.join(currentIosAcceptedDir, `${checkpoint}.png`),
+        gate: stitchGatePct === null ? "soft" : "stitch-hard",
+    });
+}
+
 function shouldCropSystemBars(inputPath) {
     return inputPath.includes(`${path.sep}screenshots${path.sep}baseline${path.sep}buyer-e2e${path.sep}`)
-        || inputPath.includes(`${path.sep}screenshots${path.sep}current${path.sep}buyer-e2e${path.sep}`);
+        || inputPath.includes(`${path.sep}screenshots${path.sep}current${path.sep}buyer-e2e${path.sep}`)
+        || inputPath.includes(`${path.sep}screenshots${path.sep}baseline${path.sep}buyer-ios-accepted-bid${path.sep}`)
+        || inputPath.includes(`${path.sep}screenshots${path.sep}current${path.sep}buyer-ios-accepted-bid${path.sep}`);
 }
 
 async function loadPngNormalized(inputPath, width, height) {

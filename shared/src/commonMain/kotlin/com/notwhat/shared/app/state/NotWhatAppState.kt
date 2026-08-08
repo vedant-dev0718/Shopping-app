@@ -353,10 +353,24 @@ class NotWhatAppState(
         return result
     }
 
+    suspend fun uploadReturnImage(
+        data: ByteArray,
+        fileName: String,
+        mimeType: String,
+    ): NetworkResult<String> {
+        val token =
+            authState.currentSession?.authToken
+                ?: return NetworkResult.Failure(AppError.Api(401, "Sign in again to upload images."))
+        return serviceLocator.uploadRepository
+            .uploadImage(data, fileName, token, mimeType)
+            .map { it.imageUrl }
+    }
+
     suspend fun submitBuyerReturnRequest(
         orderId: String,
         reason: ReturnReason,
         description: String,
+        imageUrls: List<String> = emptyList(),
     ): NetworkResult<Unit> {
         val token = authState.currentSession?.authToken
         if (token.isNullOrBlank()) return NetworkResult.Failure(AppError.Api(401, "Sign in again to request a return."))
@@ -365,7 +379,7 @@ class NotWhatAppState(
             serviceLocator.orderUseCase
                 .requestReturn(
                     id = orderId,
-                    request = ReturnRequestDto(reason = reason.name, description = description.ifBlank { null }),
+                    request = ReturnRequestDto(reason = reason.name, description = description.ifBlank { null }, imageUrls = imageUrls),
                     bearerToken = token,
                 ).map { Unit }
 

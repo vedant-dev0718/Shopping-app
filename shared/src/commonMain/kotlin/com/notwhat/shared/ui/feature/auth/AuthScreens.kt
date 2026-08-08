@@ -349,6 +349,13 @@ private fun BuyerSignupCard(authState: AuthState) {
     val scope = rememberCoroutineScope()
     var confirmPassword by remember { mutableStateOf("") }
     var acceptTerms by remember { mutableStateOf(false) }
+    var localSignupError by remember { mutableStateOf<String?>(null) }
+
+    fun canProceedBuyerSignup(): Boolean =
+        authState.canSubmitBuyerSignup &&
+            confirmPassword == authState.buyerPassword &&
+            confirmPassword.isNotBlank() &&
+            acceptTerms
 
     ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = NotWhatAuthTokens.card)) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -363,6 +370,14 @@ private fun BuyerSignupCard(authState: AuthState) {
             AuthTextField("Full Name", authState.buyerName, { authState.buyerName = it }, false, placeholder = "e.g. Aryan Sharma")
             AuthTextField("Email Address", authState.buyerEmail, { authState.buyerEmail = it }, false, placeholder = "aryan@notwhat.com")
             AuthTextField("Phone Number", authState.buyerPhone, { authState.buyerPhone = it }, false, placeholder = "+91 00000 00000")
+            AuthTextField(
+                "Delivery Address",
+                authState.buyerAddress,
+                { authState.buyerAddress = it },
+                false,
+                singleLine = false,
+                placeholder = "Flat / House, Street, Area, City",
+            )
             AuthTextField("Password", authState.buyerPassword, { authState.buyerPassword = it }, true, placeholder = "••••••••")
             AuthTextField("Confirm Password", confirmPassword, { confirmPassword = it }, true, placeholder = "••••••••")
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -374,14 +389,30 @@ private fun BuyerSignupCard(authState: AuthState) {
                 )
             }
             Button(
-                onClick = { scope.launch { authState.submitBuyerSignup() } },
-                enabled = authState.canSubmitBuyerSignup,
+                onClick = {
+                    localSignupError = null
+                    when {
+                        confirmPassword != authState.buyerPassword -> {
+                            localSignupError = "Passwords do not match."
+                        }
+
+                        !acceptTerms -> {
+                            localSignupError = "Accept Terms of Service and Privacy Policy to continue."
+                        }
+
+                        else -> {
+                            scope.launch { authState.submitBuyerSignup() }
+                        }
+                    }
+                },
+                enabled = canProceedBuyerSignup(),
                 modifier = Modifier.fillMaxWidth().height(54.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
             ) {
                 Text(if (authState.isLoading) "Creating account..." else "Create Buyer Account")
             }
+            localSignupError?.let { Text(it, color = Color(0xFFB42318), style = MaterialTheme.typography.bodySmall) }
             if (PlatformSocialAuthBridge.supportsGoogle || PlatformSocialAuthBridge.supportsApple) {
                 HorizontalDivider(color = NotWhatAuthTokens.border)
                 Text(

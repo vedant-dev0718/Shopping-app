@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.notwhat.shared.bargain.BargainRepository
+import com.notwhat.shared.bargain.BidDto
 import com.notwhat.shared.bargain.ScheduleBargainRequestDto
 import com.notwhat.shared.catalog.CreateProductRequestDto
 import com.notwhat.shared.catalog.CreateReelRequestDto
@@ -47,6 +48,50 @@ internal class SellerContentState(
     /** Re-fetches orders after a status change. */
     suspend fun refreshOrders(bearerToken: String) {
         orders = sellerUseCase.listOrders(bearerToken).getOrNull() ?: orders
+    }
+
+    private suspend fun refreshProducts(bearerToken: String) {
+        products = sellerUseCase.listProducts(bearerToken).getOrNull() ?: products
+    }
+
+    suspend fun acceptOrder(
+        orderId: String,
+        bearerToken: String,
+    ) = sellerUseCase.acceptOrder(orderId, bearerToken).also {
+        if (it is com.notwhat.shared.core.NetworkResult.Success) {
+            refreshOrders(bearerToken)
+            refreshProducts(bearerToken)
+        }
+    }
+
+    suspend fun rejectOrder(
+        orderId: String,
+        reason: String,
+        message: String,
+        bearerToken: String,
+    ) = sellerUseCase.rejectOrder(orderId, reason, message, bearerToken).also {
+        if (it is com.notwhat.shared.core.NetworkResult.Success) {
+            refreshOrders(bearerToken)
+            refreshProducts(bearerToken)
+        }
+    }
+
+    suspend fun shipOrder(
+        orderId: String,
+        trackingNumber: String,
+        bearerToken: String,
+    ) = sellerUseCase.shipOrder(orderId, trackingNumber, bearerToken).also {
+        if (it is com.notwhat.shared.core.NetworkResult.Success) refreshOrders(bearerToken)
+    }
+
+    suspend fun markDelivered(
+        orderId: String,
+        bearerToken: String,
+    ) = sellerUseCase.markDelivered(orderId, bearerToken).also {
+        if (it is com.notwhat.shared.core.NetworkResult.Success) {
+            refreshOrders(bearerToken)
+            refreshProducts(bearerToken)
+        }
     }
 
     /** Removes product optimistically, re-fetches on error. */
@@ -158,9 +203,58 @@ internal class SellerContentState(
                 bearerToken = bearerToken,
             )
         return when (result) {
-            is NetworkResult.Success -> ""  // Empty string means success
+            is NetworkResult.Success -> ""
+
+            // Empty string means success
             is NetworkResult.Failure -> result.error.message ?: "Failed to create Bargain Day"
         }
+    }
+
+    suspend fun getProductBids(
+        productId: String,
+        bearerToken: String,
+    ): NetworkResult<List<BidDto>> {
+        val repo = bargainRepository ?: return NetworkResult.Success(emptyList())
+        return repo.getProductBids(productId, bearerToken)
+    }
+
+    suspend fun acceptBid(
+        productId: String,
+        bidId: String,
+        bearerToken: String,
+    ): NetworkResult<BidDto> {
+        val repo =
+            bargainRepository ?: return NetworkResult.Failure(
+                com.notwhat.shared.core.AppError
+                    .Api(503, "Bargain service not available"),
+            )
+        return repo.acceptBid(productId, bidId, bearerToken)
+    }
+
+    suspend fun closeBidPaymentWindow(
+        productId: String,
+        bidId: String,
+        bearerToken: String,
+    ): NetworkResult<BidDto> {
+        val repo =
+            bargainRepository ?: return NetworkResult.Failure(
+                com.notwhat.shared.core.AppError
+                    .Api(503, "Bargain service not available"),
+            )
+        return repo.closeBidPaymentWindow(productId, bidId, bearerToken)
+    }
+
+    suspend fun reopenBidNegotiation(
+        productId: String,
+        bidId: String,
+        bearerToken: String,
+    ): NetworkResult<BidDto> {
+        val repo =
+            bargainRepository ?: return NetworkResult.Failure(
+                com.notwhat.shared.core.AppError
+                    .Api(503, "Bargain service not available"),
+            )
+        return repo.reopenBidNegotiation(productId, bidId, bearerToken)
     }
 }
 

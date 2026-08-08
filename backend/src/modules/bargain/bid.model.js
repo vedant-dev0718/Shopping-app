@@ -63,6 +63,12 @@ const bidSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+    default: 1
+  },
   orderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order',

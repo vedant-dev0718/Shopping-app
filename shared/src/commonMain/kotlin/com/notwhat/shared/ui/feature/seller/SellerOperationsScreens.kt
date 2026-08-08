@@ -28,6 +28,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -53,6 +54,7 @@ internal fun ProductLifecycleScreen(
     state: NotWhatAppState,
     onBack: () -> Unit,
     onAddProduct: () -> Unit = {},
+    initialEditingProductId: String? = null,
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -63,7 +65,7 @@ internal fun ProductLifecycleScreen(
     var filter by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
     var pricingControlOpen by remember { mutableStateOf(false) }
-    var editingProductId by remember { mutableStateOf<String?>(null) }
+    var editingProductId by remember(initialEditingProductId) { mutableStateOf(initialEditingProductId) }
     val scope = rememberCoroutineScope()
     val products = state.sellerContent.products
     val editingProduct: com.notwhat.shared.catalog.ProductDto? = editingProductId?.let { id -> products.firstOrNull { it.id == id } }
@@ -220,6 +222,7 @@ internal fun OrderOperationsScreen(
     modifier: Modifier,
     state: NotWhatAppState,
     onBack: () -> Unit,
+    onOpenProduct: (String) -> Unit,
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -227,21 +230,139 @@ internal fun OrderOperationsScreen(
     val text = NotWhatColors.onSurface
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
-    val orderStatusById = remember { mutableStateMapOf<String, String>() }
     var selectedLane by remember { mutableStateOf("All") }
+    var expandedOrderId by remember { mutableStateOf<String?>(null) }
+    var trackingInput by remember { mutableStateOf("") }
+    var trackingOrderId by remember { mutableStateOf<String?>(null) }
+    var rejectOrderId by remember { mutableStateOf<String?>(null) }
+    var rejectReason by remember { mutableStateOf("") }
     var actionNote by remember { mutableStateOf<String?>(null) }
+    var isActing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val token = state.authState.currentSession?.authToken
 
-    val rawOrders = state.sellerContent.orders
+    LaunchedEffect(Unit) {
+        if (!token.isNullOrBlank()) state.sellerContent.refreshOrders(token)
+    }
 
-    val orders = rawOrders.filter { order ->
-        val status = orderStatusById[order.id] ?: order.status
-        selectedLane == "All" || status.contains(selectedLane, ignoreCase = true)
+    fun statusLabel(s: String) = when (s) {
+        "awaiting_seller_acceptance" -> "New Order"
+        "confirmed", "processing" -> "Processing"
+        "packed" -> "Packed"
+        "shipped" -> "Shipped"
+        "delivered" -> "Delivered"
+        "cancelled", "seller_rejected" -> "Cancelled"
+        "return_requested" -> "Return Req."
+        "refunded" -> "Refunded"
+        else -> s.replace('_', ' ').replaceFirstChar { it.uppercaseChar() }
+    }
+
+    fun statusColor(s: String) = when (s) {
+        "awaiting_seller_acceptance" -> Color(0xFFF59E0B)
+        "confirmed", "processing", "packed" -> Color(0xFF3B82F6)
+        "shipped" -> Color(0xFF8B5CF6)
+        "delivered" -> Color(0xFF10B981)
+        "cancelled", "seller_rejected" -> Color(0xFFEF4444)
+        "return_requested", "refunded" -> Color(0xFFF97316)
+        else -> muted
+    }
+
+    val lanes = listOf("All", "New", "Processing", "Shipped", "Delivered", "Cancelled")
+    val laneFilter: (String) -> Boolean = { status ->
+        when (selectedLane) {
+            "New" -> status == "awaiting_seller_acceptance"
+            "Processing" -> status in listOf("confirmed", "processing", "packed")
+            "Shipped" -> status == "shipped"
+            "Delivered" -> status == "delivered"
+            "Cancelled" -> status in listOf("cancelled", "seller_rejected")
+            else -> true
+        }
+    }
+    val orders = state.sellerContent.orders.filter { laneFilter(it.status) }
+
+    // Reject dialog
+    if (rejectOrderId != null) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { rejectOrderId = null; rejectReason = "" }) {
+            Surface(color = surface, shape = RoundedCornerShape(20.dp)) {
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Reject Order", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Tell the buyer why you're rejecting this order.", color = muted, style = MaterialTheme.typography.bodySmall)
+                    androidx.compose.material3.OutlinedTextField(
+                        value = rejectReason,
+                        onValueChange = { rejectReason = it },
+                        placeholder = { Text("e.g. Item out of stock", color = muted) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        minLines = 3,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        TextButton(onClick = { rejectOrderId = null; rejectReason = "" }, modifier = Modifier.weight(1f)) {
+                            Text("Cancel", color = muted)
+                        }
+                        Button(
+                            onClick = {
+                                val id = rejectOrderId ?: return@Button
+                                if (rejectReason.isBlank()) { actionNote = "Please enter a reason."; return@Button }
+                                rejectOrderId = null
+                                isActing = true
+                                scope.launch {
+                                    state.sellerContent.rejectOrder(id, rejectReason, rejectReason, token ?: "")
+                                    rejectReason = ""
+                                    actionNote = "Order rejected."
+                                    isActing = false
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Reject", color = Color.White) }
+                    }
+                }
+            }
+        }
+    }
+
+    // Tracking number dialog
+    if (trackingOrderId != null) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { trackingOrderId = null; trackingInput = "" }) {
+            Surface(color = surface, shape = RoundedCornerShape(20.dp)) {
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Enter Tracking Number", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.OutlinedTextField(
+                        value = trackingInput,
+                        onValueChange = { trackingInput = it },
+                        placeholder = { Text("e.g. SR1234567890IN", color = muted) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        TextButton(onClick = { trackingOrderId = null; trackingInput = "" }, modifier = Modifier.weight(1f)) {
+                            Text("Cancel", color = muted)
+                        }
+                        Button(
+                            onClick = {
+                                val id = trackingOrderId ?: return@Button
+                                trackingOrderId = null
+                                isActing = true
+                                scope.launch {
+                                    state.sellerContent.shipOrder(id, trackingInput.ifBlank { "MANUAL" }, token ?: "")
+                                    trackingInput = ""
+                                    actionNote = "Order marked as Shipped."
+                                    isActing = false
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = accent),
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Confirm Ship", color = Color.White) }
+                    }
+                }
+            }
+        }
     }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(bg),
-        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
-        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -259,74 +380,198 @@ internal fun OrderOperationsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(note, color = text, style = MaterialTheme.typography.bodySmall)
-                        Text("Dismiss", color = accent, modifier = Modifier.clickable { actionNote = null }, fontWeight = FontWeight.Bold)
+                        Text(note, color = text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                        Text("✕", color = accent, modifier = Modifier.clickable { actionNote = null }.padding(start = 8.dp), fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
         item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(SellerUiTokens.chipGap)) {
-                items(listOf("All", "New", "Packed", "Shipped", "Exception")) { lane ->
-                    SellerFilterChip(
-                        label = lane,
-                        selected = selectedLane == lane,
-                        onClick = { selectedLane = lane },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(lanes) { lane ->
+                    SellerFilterChip(label = lane, selected = selectedLane == lane, onClick = { selectedLane = lane }, accent = accent, surface = surface, text = text)
                 }
             }
         }
 
-        item {
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
-                    Text("Operational queue", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Track order processing from new order to exception handling.", color = muted)
+        if (orders.isEmpty()) {
+            item {
+                Surface(color = surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("No orders here", color = text, fontWeight = FontWeight.Bold)
+                        Text("Orders in this status will appear here.", color = muted, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }
 
         items(orders) { order ->
-            val status = orderStatusById[order.id] ?: order.status
-            val firstItem = order.items.firstOrNull()
-            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(SellerUiTokens.cardPadding), verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap)) {
+            val isExpanded = expandedOrderId == order.id
+            val sColor = statusColor(order.status)
+            val sLabel = statusLabel(order.status)
+            val shortId = order.id.takeLast(8)
+
+            Surface(
+                color = surface,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().clickable { expandedOrderId = if (isExpanded) null else order.id },
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+                    // Order header
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(order.id, color = text, fontWeight = FontWeight.Bold)
-                            Text(firstItem?.titleSnapshot ?: "", color = muted, style = MaterialTheme.typography.bodySmall)
+                            Text("Order #$shortId", color = text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                            order.createdAt?.take(10)?.let { Text(it, color = muted, style = MaterialTheme.typography.labelSmall) }
                         }
-                        Surface(color = surfaceHigh, shape = RoundedCornerShape(10.dp)) {
-                            Text(
-                                status,
-                                color = text,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1,
-                            )
+                        Surface(color = sColor.copy(alpha = 0.18f), shape = RoundedCornerShape(8.dp)) {
+                            Text(sLabel, color = sColor, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                         }
                     }
-                    Text("₹${order.totalAmount.toInt()}", color = text, fontWeight = FontWeight.Bold)
-                    val nextSt = when (status) {
-                        "placed" -> "packed"
-                        "packed" -> "shipped"
-                        else -> null
-                    }
-                    if (nextSt != null) {
-                        Button(
-                            onClick = {
-                                orderStatusById[order.id] = nextSt
-                                actionNote = "${order.id} moved to $nextSt."
-                            },
-                            shape = SellerUiTokens.radiusButton,
-                            colors = ButtonDefaults.buttonColors(containerColor = accent),
+
+                    // Item list (always visible — 1 line summary when collapsed, full when expanded)
+                    order.items.forEachIndexed { idx, item ->
+                        val displayTitle = item.titleSnapshot.takeIf { it.isNotBlank() }
+                            ?: item.productId?.displayTitle ?: "Item ${idx + 1}"
+                        val displayImage = item.imageSnapshot?.takeIf { it.isNotBlank() }
+                            ?: item.productId?.displayImageUrl
+                        val itemProductId = item.productId?.id?.takeIf { it.isNotBlank() }
+
+                        Surface(
+                            color = surfaceHigh,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = itemProductId != null) {
+                                    if (itemProductId != null) {
+                                        onOpenProduct(itemProductId)
+                                    }
+                                },
                         ) {
-                            Text("Mark ${nextSt.replaceFirstChar { it.uppercaseChar() }}", color = Color.White)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (!displayImage.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = displayImage,
+                                        contentDescription = displayTitle,
+                                        modifier = Modifier.size(52.dp).clip(RoundedCornerShape(8.dp)),
+                                        contentScale = ContentScale.Crop,
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(displayTitle, color = text, fontWeight = FontWeight.SemiBold, maxLines = 2,
+                                        style = MaterialTheme.typography.bodySmall)
+                                    Text("Qty ${item.quantity}  ·  ₹${item.priceSnapshot.toInt()} each",
+                                        color = muted, style = MaterialTheme.typography.labelSmall)
+                                    if (itemProductId != null) {
+                                        Text("Tap to view product", color = accent, style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
                         }
+                    }
+
+                    // Total
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Order Total", color = muted, style = MaterialTheme.typography.labelSmall)
+                        Text("₹${order.totalAmount.toInt()}", color = text, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Action buttons — only when expanded
+                    if (isExpanded) {
+                        HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+
+                        when (order.status) {
+                            "awaiting_seller_acceptance" -> {
+                                Text("Review each item above and confirm availability before accepting.",
+                                    color = muted, style = MaterialTheme.typography.labelSmall)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Button(
+                                        onClick = { rejectOrderId = order.id },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(containerColor = surfaceHigh),
+                                        shape = RoundedCornerShape(12.dp),
+                                        enabled = !isActing,
+                                    ) { Text("Reject", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold) }
+                                    Button(
+                                        onClick = {
+                                            isActing = true
+                                            scope.launch {
+                                                state.sellerContent.acceptOrder(order.id, token ?: "")
+                                                actionNote = "Order accepted — now processing."
+                                                isActing = false
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                                        shape = RoundedCornerShape(12.dp),
+                                        enabled = !isActing,
+                                    ) { Text("Accept Order", color = Color.White, fontWeight = FontWeight.Bold) }
+                                }
+                            }
+                            "confirmed", "processing" -> {
+                                Button(
+                                    onClick = {
+                                        isActing = true
+                                        scope.launch {
+                                            state.sellerContent.shipOrder(order.id, "MANUAL", token ?: "")
+                                            actionNote = "Order marked as Shipped."
+                                            isActing = false
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = !isActing,
+                                ) { Text("Mark as Shipped", color = Color.White, fontWeight = FontWeight.Bold) }
+                                TextButton(onClick = { trackingOrderId = order.id }, modifier = Modifier.fillMaxWidth()) {
+                                    Text("Add Tracking Number", color = accent)
+                                }
+                            }
+                            "shipped" -> {
+                                order.trackingNumber?.takeIf { it.isNotBlank() }?.let {
+                                    Text("Tracking: $it", color = muted, style = MaterialTheme.typography.labelSmall)
+                                }
+                                Button(
+                                    onClick = {
+                                        isActing = true
+                                        scope.launch {
+                                            state.sellerContent.markDelivered(order.id, token ?: "")
+                                            actionNote = "Order marked as Delivered."
+                                            isActing = false
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = !isActing,
+                                ) { Text("Mark as Delivered", color = Color.White, fontWeight = FontWeight.Bold) }
+                            }
+                            "return_requested" -> {
+                                Surface(color = Color(0xFFF97316).copy(alpha = 0.12f), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Text("Buyer has requested a return for this order.",
+                                        color = Color(0xFFF97316), modifier = Modifier.padding(10.dp),
+                                        style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                            "delivered" -> {
+                                Surface(color = Color(0xFF10B981).copy(alpha = 0.12f), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Text("This order has been delivered to the buyer.",
+                                        color = Color(0xFF10B981), modifier = Modifier.padding(10.dp),
+                                        style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                    }
+
+                    // Chevron hint
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                        Text(if (isExpanded) "▲ Collapse" else "▼ Tap to manage", color = muted, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }

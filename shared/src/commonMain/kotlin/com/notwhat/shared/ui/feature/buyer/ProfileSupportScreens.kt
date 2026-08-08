@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -28,6 +29,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +43,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.notwhat.shared.address.AddressRequestDto
+import com.notwhat.shared.core.NetworkResult
 import kotlinx.coroutines.launch
 
 internal enum class ProfileShellRoute {
@@ -76,7 +80,7 @@ internal fun ProfileShellScreen(
         ProfileShellRoute.AddressOnly -> {
             AddressesOnlyScreen(
                 modifier = modifier,
-                state = state,
+                appState = state,
                 onBack = onBackToAccount,
             )
         }
@@ -128,7 +132,6 @@ private fun ProfileAddressManagementScreen(
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
     val text = NotWhatColors.onSurface
-    val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
     val profileName = state.currentSession?.name ?: "NotWhat User"
 
@@ -199,7 +202,7 @@ private fun ProfileAddressManagementScreen(
 @Composable
 private fun AddressesOnlyScreen(
     modifier: Modifier,
-    state: NotWhatAppState,
+    appState: NotWhatAppState,
     onBack: () -> Unit,
 ) {
     val bg = NotWhatColors.background
@@ -209,16 +212,79 @@ private fun AddressesOnlyScreen(
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
     val scope = rememberCoroutineScope()
-    val sessionToken = state.currentSession?.authToken
+    val sessionToken = appState.currentSession?.authToken
 
-    var addresses by remember(state.transaction.addresses) { mutableStateOf(state.transaction.addresses) }
     var showAddForm by remember { mutableStateOf(false) }
+    var editingAddressId by remember { mutableStateOf<String?>(null) }
+    var pendingDeleteAddress by remember { mutableStateOf<com.notwhat.shared.address.AddressDto?>(null) }
     var newLabel by remember { mutableStateOf("Other") }
-    var newName by remember { mutableStateOf(state.currentSession?.name ?: "") }
+    var newName by remember { mutableStateOf(appState.currentSession?.name ?: "") }
     var newPhone by remember { mutableStateOf("+91 ") }
     var newLine1 by remember { mutableStateOf("") }
     var newLine2 by remember { mutableStateOf("") }
-    var newCityPin by remember { mutableStateOf("") }
+    var newCity by remember { mutableStateOf("") }
+    var newRegionState by remember { mutableStateOf("") }
+    var newPinCode by remember { mutableStateOf("") }
+    var formErrorMessage by remember { mutableStateOf<String?>(null) }
+    var showFieldValidation by remember { mutableStateOf(false) }
+
+    val addresses = appState.transaction.addresses
+    val phoneDigits =
+        newPhone.filter { it.isDigit() }.let { digits ->
+            if (digits.startsWith("91") &&
+                digits.length > 10
+            ) {
+                digits.removePrefix("91")
+            } else {
+                digits
+            }
+        }
+    val phoneErrorMessage =
+        if (showFieldValidation && !Regex("^[6-9]\\d{9}$").matches(phoneDigits)) {
+            "Phone must be a valid Indian mobile number."
+        } else {
+            null
+        }
+    val pinErrorMessage =
+        if (showFieldValidation && !Regex("^[1-9]\\d{5}$").matches(newPinCode)) {
+            "PIN must be 6 digits."
+        } else {
+            null
+        }
+
+    fun resetForm() {
+        editingAddressId = null
+        newLabel = "Other"
+        newName = appState.currentSession?.name ?: ""
+        newPhone = "+91 "
+        newLine1 = ""
+        newLine2 = ""
+        newCity = ""
+        newRegionState = ""
+        newPinCode = ""
+        formErrorMessage = null
+        showFieldValidation = false
+    }
+
+    fun populateForm(address: com.notwhat.shared.address.AddressDto) {
+        editingAddressId = address.id
+        newLabel = address.type.replaceFirstChar { it.uppercaseChar() }
+        newName = address.fullName
+        newPhone = address.phone
+        newLine1 = address.addressLine1
+        newLine2 = address.addressLine2.orEmpty()
+        newCity = address.city
+        newRegionState = address.state
+        newPinCode = address.pincode
+        formErrorMessage = null
+        showFieldValidation = false
+    }
+
+    LaunchedEffect(sessionToken) {
+        if (!sessionToken.isNullOrBlank()) {
+            appState.transaction.loadAddresses(sessionToken)
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize().background(bg)) {
         LazyColumn(
@@ -234,7 +300,10 @@ private fun AddressesOnlyScreen(
                 ) {
                     TextButton(onClick = onBack) { Text("Back", color = accent) }
                     Text("Addresses", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                    TextButton(onClick = { showAddForm = true }) { Text("Add", color = accent) }
+                    TextButton(onClick = {
+                        resetForm()
+                        showAddForm = true
+                    }) { Text("Add", color = accent) }
                 }
             }
 
@@ -252,8 +321,7 @@ private fun AddressesOnlyScreen(
                 }
             }
 
-            items(addresses.indices.toList()) { index ->
-                val address = addresses[index]
+            items(addresses) { address ->
                 Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
@@ -284,7 +352,10 @@ private fun AddressesOnlyScreen(
                             }
                             if (!address.isDefault) {
                                 TextButton(onClick = {
-                                    addresses = addresses.mapIndexed { idx, item -> item.copy(isDefault = idx == index) }
+                                    val token = sessionToken ?: return@TextButton
+                                    scope.launch {
+                                        appState.transaction.setDefaultDeliveryAddress(address.id, token)
+                                    }
                                 }) {
                                     Text("Set Default", color = accent)
                                 }
@@ -299,14 +370,51 @@ private fun AddressesOnlyScreen(
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Text(address.phone, color = accent, style = MaterialTheme.typography.labelMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = {
+                                populateForm(address)
+                                showAddForm = true
+                            }) {
+                                Text("Edit", color = accent)
+                            }
+                            TextButton(onClick = {
+                                pendingDeleteAddress = address
+                            }) {
+                                Text("Delete", color = Color(0xFFFFB4AB))
+                            }
+                        }
+                        if (appState.transaction.selectedDeliveryAddressId == address.id) {
+                            Text(
+                                "Selected for checkout",
+                                color = accent,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        } else {
+                            TextButton(
+                                onClick = { appState.transaction.selectDeliveryAddress(address.id) },
+                            ) {
+                                Text("Use This Address", color = accent)
+                            }
+                        }
                     }
+                }
+            }
+
+            appState.transaction.addressesErrorMessage?.let { errorMessage ->
+                item {
+                    Text(errorMessage, color = Color(0xFFFFB4AB), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
 
         if (showAddForm) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.68f)).clickable { showAddForm = false },
+                modifier =
+                    Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.68f)).clickable {
+                        showAddForm = false
+                        resetForm()
+                    },
             )
             Surface(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(560.dp),
@@ -324,8 +432,16 @@ private fun AddressesOnlyScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("Add Address", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            TextButton(onClick = { showAddForm = false }) { Text("Close", color = accent) }
+                            Text(
+                                if (editingAddressId == null) "Add Address" else "Edit Address",
+                                color = text,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            TextButton(onClick = {
+                                showAddForm = false
+                                resetForm()
+                            }) { Text("Close", color = accent) }
                         }
                     }
                     item {
@@ -339,9 +455,17 @@ private fun AddressesOnlyScreen(
                     item {
                         OutlinedTextField(
                             value = newPhone,
-                            onValueChange = { newPhone = it },
+                            onValueChange = { value ->
+                                newPhone = value.filter { it.isDigit() || it == '+' || it == ' ' }.take(14)
+                            },
                             label = { Text("Phone") },
                             modifier = Modifier.fillMaxWidth(),
+                            isError = phoneErrorMessage != null,
+                            supportingText = {
+                                phoneErrorMessage?.let { message ->
+                                    Text(message, color = Color(0xFFFFB4AB), style = MaterialTheme.typography.bodySmall)
+                                }
+                            },
                         )
                     }
                     item {
@@ -355,9 +479,34 @@ private fun AddressesOnlyScreen(
                         }, label = { Text("Address Line 2") }, modifier = Modifier.fillMaxWidth())
                     }
                     item {
-                        OutlinedTextField(value = newCityPin, onValueChange = {
-                            newCityPin = it
-                        }, label = { Text("City, State, PIN") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(
+                            value = newCity,
+                            onValueChange = { newCity = it },
+                            label = { Text("City") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    item {
+                        OutlinedTextField(
+                            value = newRegionState,
+                            onValueChange = { newRegionState = it },
+                            label = { Text("State") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    item {
+                        OutlinedTextField(
+                            value = newPinCode,
+                            onValueChange = { value -> newPinCode = value.filter { it.isDigit() }.take(6) },
+                            label = { Text("PIN Code") },
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = pinErrorMessage != null,
+                            supportingText = {
+                                pinErrorMessage?.let { message ->
+                                    Text(message, color = Color(0xFFFFB4AB), style = MaterialTheme.typography.bodySmall)
+                                }
+                            },
+                        )
                     }
                     item {
                         Text("Type", color = muted, style = MaterialTheme.typography.labelSmall)
@@ -380,40 +529,125 @@ private fun AddressesOnlyScreen(
                             }
                         }
                     }
+                    formErrorMessage?.let { message ->
+                        item {
+                            Text(message, color = Color(0xFFFFB4AB), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                     item {
                         Button(
                             onClick = {
-                                if (newName.isNotBlank() && newLine1.isNotBlank() && newCityPin.isNotBlank()) {
-                                    addresses = addresses +
-                                        com.notwhat.shared.address.AddressDto(
-                                            fullName = newName,
-                                            phone = newPhone,
-                                            addressLine1 = newLine1,
-                                            addressLine2 = newLine2.ifBlank { null },
-                                            city = newCityPin.substringBefore(",").trim(),
-                                            state = newCityPin.substringAfter(",").substringBeforeLast(" ").trim(),
-                                            pincode = newCityPin.substringAfterLast(" ").trim(),
+                                val token = sessionToken
+                                if (token.isNullOrBlank()) {
+                                    formErrorMessage = "Sign in again to manage delivery addresses."
+                                    return@Button
+                                }
+
+                                showFieldValidation = true
+
+                                if (
+                                    newName.isBlank() ||
+                                    newLine1.isBlank() ||
+                                    newCity.isBlank() ||
+                                    newRegionState.isBlank() ||
+                                    newPinCode.length != 6
+                                ) {
+                                    formErrorMessage = "Enter full name, address line 1, city, and state."
+                                    return@Button
+                                }
+
+                                if (phoneErrorMessage != null || pinErrorMessage != null) {
+                                    formErrorMessage = null
+                                    return@Button
+                                }
+
+                                formErrorMessage = null
+                                scope.launch {
+                                    val request =
+                                        AddressRequestDto(
+                                            fullName = newName.trim(),
+                                            phone = newPhone.trim(),
+                                            addressLine1 = newLine1.trim(),
+                                            addressLine2 = newLine2.trim().ifBlank { null },
+                                            city = newCity.trim(),
+                                            state = newRegionState.trim(),
+                                            pincode = newPinCode,
                                             type = newLabel.lowercase(),
-                                            isDefault = addresses.none { it.isDefault },
                                         )
-                                    showAddForm = false
-                                    newLabel = "Other"
-                                    newName = state.currentSession?.name ?: ""
-                                    newPhone = "+91 "
-                                    newLine1 = ""
-                                    newLine2 = ""
-                                    newCityPin = ""
+                                    val result =
+                                        editingAddressId?.let { addressId ->
+                                            appState.transaction.updateDeliveryAddress(
+                                                addressId = addressId,
+                                                request = request,
+                                                bearerToken = token,
+                                            )
+                                        } ?: appState.transaction.createDeliveryAddress(
+                                            request = request,
+                                            bearerToken = token,
+                                        )
+                                    when (result) {
+                                        is NetworkResult.Success -> {
+                                            resetForm()
+                                            showAddForm = false
+                                        }
+
+                                        is NetworkResult.Failure -> {
+                                            formErrorMessage = appState.transaction.addressesErrorMessage ?: "Unable to save address."
+                                        }
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = accent),
                         ) {
-                            Text("SAVE ADDRESS", color = Color.White, fontWeight = FontWeight.Black)
+                            Text(
+                                if (editingAddressId ==
+                                    null
+                                ) {
+                                    "SAVE ADDRESS"
+                                } else {
+                                    "UPDATE ADDRESS"
+                                },
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                            )
                         }
                     }
                 }
             }
+        }
+
+        pendingDeleteAddress?.let { address ->
+            AlertDialog(
+                onDismissRequest = { pendingDeleteAddress = null },
+                containerColor = surface,
+                title = {
+                    Text("Delete address?", color = text, fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Text(
+                        "Remove ${address.fullName}'s address at ${address.addressLine1}? This cannot be undone.",
+                        color = muted,
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val token = sessionToken ?: return@TextButton
+                        pendingDeleteAddress = null
+                        scope.launch {
+                            appState.transaction.deleteDeliveryAddress(address.id, token)
+                        }
+                    }) {
+                        Text("Delete Address", color = Color(0xFFFFB4AB), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingDeleteAddress = null }) {
+                        Text("Keep Address", color = accent)
+                    }
+                },
+            )
         }
     }
 }

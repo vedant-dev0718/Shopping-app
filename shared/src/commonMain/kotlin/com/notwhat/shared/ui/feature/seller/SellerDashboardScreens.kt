@@ -28,7 +28,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,9 +42,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.notwhat.shared.util.getCurrentTimeMillis
+import com.notwhat.shared.bargain.BargainScheduleDto
+import com.notwhat.shared.bargain.BidDto
+import com.notwhat.shared.catalog.ProductDto
+import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.util.toIso8601
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 internal enum class SellerShellRoute {
     Dashboard,
@@ -56,6 +64,7 @@ internal enum class SellerShellRoute {
     UploadReel,
     SellerProfile,
     SellerBargainCreate,
+    SellerAcceptedBidsQueue,
     LowStockRestock,
 }
 
@@ -69,6 +78,7 @@ internal fun SellerShellScreen(
     state: NotWhatAppState,
     route: SellerShellRoute,
     onRouteChange: (SellerShellRoute) -> Unit,
+    onOpenProduct: (ProductDto) -> Unit,
     onBackToAccount: () -> Unit,
 ) {
     val bg = NotWhatColors.background
@@ -163,6 +173,13 @@ internal fun SellerShellScreen(
             modifier = modifier,
             state = state,
             onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+            onOpenProduct = { productId ->
+                val product =
+                    state.sellerContent.products.firstOrNull { it.id == productId }
+                        ?: state.content.products.firstOrNull { it.id == productId }
+                        ?: ProductDto(id = productId)
+                onOpenProduct(product)
+            },
         )
         return
     }
@@ -176,11 +193,28 @@ internal fun SellerShellScreen(
         return
     }
 
+    if (route == SellerShellRoute.SellerAcceptedBidsQueue) {
+        SellerAcceptedBidsQueueScreen(
+            modifier = modifier,
+            state = state,
+            onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+            onOpenProduct = onOpenProduct,
+        )
+        return
+    }
+
     if (route == SellerShellRoute.OrderOperationsStub) {
         OrderOperationsScreen(
             modifier = modifier,
             state = state,
             onBack = { onRouteChange(SellerShellRoute.Dashboard) },
+            onOpenProduct = { productId ->
+                val product =
+                    state.sellerContent.products.firstOrNull { it.id == productId }
+                        ?: state.content.products.firstOrNull { it.id == productId }
+                        ?: ProductDto(id = productId)
+                onOpenProduct(product)
+            },
         )
         return
     }
@@ -328,6 +362,16 @@ internal fun SellerShellScreen(
                         label = "Reels",
                         selected = route == SellerShellRoute.SellerReelList || route == SellerShellRoute.UploadReel,
                         onClick = { onRouteChange(SellerShellRoute.SellerReelList) },
+                        accent = accent,
+                        surface = surface,
+                        text = text,
+                    )
+                }
+                item {
+                    SellerRouteChip(
+                        label = "Accepted Bids",
+                        selected = route == SellerShellRoute.SellerAcceptedBidsQueue,
+                        onClick = { onRouteChange(SellerShellRoute.SellerAcceptedBidsQueue) },
                         accent = accent,
                         surface = surface,
                         text = text,
@@ -765,16 +809,78 @@ internal fun SellerBargainCreateScreen(
     var isSubmitting by remember { mutableStateOf(false) }
     var submitError by remember { mutableStateOf<String?>(null) }
     var submitSuccess by remember { mutableStateOf(false) }
+    var activeSchedulesByProductId by remember { mutableStateOf<Map<String, BargainScheduleDto>>(emptyMap()) }
+    var activeBidSummaryByProductId by remember { mutableStateOf<Map<String, SellerActiveBidSummary>>(emptyMap()) }
+    var isBidMetadataLoading by remember { mutableStateOf(false) }
+    var bidMetadataError by remember { mutableStateOf<String?>(null) }
+    var nowMs by remember { mutableLongStateOf(Clock.System.now().toEpochMilliseconds()) }
 
-    val selectedProduct = products.firstOrNull { it.id == selectedProductId }
-    val filteredProducts = if (searchQuery.isBlank()) {
-        products
-    } else {
-        products.filter { p ->
-            p.displayTitle.contains(searchQuery, ignoreCase = true) ||
-                p.displayPrice.contains(searchQuery, ignoreCase = true)
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowMs = Clock.System.now().toEpochMilliseconds()
+            delay(1000)
         }
     }
+
+    LaunchedEffect(state.currentSession?.authToken, products.map { it.id }.joinToString("|")) {
+        val token = state.currentSession?.authToken
+        isBidMetadataLoading = true
+        bidMetadataError = null
+
+        val scheduleMap = mutableMapOf<String, BargainScheduleDto>()
+        when (val schedulesResult = state.bargainUseCase.getActiveBargains()) {
+            is NetworkResult.Success -> {
+                scheduleMap.putAll(
+                    schedulesResult.data
+                        .filter { it.status.lowercase() == "active" }
+                        .associateBy { it.productId },
+                )
+            }
+
+            is NetworkResult.Failure -> {
+                bidMetadataError = schedulesResult.error.userMessage()
+            }
+        }
+
+        val activeStatuses = setOf("active", "pending_seller_decision")
+        val bidSummaryMap = mutableMapOf<String, SellerActiveBidSummary>()
+
+        if (!token.isNullOrBlank()) {
+            for (productId in scheduleMap.keys) {
+                when (val bidsResult = state.sellerContent.getProductBids(productId, token)) {
+                    is NetworkResult.Success -> {
+                        val liveBids = bidsResult.data.filter { it.status.lowercase() in activeStatuses }
+                        bidSummaryMap[productId] =
+                            SellerActiveBidSummary(
+                                activeBidCount = liveBids.size,
+                                highestActiveBidAmount = liveBids.maxOfOrNull { it.amount },
+                            )
+                    }
+
+                    is NetworkResult.Failure -> {
+                        if (bidMetadataError == null) {
+                            bidMetadataError = bidsResult.error.userMessage()
+                        }
+                    }
+                }
+            }
+        }
+
+        activeSchedulesByProductId = scheduleMap
+        activeBidSummaryByProductId = bidSummaryMap
+        isBidMetadataLoading = false
+    }
+
+    val selectedProduct = products.firstOrNull { it.id == selectedProductId }
+    val filteredProducts =
+        if (searchQuery.isBlank()) {
+            products
+        } else {
+            products.filter { p ->
+                p.displayTitle.contains(searchQuery, ignoreCase = true) ||
+                    p.displayPrice.contains(searchQuery, ignoreCase = true)
+            }
+        }
 
     // ── Step 2: Auction settings ──────────────────────────────────────
     if (step == 2 && selectedProduct != null) {
@@ -821,6 +927,34 @@ internal fun SellerBargainCreateScreen(
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Text(selectedProduct.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
+
+                            val selectedSchedule = activeSchedulesByProductId[selectedProduct.id]
+                            if (selectedSchedule != null) {
+                                val selectedBidSummary = activeBidSummaryByProductId[selectedProduct.id]
+                                Text(
+                                    "Active bids: ${selectedBidSummary?.activeBidCount ?: 0}",
+                                    color = text,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                selectedBidSummary?.highestActiveBidAmount?.let { highest ->
+                                    Text(
+                                        "Highest active: ${formatSellerMoney(highest)}",
+                                        color = accent,
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                }
+                                Text(
+                                    "Config: Reserve ${formatSellerMoney(selectedSchedule.reservePrice)}",
+                                    color = muted,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                                Text(
+                                    "Time remaining: ${formatSellerTimerLabel(selectedSchedule.endDate, nowMs)}",
+                                    color = muted,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
                         }
                         TextButton(onClick = { step = 1 }) { Text("Change", color = muted, style = MaterialTheme.typography.labelSmall) }
                     }
@@ -896,7 +1030,7 @@ internal fun SellerBargainCreateScreen(
                             isSubmitting = true
                             submitError = null
                             // Compute ISO-8601 timestamps
-                            val nowMs = getCurrentTimeMillis()
+                            val nowMs = Clock.System.now().toEpochMilliseconds()
                             val endMs = nowMs + (durationH * 3_600_000)
                             val startDate = toIso8601(nowMs)
                             val endDate = toIso8601(endMs)
@@ -989,6 +1123,28 @@ internal fun SellerBargainCreateScreen(
             }
         }
 
+        if (isBidMetadataLoading) {
+            item {
+                Text(
+                    "Loading active bid configuration...",
+                    color = muted,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                )
+            }
+        }
+
+        bidMetadataError?.let { err ->
+            item {
+                Text(
+                    err,
+                    color = danger,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                )
+            }
+        }
+
         if (products.isEmpty()) {
             item {
                 Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
@@ -1040,6 +1196,34 @@ internal fun SellerBargainCreateScreen(
                                     },
                                 style = MaterialTheme.typography.labelSmall,
                             )
+
+                            val activeSchedule = activeSchedulesByProductId[product.id]
+                            if (activeSchedule != null) {
+                                val bidSummary = activeBidSummaryByProductId[product.id]
+                                Text(
+                                    "Active bids: ${bidSummary?.activeBidCount ?: 0}",
+                                    color = text,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                bidSummary?.highestActiveBidAmount?.let { highest ->
+                                    Text(
+                                        "Highest active: ${formatSellerMoney(highest)}",
+                                        color = accent,
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                }
+                                Text(
+                                    "Config: Reserve ${formatSellerMoney(activeSchedule.reservePrice)}",
+                                    color = muted,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                                Text(
+                                    "Time remaining: ${formatSellerTimerLabel(activeSchedule.endDate, nowMs)}",
+                                    color = muted,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
                         }
                         if (selected) Text("✓", color = accent, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
                     }
@@ -1049,6 +1233,327 @@ internal fun SellerBargainCreateScreen(
 
         submitError?.let { err ->
             item { Text(err, color = danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 4.dp)) }
+        }
+    }
+}
+
+private data class SellerActiveBidSummary(
+    val activeBidCount: Int,
+    val highestActiveBidAmount: Double?,
+)
+
+private fun formatSellerMoney(value: Double): String {
+    val rounded = kotlin.math.round(value * 100.0) / 100.0
+    val isWhole = kotlin.math.abs(rounded - rounded.toInt()) < 0.0001
+    return if (isWhole) "₹${rounded.toInt()}" else "₹$rounded"
+}
+
+private fun formatSellerTimerLabel(
+    endDateIso: String?,
+    nowMs: Long,
+): String {
+    if (endDateIso.isNullOrBlank()) {
+        return "No timer"
+    }
+
+    val endMs = runCatching { Instant.parse(endDateIso).toEpochMilliseconds() }.getOrNull() ?: return "No timer"
+    val remainingMs = endMs - nowMs
+
+    if (remainingMs <= 0L) {
+        return "Ended"
+    }
+
+    val remainingSec = remainingMs / 1000
+    val hours = remainingSec / 3600
+    val minutes = (remainingSec % 3600) / 60
+    val seconds = remainingSec % 60
+
+    return "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+}
+
+private data class SellerAcceptedBidQueueItem(
+    val product: ProductDto,
+    val bid: BidDto,
+)
+
+@Composable
+internal fun SellerAcceptedBidsQueueScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
+    onOpenProduct: (ProductDto) -> Unit,
+) {
+    val bg = NotWhatColors.background
+    val surface = NotWhatColors.surface
+    val text = NotWhatColors.onSurface
+    val muted = NotWhatColors.onSurfaceVariant
+    val accent = NotWhatAuthTokens.accent
+    val scope = rememberCoroutineScope()
+
+    var isLoading by remember { mutableStateOf(false) }
+    var loadError by remember { mutableStateOf<String?>(null) }
+    var actionNote by remember { mutableStateOf<String?>(null) }
+    var actingBidId by remember { mutableStateOf<String?>(null) }
+    var queueItems by remember { mutableStateOf<List<SellerAcceptedBidQueueItem>>(emptyList()) }
+
+    suspend fun refreshQueue() {
+        val token = state.currentSession?.authToken
+        if (token.isNullOrBlank()) {
+            queueItems = emptyList()
+            loadError = "Please sign in again to load bid queue."
+            isLoading = false
+            return
+        }
+
+        isLoading = true
+        loadError = null
+        val queue = mutableListOf<SellerAcceptedBidQueueItem>()
+
+        for (product in state.sellerContent.products) {
+            when (val result = state.sellerContent.getProductBids(product.id, token)) {
+                is NetworkResult.Success -> {
+                    result.data
+                        .filter { it.status in setOf("accepted", "won", "pending_seller_decision", "expired", "rejected") }
+                        .forEach { bid -> queue += SellerAcceptedBidQueueItem(product = product, bid = bid) }
+                }
+
+                is NetworkResult.Failure -> {
+                    if (loadError == null) {
+                        loadError = result.error.userMessage()
+                    }
+                }
+            }
+        }
+
+        queueItems = queue.sortedByDescending { it.bid.createdAt ?: "" }
+        isLoading = false
+    }
+
+    LaunchedEffect(state.currentSession?.authToken, state.sellerContent.products) {
+        refreshQueue()
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onBack) { Text("Back", color = accent) }
+                Text("Bid Queue", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                Surface(color = surface, shape = RoundedCornerShape(10.dp)) {
+                    Text(
+                        queueItems.size.toString(),
+                        color = text,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                "Manage accepted and pending bargain bids directly from this queue.",
+                color = muted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
+        actionNote?.let { note ->
+            item {
+                Surface(color = Color(0xFFF0F6FF), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(note, color = Color(0xFF1F4B8F), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
+                }
+            }
+        }
+
+        loadError?.let { message ->
+            item {
+                Surface(color = Color(0xFFFFF0E6), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        message,
+                        color = Color(0xFF8B4513),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp),
+                    )
+                }
+            }
+        }
+
+        if (isLoading) {
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(color = accent, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Text("Loading bid queue...", color = muted)
+                    }
+                }
+            }
+        }
+
+        if (!isLoading && queueItems.isEmpty()) {
+            item {
+                Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("No queue bids yet", color = text, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Accepted and pending bids will appear here once buyers place offers.",
+                            color = muted,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
+        }
+
+        items(queueItems) { queueItem ->
+            val canCloseWindow =
+                queueItem.bid.status in setOf("accepted", "won") &&
+                    queueItem.bid.paymentStatus.lowercase() !in setOf("captured", "refunded", "cancelled")
+            val canReopen =
+                queueItem.bid.status in setOf("accepted", "expired", "rejected", "pending_seller_decision") &&
+                    queueItem.bid.paymentStatus.lowercase() !in setOf("captured", "refunded", "cancelled")
+            val isActing = actingBidId == queueItem.bid.id
+
+            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(
+                                queueItem.product.displayTitle,
+                                color = text,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(queueItem.product.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
+                        }
+                        Surface(color = accent.copy(alpha = 0.16f), shape = RoundedCornerShape(8.dp)) {
+                            Text(
+                                queueItem.bid.status
+                                    .replace('_', ' ')
+                                    .uppercase(),
+                                color = accent,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            )
+                        }
+                    }
+
+                    Text(
+                        "Bid price: ₹${queueItem.bid.amount.toInt()} x ${queueItem.bid.quantity}",
+                        color = text,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                val token = state.currentSession?.authToken
+                                if (token.isNullOrBlank()) {
+                                    actionNote = "Sign in again to update queue actions."
+                                    return@Button
+                                }
+                                scope.launch {
+                                    actingBidId = queueItem.bid.id
+                                    val result = state.sellerContent.closeBidPaymentWindow(queueItem.product.id, queueItem.bid.id, token)
+                                    actionNote =
+                                        when (result) {
+                                            is NetworkResult.Success -> "Closed payment window for ${queueItem.product.displayTitle}."
+                                            is NetworkResult.Failure -> result.error.userMessage()
+                                        }
+                                    refreshQueue()
+                                    actingBidId = null
+                                }
+                            },
+                            shape = SellerUiTokens.radiusButton,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7A251C)),
+                            enabled = canCloseWindow && !isActing,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                if (isActing &&
+                                    canCloseWindow
+                                ) {
+                                    "Closing..."
+                                } else {
+                                    "Close Window"
+                                },
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val token = state.currentSession?.authToken
+                                if (token.isNullOrBlank()) {
+                                    actionNote = "Sign in again to update queue actions."
+                                    return@Button
+                                }
+                                scope.launch {
+                                    actingBidId = queueItem.bid.id
+                                    val result = state.sellerContent.reopenBidNegotiation(queueItem.product.id, queueItem.bid.id, token)
+                                    actionNote =
+                                        when (result) {
+                                            is NetworkResult.Success -> "Re-opened negotiation for ${queueItem.product.displayTitle}."
+                                            is NetworkResult.Failure -> result.error.userMessage()
+                                        }
+                                    refreshQueue()
+                                    actingBidId = null
+                                }
+                            },
+                            shape = SellerUiTokens.radiusButton,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B8A7A)),
+                            enabled = canReopen && !isActing,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                if (isActing &&
+                                    canReopen
+                                ) {
+                                    "Re-opening..."
+                                } else {
+                                    "Re-open"
+                                },
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+
+                        Button(
+                            onClick = { onOpenProduct(queueItem.product) },
+                            shape = SellerUiTokens.radiusButton,
+                            colors = ButtonDefaults.buttonColors(containerColor = accent),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text("Open Product", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
         }
     }
 }

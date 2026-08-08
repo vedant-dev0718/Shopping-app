@@ -50,6 +50,17 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  originalPrice: {
+    type: Number,
+    min: 0,
+    default: null
+  },
+  discountPercent: {
+    type: Number,
+    min: 0,
+    max: 99,
+    default: null
+  },
   sku: {
     type: String,
     trim: true,

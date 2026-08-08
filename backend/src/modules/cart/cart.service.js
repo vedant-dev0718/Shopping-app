@@ -1,5 +1,6 @@
 const AppError = require('../../utils/AppError');
 const analyticsService = require('../analytics/analytics.service');
+const Bid = require('../bargain/bid.model');
 const Product = require('../products/product.model');
 const Cart = require('./cart.model');
 
@@ -75,30 +76,74 @@ const getActiveProductForCart = async (productId) => {
   return product;
 };
 
-const addItem = async (buyerId, { productId, quantity }) => {
-  const product = await getActiveProductForCart(productId);
+const resolveAcceptedBidForCart = async (buyerId, product, bargainBidId) => {
+  if (!bargainBidId) {
+    return null;
+  }
 
-  if (quantity > product.stock) {
-    throw new AppError('Quantity cannot exceed available product stock', 400);
+  const bid = await Bid.findOne({
+    _id: bargainBidId,
+    buyerId,
+    productId: product._id,
+    bidStatus: { $in: ['accepted', 'won'] }
+  }).lean();
+
+  if (!bid) {
+    throw new AppError('Accepted bid not found for this product', 404);
+  }
+
+  const lockExpiry = bid.razorpay?.authorizationExpiresAt || null;
+  if (lockExpiry && new Date(lockExpiry).getTime() <= Date.now()) {
+    throw new AppError('Accepted bid payment window has expired', 400);
+  }
+
+  return bid;
+};
+
+const addItem = async (buyerId, { productId, quantity, bargainBidId }) => {
+  const product = await getActiveProductForCart(productId);
+  const acceptedBid = await resolveAcceptedBidForCart(buyerId, product, bargainBidId);
+  const maxAllowedQuantity = acceptedBid ? Number(acceptedBid.quantity) || 1 : product.stock;
+
+  if (quantity > maxAllowedQuantity) {
+    throw new AppError(
+      acceptedBid
+        ? `Quantity cannot exceed accepted bid quantity (${maxAllowedQuantity})`
+        : 'Quantity cannot exceed available product stock',
+      400
+    );
   }
 
   const cart = await getOrCreateCart(buyerId);
-  const existingItem = cart.items.find((item) => item.productId.toString() === product._id.toString());
+  const existingItem = cart.items.find((item) => {
+    const sameProduct = item.productId.toString() === product._id.toString();
+    const sameBid = String(item.bargainBidId || '') === String(bargainBidId || '');
+    return sameProduct && sameBid;
+  });
 
   if (existingItem) {
     const nextQuantity = existingItem.quantity + quantity;
 
-    if (nextQuantity > product.stock) {
-      throw new AppError('Quantity cannot exceed available product stock', 400);
+    if (nextQuantity > maxAllowedQuantity) {
+      throw new AppError(
+        acceptedBid
+          ? `Quantity cannot exceed accepted bid quantity (${maxAllowedQuantity})`
+          : 'Quantity cannot exceed available product stock',
+        400
+      );
     }
 
     existingItem.quantity = nextQuantity;
-    existingItem.priceSnapshot = product.price;
+    existingItem.priceSnapshot = acceptedBid ? acceptedBid.amount : product.price;
+    existingItem.bargainBidId = acceptedBid ? acceptedBid._id : null;
+    existingItem.bargainLockExpiresAt = acceptedBid?.razorpay?.authorizationExpiresAt || null;
   } else {
     cart.items.push({
       productId: product._id,
       quantity,
-      priceSnapshot: product.price
+      priceSnapshot: acceptedBid ? acceptedBid.amount : product.price,
+      bargainBidId: acceptedBid ? acceptedBid._id : null,
+      bargainLockExpiresAt: acceptedBid?.razorpay?.authorizationExpiresAt || null
     });
   }
 
@@ -112,7 +157,8 @@ const addItem = async (buyerId, { productId, quantity }) => {
     eventType: 'cart_add',
     metadata: {
       quantity,
-      priceSnapshot: product.price
+      priceSnapshot: acceptedBid ? acceptedBid.amount : product.price,
+      bargainBidId: acceptedBid?._id?.toString() || ''
     }
   });
 
@@ -128,13 +174,23 @@ const updateItem = async (buyerId, itemId, { quantity }) => {
   }
 
   const product = await getActiveProductForCart(item.productId);
+  const acceptedBid = item.bargainBidId
+    ? await resolveAcceptedBidForCart(buyerId, product, item.bargainBidId)
+    : null;
+  const maxAllowedQuantity = acceptedBid ? Number(acceptedBid.quantity) || 1 : product.stock;
 
-  if (quantity > product.stock) {
-    throw new AppError('Quantity cannot exceed available product stock', 400);
+  if (quantity > maxAllowedQuantity) {
+    throw new AppError(
+      acceptedBid
+        ? `Quantity cannot exceed accepted bid quantity (${maxAllowedQuantity})`
+        : 'Quantity cannot exceed available product stock',
+      400
+    );
   }
 
   item.quantity = quantity;
-  item.priceSnapshot = product.price;
+  item.priceSnapshot = acceptedBid ? acceptedBid.amount : product.price;
+  item.bargainLockExpiresAt = acceptedBid?.razorpay?.authorizationExpiresAt || null;
   recalculateCartTotals(cart);
   await cart.save();
 

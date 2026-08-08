@@ -6,6 +6,16 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true
   },
+  bargainBidId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bid',
+    default: null,
+    index: true
+  },
+  bargainLockExpiresAt: {
+    type: Date,
+    default: null
+  },
   quantity: {
     type: Number,
     required: true,

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.notwhat.shared.address.AddressDto
 import com.notwhat.shared.address.AddressRepository
+import com.notwhat.shared.address.AddressRequestDto
 import com.notwhat.shared.cart.CartDto
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.domain.cart.CartUseCase
@@ -72,11 +73,96 @@ internal class BuyerTransactionState(
         when (val result = addressRepository.listDeliveryAddresses(bearerToken)) {
             is NetworkResult.Success -> {
                 addresses = result.data
+                syncSelectedDeliveryAddress()
             }
 
             is NetworkResult.Failure -> {
                 addresses = emptyList()
                 addressesErrorMessage = result.error.userMessage()
+                selectedDeliveryAddressId = null
+            }
+        }
+    }
+
+    suspend fun createDeliveryAddress(
+        request: AddressRequestDto,
+        bearerToken: String,
+    ): NetworkResult<AddressDto> {
+        addressesErrorMessage = null
+        return when (val result = addressRepository.createDeliveryAddress(request, bearerToken)) {
+            is NetworkResult.Success -> {
+                loadAddresses(bearerToken)
+                selectDeliveryAddress(result.data.id)
+                result
+            }
+
+            is NetworkResult.Failure -> {
+                addressesErrorMessage = result.error.userMessage()
+                result
+            }
+        }
+    }
+
+    suspend fun setDefaultDeliveryAddress(
+        addressId: String,
+        bearerToken: String,
+    ): NetworkResult<AddressDto> {
+        addressesErrorMessage = null
+        return when (val result = addressRepository.setDefaultDeliveryAddress(addressId, bearerToken)) {
+            is NetworkResult.Success -> {
+                loadAddresses(bearerToken)
+                selectDeliveryAddress(addressId)
+                result
+            }
+
+            is NetworkResult.Failure -> {
+                addressesErrorMessage = result.error.userMessage()
+                result
+            }
+        }
+    }
+
+    suspend fun updateDeliveryAddress(
+        addressId: String,
+        request: AddressRequestDto,
+        bearerToken: String,
+    ): NetworkResult<AddressDto> {
+        addressesErrorMessage = null
+        return when (val result = addressRepository.updateDeliveryAddress(addressId, request, bearerToken)) {
+            is NetworkResult.Success -> {
+                loadAddresses(bearerToken)
+                selectDeliveryAddress(addressId)
+                result
+            }
+
+            is NetworkResult.Failure -> {
+                addressesErrorMessage = result.error.userMessage()
+                result
+            }
+        }
+    }
+
+    suspend fun deleteDeliveryAddress(
+        addressId: String,
+        bearerToken: String,
+    ): NetworkResult<Unit> {
+        addressesErrorMessage = null
+        val wasDefault = addresses.firstOrNull { it.id == addressId }?.isDefault == true
+        return when (val result = addressRepository.deleteDeliveryAddress(addressId, bearerToken)) {
+            is NetworkResult.Success -> {
+                if (selectedDeliveryAddressId == addressId) {
+                    clearSelectedDeliveryAddress()
+                }
+                loadAddresses(bearerToken)
+                if (wasDefault && addresses.isNotEmpty() && addresses.none { it.isDefault }) {
+                    setDefaultDeliveryAddress(addresses.first().id, bearerToken)
+                }
+                result.map { Unit }
+            }
+
+            is NetworkResult.Failure -> {
+                addressesErrorMessage = result.error.userMessage()
+                NetworkResult.Failure(result.error)
             }
         }
     }
@@ -104,11 +190,12 @@ internal class BuyerTransactionState(
     suspend fun addCartItem(
         productId: String,
         quantity: Int = 1,
+        bargainBidId: String? = null,
         bearerToken: String,
     ): NetworkResult<CartDto> =
         cartUseCase.addItem(
             com.notwhat.shared.cart
-                .AddCartItemRequestDto(productId, quantity),
+                .AddCartItemRequestDto(productId = productId, quantity = quantity, bargainBidId = bargainBidId),
             bearerToken,
         )
 
@@ -118,5 +205,14 @@ internal class BuyerTransactionState(
 
     fun clearSelectedDeliveryAddress() {
         selectedDeliveryAddressId = null
+    }
+
+    private fun syncSelectedDeliveryAddress() {
+        val currentSelection = selectedDeliveryAddressId
+        if (!currentSelection.isNullOrBlank() && addresses.any { it.id == currentSelection }) {
+            return
+        }
+
+        selectedDeliveryAddressId = addresses.firstOrNull { it.isDefault }?.id ?: addresses.firstOrNull()?.id
     }
 }

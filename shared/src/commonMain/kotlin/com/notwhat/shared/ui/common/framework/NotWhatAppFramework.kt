@@ -66,7 +66,10 @@ internal fun NotWhatAppFramework(
             onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
             onOpenStore = { flow.onEvent(AppNavEvent.OpenStore(it)) },
         )
-    val productCoordinator = ProductNavigationCoordinator()
+    val productCoordinator =
+        ProductNavigationCoordinator(
+            onOpenStore = { flow.onEvent(AppNavEvent.OpenStore(it)) },
+        )
     val sellerCoordinator = SellerNavigationCoordinator()
     val adminCoordinator = AdminNavigationCoordinator()
 

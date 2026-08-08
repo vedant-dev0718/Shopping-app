@@ -6,6 +6,7 @@ STITCH_THRESHOLD_PCT="${STITCH_THRESHOLD_PCT:-35}"
 
 cd "$ROOT_DIR"
 bash qa/ui-regression/scripts/run-buyer-e2e-flow.sh current
+bash qa/ui-regression/scripts/run-buyer-ios-accepted-bid-flow.sh current
 
 cd "$ROOT_DIR/qa/ui-regression"
 node scripts/capture-buyer-e2e-stitch.mjs

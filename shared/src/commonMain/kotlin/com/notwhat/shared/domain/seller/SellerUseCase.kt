@@ -65,9 +65,21 @@ class SellerUseCase(
         bearerToken: String,
     ): NetworkResult<OrderDto> = sellerOrderRepository.acceptOrder(orderId, bearerToken)
 
+    suspend fun rejectOrder(
+        orderId: String,
+        reason: String,
+        messageToBuyer: String,
+        bearerToken: String,
+    ): NetworkResult<OrderDto> = sellerOrderRepository.rejectOrder(orderId, reason, messageToBuyer, bearerToken)
+
     suspend fun shipOrder(
         orderId: String,
         trackingNumber: String,
         bearerToken: String,
     ): NetworkResult<OrderDto> = sellerOrderRepository.shipOrder(orderId, ShipOrderRequestDto(trackingNumber), bearerToken)
+
+    suspend fun markDelivered(
+        orderId: String,
+        bearerToken: String,
+    ): NetworkResult<OrderDto> = sellerOrderRepository.markDelivered(orderId, bearerToken)
 }

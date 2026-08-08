@@ -280,6 +280,53 @@ const restoreAcceptedStockForCancelledItems = async (items = []) => {
     )));
 };
 
+const adjustStockForLegacyDeliveredItems = async (sellerItems = []) => {
+  for (const item of sellerItems) {
+    if (item.itemAcceptanceStatus === 'accepted') {
+      continue;
+    }
+
+    const quantity = Math.max(item.quantity || 0, 0);
+
+    if (!item.productId || quantity === 0) {
+      continue;
+    }
+
+    const product = await Product.findById(item.productId);
+
+    if (!product) {
+      continue;
+    }
+
+    const previousStock = Math.max(product.stock || 0, 0);
+    const newStock = Math.max(previousStock - quantity, 0);
+
+    const statusUpdate = newStock === 0 && product.status === 'active'
+      ? 'sold_out'
+      : product.status;
+
+    await Product.updateOne(
+      { _id: item.productId },
+      {
+        $set: {
+          stock: newStock,
+          status: statusUpdate
+        },
+        $push: {
+          inventoryHistory: {
+            adjustedBy: item.sellerId || null,
+            previousStock,
+            newStock,
+            reason: 'order_delivered_legacy_sync'
+          }
+        }
+      }
+    );
+
+    item.itemAcceptanceStatus = 'accepted';
+  }
+};
+
 const maybeFinalizeAcceptedOrder = async (order) => {
   ensureSellerAcceptanceContainers(order);
 
@@ -878,18 +925,26 @@ const markOrderDelivered = async (sellerId, orderId, options = {}) => {
 
   const deliveredAt = options.deliveredAt ? new Date(options.deliveredAt) : new Date();
 
+  await adjustStockForLegacyDeliveredItems(sellerItems);
+
   forEachSellerItem(order, sellerId, (item) => {
     item.itemStatus = 'delivered';
+    item.itemDeliveredAt = deliveredAt;
+    item.returnEligible = item.returnEligible !== false;
   });
 
   updateComputedOrderStatus(order);
   order.deliveredAt = deliveredAt;
+  order.trackingStatus = 'Delivered';
+  order.inventoryReservation = order.inventoryReservation || {};
+  order.inventoryReservation.status = 'consumed';
   order.deliveryInfo = order.deliveryInfo || {};
   order.deliveryInfo.deliveredAt = deliveredAt;
   order.deliveryInfo.deliveryConfirmedBy = confirmationSource;
   order.deliveryInfo.deliveryConfirmationStatus = 'confirmed';
   order.deliveryInfo.deliveryReviewRequired = false;
   order.deliveryInfo.deliveryReviewReason = '';
+  order.deliveryInfo.deliveryReviewFlaggedAt = null;
   order.deliveryInfo.lastCourierStatus = options.courierStatus || order.deliveryInfo.lastCourierStatus || 'Delivered';
   order.deliveryInfo.lastCourierStatusAt = options.courierStatusAt ? new Date(options.courierStatusAt) : deliveredAt;
   order.deliveryInfo.returnWindowEndsAt = new Date(

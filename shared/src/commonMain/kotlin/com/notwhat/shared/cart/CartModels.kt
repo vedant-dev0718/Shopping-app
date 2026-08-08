@@ -11,6 +11,8 @@ import kotlinx.serialization.json.JsonNames
 data class CartItemDto(
     @JsonNames("id", "_id") val id: String = "",
     val productId: ProductDto? = null,
+    @JsonNames("bargainBidId") val bargainBidId: String? = null,
+    val bargainLockExpiresAt: String? = null,
     val quantity: Int = 1,
     val priceSnapshot: Double = 0.0,
     val itemTotal: Double = 0.0,
@@ -30,6 +32,7 @@ data class CartDto(
 data class AddCartItemRequestDto(
     val productId: String,
     val quantity: Int = 1,
+    val bargainBidId: String? = null,
 )
 
 @Serializable
@@ -42,14 +45,18 @@ data class UpdateCartItemRequestDto(
 // ---------------------------------------------------------------------------
 
 fun seedCart(): CartDto {
-    val seedProduct = com.notwhat.shared.catalog.seedProducts().first()
-    val item = CartItemDto(
-        id = "seed-item-1",
-        productId = seedProduct,
-        quantity = 1,
-        priceSnapshot = seedProduct.price,
-        itemTotal = seedProduct.price,
-    )
+    val seedProduct =
+        com.notwhat.shared.catalog
+            .seedProducts()
+            .first()
+    val item =
+        CartItemDto(
+            id = "seed-item-1",
+            productId = seedProduct,
+            quantity = 1,
+            priceSnapshot = seedProduct.price,
+            itemTotal = seedProduct.price,
+        )
     return CartDto(
         id = "seed-cart-1",
         items = listOf(item),

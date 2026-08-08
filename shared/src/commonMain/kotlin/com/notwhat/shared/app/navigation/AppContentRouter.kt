@@ -73,6 +73,14 @@ internal fun AppContentRouter(
                 modifier = Modifier.padding(padding),
                 state = state,
                 product = route.product,
+                onSellerEdit = {
+                    flow.onEvent(AppNavEvent.CloseCurrent)
+                    flow.onEvent(AppNavEvent.ChangeSellerRoute(SellerShellRoute.ProductLifecycleStub))
+                },
+                onSellerRestock = {
+                    flow.onEvent(AppNavEvent.CloseCurrent)
+                    flow.onEvent(AppNavEvent.ChangeSellerRoute(SellerShellRoute.LowStockRestock))
+                },
                 onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
             )
         } else {
@@ -81,6 +89,7 @@ internal fun AppContentRouter(
                 state = state,
                 route = flow.sellerRoute,
                 onRouteChange = { sellerRoute -> flow.onEvent(AppNavEvent.ChangeSellerRoute(sellerRoute)) },
+                onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
                 onBackToAccount = state::signOut,
             )
         }
@@ -101,6 +110,7 @@ internal fun AppContentRouter(
             state = state,
             route = flow.sellerRoute,
             onRouteChange = { sellerRoute -> flow.onEvent(AppNavEvent.ChangeSellerRoute(sellerRoute)) },
+            onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
             onBackToAccount = { flow.onEvent(AppNavEvent.CloseCurrent) },
         )
         return
@@ -157,6 +167,7 @@ internal fun AppContentRouter(
         OrderDetailScreen(
             modifier = Modifier.padding(padding),
             order = route.order,
+            state = state,
             onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
         )
         return
@@ -243,6 +254,7 @@ internal fun AppContentRouter(
                 modifier = Modifier.padding(padding),
                 state = state,
                 onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+                onOpenCart = { flow.onEvent(AppNavEvent.OpenCart) },
             )
         }
 

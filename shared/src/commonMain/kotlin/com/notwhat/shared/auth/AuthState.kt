@@ -148,16 +148,16 @@ class AuthState(
                 changePasswordNew == changePasswordConfirm && !isLoading
 
     init {
-        config.setBackendMode(BackendFlowMode.LIVE)
-        backendMode = BackendFlowMode.LIVE
-        persistence.saveBackendMode(BackendFlowMode.LIVE)
+        val restoredMode = persistence.loadBackendMode()
+        config.setBackendMode(restoredMode)
+        backendMode = restoredMode
         currentSession = persistence.loadSession()
     }
 
     fun updateBackendMode(mode: BackendFlowMode) {
-        config.setBackendMode(BackendFlowMode.LIVE)
-        backendMode = BackendFlowMode.LIVE
-        persistence.saveBackendMode(BackendFlowMode.LIVE)
+        config.setBackendMode(mode)
+        backendMode = mode
+        persistence.saveBackendMode(mode)
     }
 
     fun openBuyerSignup() {
@@ -361,13 +361,26 @@ class AuthState(
 
     fun editSignupEmail() {
         clearMessages()
+        val verification = pendingVerification
         pendingVerification = null
         verificationCode = ""
         destination =
-            if (sellerEmail.trim().isNotEmpty() && sellerStoreName.trim().isNotEmpty()) {
-                AuthDestination.SellerSignup
-            } else {
-                AuthDestination.BuyerSignup
+            when (verification?.role) {
+                UserRole.Seller -> {
+                    AuthDestination.SellerSignup
+                }
+
+                UserRole.Buyer -> {
+                    AuthDestination.BuyerSignup
+                }
+
+                else -> {
+                    if (sellerEmail.trim().isNotEmpty() && sellerStoreName.trim().isNotEmpty()) {
+                        AuthDestination.SellerSignup
+                    } else {
+                        AuthDestination.BuyerSignup
+                    }
+                }
             }
     }
 

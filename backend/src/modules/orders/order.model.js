@@ -144,6 +144,10 @@ const orderItemSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  itemDeliveredAt: {
+    type: Date,
+    default: null
+  },
   itemTrackingNumber: {
     type: String,
     default: ''

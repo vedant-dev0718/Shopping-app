@@ -171,6 +171,27 @@ class AuthStateTest {
         assertEquals(originalId, state.pendingVerification?.verificationId)
     }
 
+    @Test
+    fun editSignupEmail_returnsToRoleSpecificFlow() {
+        val state = freshState()
+
+        // Fill seller fields so fallback heuristic would incorrectly choose seller.
+        state.sellerStoreName = "Urban Threads"
+        state.sellerEmail = "seller@example.com"
+
+        state.buyerName = "Aanya"
+        state.buyerEmail = "buyer@example.com"
+        state.buyerPassword = "Password123!"
+        state.buyerPhone = "9999999999"
+        state.buyerAddress = "Jaipur"
+
+        kotlinx.coroutines.runBlocking { state.submitBuyerSignup() }
+        assertEquals(AuthDestination.VerifySignup, state.destination)
+
+        state.editSignupEmail()
+        assertEquals(AuthDestination.BuyerSignup, state.destination)
+    }
+
     // ------------------------------------------------------------------
     // Validation guards
     // ------------------------------------------------------------------

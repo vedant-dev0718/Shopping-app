@@ -57,12 +57,12 @@ const shippingInfoIsComplete = (shippingInfo = {}) => {
 
   return Boolean(
     cleaned.name
-      && cleaned.email
-      && cleaned.phone
-      && cleaned.address
-      && cleaned.city
-      && cleaned.state
-      && cleaned.postalCode
+    && cleaned.email
+    && cleaned.phone
+    && cleaned.address
+    && cleaned.city
+    && cleaned.state
+    && cleaned.postalCode
   );
 };
 
@@ -241,7 +241,7 @@ const scheduleBargain = async (seller, productId, { startDate, endDate, reserveP
   });
 };
 
-const createBidOrder = async (buyer, productId, { amount }) => {
+const createBidOrder = async (buyer, productId, { amount, quantity = 1 }) => {
   const product = await Product.findById(productId);
 
   if (!product || product.status !== 'active' || product.stock <= 0) {
@@ -249,7 +249,15 @@ const createBidOrder = async (buyer, productId, { amount }) => {
   }
 
   if (amount >= product.price) {
-    throw new AppError('Bid amount must be lower than the marked price', 400);
+    throw new AppError('Bid price per item must be lower than the marked price', 400);
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new AppError('Quantity must be at least 1', 400);
+  }
+
+  if (quantity > product.stock) {
+    throw new AppError('Quantity cannot exceed available product stock', 400);
   }
 
   const schedule = await getActiveScheduleForProduct(product._id);
@@ -259,7 +267,7 @@ const createBidOrder = async (buyer, productId, { amount }) => {
   }
 
   let razorpayOrderId;
-  let razorpayOrderAmount = Math.round(amount * 100);
+  let razorpayOrderAmount = Math.round(amount * quantity * 100);
 
   if (env.razorpayKeyId && env.razorpayKeySecret) {
     const razorpayOrder = await createManualCaptureOrder({
@@ -281,7 +289,7 @@ const createBidOrder = async (buyer, productId, { amount }) => {
   };
 };
 
-const placeBid = async (buyer, productId, { amount, razorpayPaymentId, shippingInfo }) => {
+const placeBid = async (buyer, productId, { amount, quantity = 1, razorpayPaymentId, shippingInfo }) => {
   const product = await Product.findById(productId);
 
   if (!product || product.status !== 'active' || product.stock <= 0) {
@@ -289,7 +297,15 @@ const placeBid = async (buyer, productId, { amount, razorpayPaymentId, shippingI
   }
 
   if (amount >= product.price) {
-    throw new AppError('Bid amount must be lower than the marked price', 400);
+    throw new AppError('Bid price per item must be lower than the marked price', 400);
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new AppError('Quantity must be at least 1', 400);
+  }
+
+  if (quantity > product.stock) {
+    throw new AppError('Quantity cannot exceed available product stock', 400);
   }
 
   const schedule = await getActiveScheduleForProduct(product._id);
@@ -326,7 +342,7 @@ const placeBid = async (buyer, productId, { amount, razorpayPaymentId, shippingI
       throw new AppError('Payment not authorized', 400);
     }
 
-    if (payment.amount !== Math.round(amount * 100)) {
+    if (payment.amount !== Math.round(amount * quantity * 100)) {
       throw new AppError('Payment amount mismatch', 400);
     }
 
@@ -336,6 +352,7 @@ const placeBid = async (buyer, productId, { amount, razorpayPaymentId, shippingI
   // Buyers can revise their bid by placing another bid; the active bid is updated in place.
   if (existingBid) {
     existingBid.amount = amount;
+    existingBid.quantity = quantity;
     existingBid.shippingInfo = cleanedShippingInfo;
     existingBid.razorpayPaymentId = verifiedPaymentId;
     existingBid.razorpayOrderId = verifiedPayment?.order_id || existingBid.razorpayOrderId;
@@ -359,6 +376,7 @@ const placeBid = async (buyer, productId, { amount, razorpayPaymentId, shippingI
     buyerId: buyer.id,
     sellerId: product.sellerId,
     amount,
+    quantity,
     shippingInfo: cleanedShippingInfo,
     razorpayOrderId: verifiedPayment?.order_id || '',
     razorpayPaymentId: verifiedPaymentId,
@@ -400,7 +418,8 @@ const createOrderFromWinningBid = async ({ winningBid, product, schedule }) => {
   }
 
   const bidAmount = roundMoney(winningBid.amount);
-  const itemTotal = bidAmount;
+  const bidQuantity = Math.max(1, Number(winningBid.quantity) || 1);
+  const itemTotal = roundMoney(bidAmount * bidQuantity);
   const shipping = 0;
   const finalTotal = itemTotal + shipping;
   const orderNumber = generateOrderNumber();
@@ -412,7 +431,7 @@ const createOrderFromWinningBid = async ({ winningBid, product, schedule }) => {
     imageSnapshot: Array.isArray(product.imageUrls) && product.imageUrls.length > 0
       ? product.imageUrls[0]
       : '',
-    quantity: 1,
+    quantity: bidQuantity,
     priceSnapshot: bidAmount,
     itemTotal,
     itemStatus: 'processing',
@@ -556,6 +575,181 @@ const getProductBids = async (seller, productId) => {
     .lean();
 };
 
+const acceptBid = async (seller, productId, bidId) => {
+  const product = await getSellerProduct(productId, seller.id);
+  const schedule = await getActiveScheduleForProduct(product._id);
+
+  if (!schedule) {
+    throw new AppError('Active bargain schedule not found', 404);
+  }
+
+  if (!scheduleIsCurrentlyOpen(schedule)) {
+    throw new AppError('Bargain schedule is not currently active', 400);
+  }
+
+  const bid = await Bid.findOne({
+    _id: bidId,
+    productId: product._id,
+    sellerId: seller.id
+  });
+
+  if (!bid) {
+    throw new AppError('Bid not found for this product', 404);
+  }
+
+  if (!['active', 'pending_seller_decision'].includes(bid.bidStatus)) {
+    throw new AppError('Only active or pending bids can be accepted', 400);
+  }
+
+  if (schedule.reservePrice > 0 && bid.amount < schedule.reservePrice) {
+    throw new AppError('Cannot accept bid below reserve price', 400);
+  }
+
+  const requestedQuantity = Math.max(1, Number(bid.quantity) || 1);
+  if (requestedQuantity > product.stock) {
+    throw new AppError('Bid quantity exceeds available stock', 409);
+  }
+
+  const authorizationExpiresAt = bid.razorpay?.authorizationExpiresAt;
+  if (authorizationExpiresAt && new Date(authorizationExpiresAt).getTime() <= Date.now()) {
+    throw new AppError('Bid payment authorization has expired', 409);
+  }
+
+  const competingBids = await Bid.find({
+    productId: product._id,
+    _id: { $ne: bid._id },
+    bidStatus: { $in: ['active', 'pending_seller_decision'] }
+  });
+
+  if (competingBids.length > 0) {
+    await releaseBidAuthorizations(competingBids, 'rejected');
+  }
+
+  bid.bidStatus = 'accepted';
+  bid.sellerDecision = {
+    ...(bid.sellerDecision || {}),
+    decidedBy: seller.id,
+    decidedAt: new Date(),
+    decision: 'accepted',
+    messageToBuyer: 'Your bid was accepted. Proceed to payment within the allowed window.',
+    rejectionReason: ''
+  };
+  await bid.save();
+
+  schedule.status = 'closed';
+  schedule.winningBidId = bid._id;
+  await schedule.save();
+
+  return {
+    acceptedBid: bid,
+    schedule,
+    rejectedBidCount: competingBids.length
+  };
+};
+
+const closeBidPaymentWindow = async (seller, productId, bidId) => {
+  const product = await getSellerProduct(productId, seller.id);
+
+  const bid = await Bid.findOne({
+    _id: bidId,
+    productId: product._id,
+    sellerId: seller.id
+  });
+
+  if (!bid) {
+    throw new AppError('Bid not found for this product', 404);
+  }
+
+  if (!['accepted', 'won'].includes(bid.bidStatus)) {
+    throw new AppError('Only accepted bids can have their payment window closed', 400);
+  }
+
+  if (['captured', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())) {
+    throw new AppError('Cannot close payment window for completed payment', 400);
+  }
+
+  const now = new Date();
+  bid.bidStatus = 'expired';
+  bid.paymentStatus = 'authorization_expired';
+  bid.sellerDecision = {
+    ...(bid.sellerDecision || {}),
+    decidedBy: seller.id,
+    decidedAt: now,
+    decision: 'rejected',
+    messageToBuyer: 'Payment window closed by seller.',
+    rejectionReason: 'Payment window closed by seller'
+  };
+  bid.razorpay = {
+    ...(bid.razorpay || {}),
+    authorizationExpiresAt: now,
+    captureFailureReason: 'Payment window closed by seller'
+  };
+  await bid.save();
+
+  const schedule = await BargainSchedule.findOne({ productId: product._id, winningBidId: bid._id });
+  if (schedule) {
+    schedule.winningBidId = null;
+    if (schedule.endDate > now) {
+      schedule.status = 'active';
+    }
+    await schedule.save();
+  }
+
+  return { bid, schedule: schedule || null };
+};
+
+const reopenBidNegotiation = async (seller, productId, bidId) => {
+  const product = await getSellerProduct(productId, seller.id);
+
+  const bid = await Bid.findOne({
+    _id: bidId,
+    productId: product._id,
+    sellerId: seller.id
+  });
+
+  if (!bid) {
+    throw new AppError('Bid not found for this product', 404);
+  }
+
+  if (!['accepted', 'expired', 'rejected', 'pending_seller_decision'].includes(bid.bidStatus)) {
+    throw new AppError('Only accepted, pending, or expired bids can be reopened', 400);
+  }
+
+  if (['captured', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())) {
+    throw new AppError('Cannot reopen negotiation for completed payment', 400);
+  }
+
+  bid.bidStatus = 'pending_seller_decision';
+  bid.paymentStatus = 'pending_authorization';
+  bid.sellerDecision = {
+    ...(bid.sellerDecision || {}),
+    decidedBy: seller.id,
+    decidedAt: new Date(),
+    decision: '',
+    messageToBuyer: 'Negotiation reopened by seller. Place an updated bid to continue.',
+    rejectionReason: ''
+  };
+  await bid.save();
+
+  let schedule = await BargainSchedule.findOne({ productId: product._id, status: 'active' });
+  if (!schedule) {
+    const maybeClosed = await BargainSchedule.findOne({ productId: product._id }).sort({ endDate: -1 });
+    if (maybeClosed && maybeClosed.endDate > new Date()) {
+      maybeClosed.status = 'active';
+      maybeClosed.winningBidId = null;
+      await maybeClosed.save();
+      schedule = maybeClosed;
+    }
+  }
+
+  if (schedule && schedule.winningBidId && schedule.winningBidId.toString() === bid._id.toString()) {
+    schedule.winningBidId = null;
+    await schedule.save();
+  }
+
+  return { bid, schedule: schedule || null };
+};
+
 const closeBargain = async (seller, productId, { force = false } = {}) => {
   const product = await getSellerProduct(productId, seller.id);
   const schedule = await getActiveScheduleForProduct(product._id);
@@ -677,7 +871,8 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
     }
   );
 
-  product.stock = Math.max(product.stock - 1, 0);
+  const soldQuantity = Math.max(1, Number(winningBid.quantity) || 1);
+  product.stock = Math.max(product.stock - soldQuantity, 0);
 
   if (product.stock === 0) {
     product.status = 'sold_out';
@@ -747,11 +942,62 @@ const getActiveBargains = async () => {
   });
 };
 
+const getBuyerBids = async (buyer) => {
+  const now = new Date();
+  const buyerBids = await Bid.find({ buyerId: buyer.id })
+    .populate(activeProductPopulate)
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const productIds = [...new Set(
+    buyerBids
+      .map((bid) => bid.productId?._id || bid.productId)
+      .filter(Boolean)
+      .map((value) => value.toString())
+  )];
+
+  const schedules = await BargainSchedule.find({ productId: { $in: productIds } })
+    .sort({ endDate: -1 })
+    .lean();
+
+  const latestScheduleByProductId = new Map();
+  schedules.forEach((schedule) => {
+    const key = schedule.productId?.toString();
+    if (key && !latestScheduleByProductId.has(key)) {
+      latestScheduleByProductId.set(key, schedule);
+    }
+  });
+
+  return buyerBids.map((bid) => {
+    const product = bid.productId && bid.productId._id ? bid.productId : null;
+    const productId = product?._id?.toString() || bid.productId?.toString() || '';
+    const schedule = latestScheduleByProductId.get(productId);
+    const paymentWindowEndsAt = bid.razorpay?.authorizationExpiresAt || null;
+    const canProceedToPayment =
+      ['accepted', 'won'].includes(bid.bidStatus)
+      && !['captured', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())
+      && (!paymentWindowEndsAt || new Date(paymentWindowEndsAt) > now);
+
+    return {
+      ...bid,
+      product,
+      scheduleEndDate: schedule?.endDate || null,
+      scheduleStatus: schedule?.status || null,
+      paymentWindowEndsAt,
+      canProceedToPayment
+    };
+  });
+};
+
 module.exports = {
   scheduleBargain,
   createBidOrder,
   placeBid,
+  getBuyerBids,
   getProductBids,
+  acceptBid,
+  closeBidPaymentWindow,
+  reopenBidNegotiation,
   closeBargain,
   withdrawBid,
   getActiveBargains

@@ -15,12 +15,14 @@ const scheduleValidation = [
 
 const createBidOrderValidation = [
   param('productId').isMongoId().withMessage('A valid product id is required'),
-  body('amount').isFloat({ gt: 0 }).withMessage('Bid amount must be greater than 0').toFloat()
+  body('amount').isFloat({ gt: 0 }).withMessage('Bid amount must be greater than 0').toFloat(),
+  body('quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1').toInt()
 ];
 
 const placeBidValidation = [
   param('productId').isMongoId().withMessage('A valid product id is required'),
   body('amount').isFloat({ gt: 0 }).withMessage('Bid amount must be greater than 0').toFloat(),
+  body('quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1').toInt(),
   body('shippingInfo').isObject().withMessage('Shipping info is required'),
   body('shippingInfo.name').trim().notEmpty().withMessage('Shipping name is required'),
   body('shippingInfo.email').trim().isEmail().withMessage('A valid shipping email is required').normalizeEmail(),
@@ -40,9 +42,21 @@ const bidIdValidation = [
   param('bidId').isMongoId().withMessage('A valid bid id is required')
 ];
 
+const acceptBidValidation = [
+  param('productId').isMongoId().withMessage('A valid product id is required'),
+  param('bidId').isMongoId().withMessage('A valid bid id is required')
+];
+
+const sellerBidActionValidation = [
+  param('productId').isMongoId().withMessage('A valid product id is required'),
+  param('bidId').isMongoId().withMessage('A valid bid id is required')
+];
+
 module.exports = {
   productIdValidation,
   bidIdValidation,
+  acceptBidValidation,
+  sellerBidActionValidation,
   scheduleValidation,
   createBidOrderValidation,
   placeBidValidation

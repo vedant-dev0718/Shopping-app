@@ -32,11 +32,47 @@ const placeBid = asyncHandler(async (req, res) => {
   });
 });
 
+const acceptBid = asyncHandler(async (req, res) => {
+  const result = await bargainService.acceptBid(req.user, req.params.productId, req.params.bidId);
+
+  return successResponse(res, {
+    message: 'Bid accepted successfully',
+    data: result.acceptedBid
+  });
+});
+
+const closeBidPaymentWindow = asyncHandler(async (req, res) => {
+  const result = await bargainService.closeBidPaymentWindow(req.user, req.params.productId, req.params.bidId);
+
+  return successResponse(res, {
+    message: 'Bid payment window closed successfully',
+    data: result.bid
+  });
+});
+
+const reopenBidNegotiation = asyncHandler(async (req, res) => {
+  const result = await bargainService.reopenBidNegotiation(req.user, req.params.productId, req.params.bidId);
+
+  return successResponse(res, {
+    message: 'Bid negotiation reopened successfully',
+    data: result.bid
+  });
+});
+
 const getProductBids = asyncHandler(async (req, res) => {
   const bids = await bargainService.getProductBids(req.user, req.params.productId);
 
   return successResponse(res, {
     message: 'Product bids fetched successfully',
+    data: bids
+  });
+});
+
+const getMyBids = asyncHandler(async (req, res) => {
+  const bids = await bargainService.getBuyerBids(req.user);
+
+  return successResponse(res, {
+    message: 'Buyer bids fetched successfully',
     data: bids
   });
 });
@@ -72,6 +108,10 @@ module.exports = {
   scheduleBargain,
   createBidOrder,
   placeBid,
+  acceptBid,
+  closeBidPaymentWindow,
+  reopenBidNegotiation,
+  getMyBids,
   getProductBids,
   closeBargain,
   withdrawBid,

@@ -1,0 +1,6 @@
+Running on iPhone 17 Pro - iOS 26.5 - 3D0C9DF5-53F3-4617-86BF-55EAE24A0EB5
+ > Flow _tmp_email_focus_probe
+Launch app "com.notwhat.app" with clear state and clear keychain... COMPLETED
+Tap on point (25%,38%)... COMPLETED
+Input text buyer@example.com... COMPLETED
+Take screenshot email_focus_probe... COMPLETED
