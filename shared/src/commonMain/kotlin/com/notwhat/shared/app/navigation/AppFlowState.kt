@@ -58,6 +58,10 @@ internal class AppFlowState {
                 route = AppRoute.AddressSelectorRoute(event.draft)
             }
 
+            AppNavEvent.OpenAddressSelectorFromCart -> {
+                route = AppRoute.CartAddressSelectorRoute
+            }
+
             is AppNavEvent.AddressSelected -> {
                 route = AppRoute.CheckoutDraftRoute(event.draft)
             }

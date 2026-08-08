@@ -429,6 +429,7 @@ internal fun CartSavedPaymentsScreen(
     state: NotWhatAppState,
     onBack: () -> Unit,
     onOpenProduct: (com.notwhat.shared.catalog.ProductDto) -> Unit,
+    onChangeAddress: () -> Unit = {},
     onProceedToCheckout: (CheckoutDraft) -> Unit,
 ) {
     val cartBg = NotWhatColors.background
@@ -638,12 +639,21 @@ internal fun CartSavedPaymentsScreen(
             item {
                 Surface(color = cartSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text(
-                            "Delivery Address",
-                            color = cartText,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "Delivery Address",
+                                color = cartText,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            TextButton(onClick = onChangeAddress) {
+                                Text("Change", color = cartAccent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            }
+                        }
                         if (state.transaction.addresses.isEmpty()) {
                             Text("No addresses available", color = cartMuted, style = MaterialTheme.typography.bodySmall)
                         } else {

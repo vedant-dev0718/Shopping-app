@@ -42,6 +42,8 @@ internal sealed interface AppRoute {
         val draft: CheckoutDraft,
     ) : AppRoute
 
+    data object CartAddressSelectorRoute : AppRoute
+
     data class ProfileShellRouteEntry(
         val route: ProfileShellRoute,
     ) : AppRoute
@@ -86,6 +88,8 @@ internal sealed interface AppNavEvent {
     data class OpenAddressSelector(
         val draft: CheckoutDraft,
     ) : AppNavEvent
+
+    data object OpenAddressSelectorFromCart : AppNavEvent
 
     data class AddressSelected(
         val draft: CheckoutDraft,

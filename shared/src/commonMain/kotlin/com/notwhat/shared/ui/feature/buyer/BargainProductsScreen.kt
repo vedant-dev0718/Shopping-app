@@ -73,6 +73,7 @@ internal fun BargainProductsScreen(
     var loadError by remember { mutableStateOf<String?>(null) }
     var paymentActionNote by remember { mutableStateOf<String?>(null) }
     var nowMs by remember { mutableLongStateOf(debugNowMs ?: Clock.System.now().toEpochMilliseconds()) }
+    var refreshTrigger by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
     LaunchedEffect(debugNowMs) {
         if (debugNowMs != null) {
@@ -85,7 +86,16 @@ internal fun BargainProductsScreen(
         }
     }
 
-    LaunchedEffect(state.currentSession?.authToken, state.uiRole) {
+    // Poll every 30 seconds so seller bid-window changes surface promptly
+    LaunchedEffect(debugNowMs) {
+        if (debugNowMs != null) return@LaunchedEffect
+        while (true) {
+            delay(30_000)
+            refreshTrigger++
+        }
+    }
+
+    LaunchedEffect(state.currentSession?.authToken, state.uiRole, refreshTrigger) {
         if (previewActiveSchedules != null) {
             activeSchedules = previewActiveSchedules
             myBids = previewMyBids.orEmpty()

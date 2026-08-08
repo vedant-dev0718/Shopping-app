@@ -50,4 +50,39 @@ describe('product API', () => {
     await api().post('/api/seller/products').set('Authorization', authHeader(seller)).send(productPayload({ stock: -1 })).expect(400);
     await api().patch(`/api/seller/products/${product._id}`).set('Authorization', authHeader(otherSeller)).send({ title: 'Nope' }).expect(404);
   });
+
+  test('seller inventory still shows and updates products attached to their store when sellerId drifted', async () => {
+    const seller = await createSeller();
+    const otherSeller = await createSeller({ email: 'drift-owner@example.com' });
+
+    const driftedProduct = await createProduct(otherSeller, {
+      title: 'Legacy Store Product',
+      storeId: seller.testStore._id
+    });
+
+    await api()
+      .get('/api/stores/' + seller.testStore._id + '/products')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.some((product) => product._id === driftedProduct._id.toString())).toBe(true);
+      });
+
+    await api()
+      .get('/api/seller/products')
+      .set('Authorization', authHeader(seller))
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data.some((product) => product._id === driftedProduct._id.toString())).toBe(true);
+      });
+
+    await api()
+      .patch(`/api/seller/products/${driftedProduct._id}`)
+      .set('Authorization', authHeader(seller))
+      .send({ title: 'Recovered Store Product' })
+      .expect(200);
+
+    const updatedProduct = await Product.findById(driftedProduct._id).lean();
+    expect(updatedProduct.title).toBe('Recovered Store Product');
+    expect(updatedProduct.sellerId.toString()).toBe(seller._id.toString());
+  });
 });

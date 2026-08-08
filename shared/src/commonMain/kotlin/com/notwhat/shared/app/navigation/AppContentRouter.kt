@@ -151,6 +151,27 @@ internal fun AppContentRouter(
         return
     }
 
+    if (flow.route is AppRoute.CartAddressSelectorRoute) {
+        val selectedAddrId = state.transaction.selectedDeliveryAddressId
+        val dummyDraft = CheckoutDraft(
+            items = emptyList(),
+            selectedPayment = DemoSavedPayment(label = "", maskedNumber = "", holderName = "", isDefault = false),
+            subtotal = "₹0",
+            shipping = "Free",
+            total = "₹0",
+            shippingAddress = "",
+            selectedAddressId = selectedAddrId,
+        )
+        CheckoutAddressSelectorScreen(
+            modifier = Modifier.padding(padding),
+            state = state,
+            draft = dummyDraft,
+            onBack = { flow.onEvent(AppNavEvent.OpenCart) },
+            onAddressSelected = { _ -> flow.onEvent(AppNavEvent.OpenCart) },
+        )
+        return
+    }
+
     if (flow.route is AppRoute.CheckoutDraftRoute) {
         val route = flow.route as AppRoute.CheckoutDraftRoute
         CheckoutConfirmationScreen(
@@ -170,6 +191,7 @@ internal fun AppContentRouter(
             state = state,
             onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
             onOpenProduct = { flow.onEvent(AppNavEvent.OpenProduct(it)) },
+            onChangeAddress = { flow.onEvent(AppNavEvent.OpenAddressSelectorFromCart) },
             onProceedToCheckout = { draft -> flow.onEvent(AppNavEvent.ProceedToCheckout(draft)) },
         )
         return

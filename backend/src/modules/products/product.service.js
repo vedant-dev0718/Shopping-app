@@ -339,6 +339,23 @@ const getSellerProfile = async (sellerId) => {
   return profile;
 };
 
+const getSellerOwnedStoreIds = async (sellerId) => {
+  return Store.find({ sellerId }).distinct('_id');
+};
+
+const buildSellerOwnedProductQuery = (sellerId, storeIds = []) => {
+  if (storeIds.length === 0) {
+    return { sellerId };
+  }
+
+  return {
+    $or: [
+      { sellerId },
+      { storeId: { $in: storeIds } }
+    ]
+  };
+};
+
 const resolveKycGatedProductStatus = (_profile, requestedStatus = 'active') => {
   // KYC remains on the seller profile for future rollout, but product publishing
   // is intentionally open while marketplace flows are being tested.
@@ -374,20 +391,27 @@ const createSellerProduct = async (user, data) => {
 };
 
 const getSellerProducts = async (sellerId) => {
-  return Product.find({ sellerId })
+  const storeIds = await getSellerOwnedStoreIds(sellerId);
+
+  return Product.find(buildSellerOwnedProductQuery(sellerId, storeIds))
     .populate('storeId', 'storeName city state region category')
     .sort({ createdAt: -1 })
     .lean();
 };
 
 const updateSellerProduct = async (user, productId, data) => {
+  const storeIds = await getSellerOwnedStoreIds(user.id);
   const product = await Product.findOne({
     _id: productId,
-    sellerId: user.id
+    ...buildSellerOwnedProductQuery(user.id, storeIds)
   });
 
   if (!product) {
     throw new AppError('Product not found for this seller', 404);
+  }
+
+  if (product.sellerId?.toString() !== user.id.toString()) {
+    product.sellerId = user.id;
   }
 
   if (data.storeId) {
@@ -446,9 +470,10 @@ const updateSellerProduct = async (user, productId, data) => {
 };
 
 const deleteSellerProduct = async (user, productId) => {
+  const storeIds = await getSellerOwnedStoreIds(user.id);
   const product = await Product.findOneAndDelete({
     _id: productId,
-    sellerId: user.id
+    ...buildSellerOwnedProductQuery(user.id, storeIds)
   });
 
   if (!product) {

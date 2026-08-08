@@ -810,6 +810,7 @@ internal fun SellerBargainCreateScreen(
     var isBidMetadataLoading by remember { mutableStateOf(false) }
     var bidMetadataError by remember { mutableStateOf<String?>(null) }
     var nowMs by remember { mutableLongStateOf(Clock.System.now().toEpochMilliseconds()) }
+    var bargainRefreshTrigger by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -818,7 +819,15 @@ internal fun SellerBargainCreateScreen(
         }
     }
 
-    LaunchedEffect(state.currentSession?.authToken, products.map { it.id }.joinToString("|")) {
+    // Poll every 30 seconds so bid counts stay current after seller queue actions
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30_000)
+            bargainRefreshTrigger++
+        }
+    }
+
+    LaunchedEffect(state.currentSession?.authToken, products.map { it.id }.joinToString("|"), bargainRefreshTrigger) {
         val token = state.currentSession?.authToken
         isBidMetadataLoading = true
         bidMetadataError = null
