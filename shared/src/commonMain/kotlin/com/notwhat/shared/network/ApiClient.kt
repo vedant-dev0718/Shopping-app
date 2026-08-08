@@ -5,6 +5,7 @@ import com.notwhat.shared.core.AppError
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.delete
@@ -194,7 +195,14 @@ class ApiClient(
                     explicitNulls = false
                     encodeDefaults = true
                 }
-            return createPlatformHttpClient { install(ContentNegotiation) { json(json) } }
+            return createPlatformHttpClient {
+                    install(ContentNegotiation) { json(json) }
+                    install(HttpTimeout) {
+                        requestTimeoutMillis = 60_000
+                        connectTimeoutMillis = 15_000
+                        socketTimeoutMillis = 300_000 // allow time for large media uploads
+                    }
+                }
         }
     }
 }

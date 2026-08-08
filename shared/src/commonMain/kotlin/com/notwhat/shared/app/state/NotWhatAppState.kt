@@ -19,6 +19,7 @@ import com.notwhat.shared.core.AppError
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.di.ServiceLocator
 import com.notwhat.shared.order.ReturnRequestDto
+import com.notwhat.shared.returns.RejectReturnRequestDto
 import com.notwhat.shared.returns.ReturnReason
 import com.notwhat.shared.returns.ReturnRequestResponseDto
 import com.notwhat.shared.returns.ReturnsAnalyticsContext
@@ -110,6 +111,13 @@ class NotWhatAppState(
     var isBuyerReturnsLoading by mutableStateOf(false)
         private set
     var buyerReturnsErrorMessage by mutableStateOf<String?>(null)
+        private set
+
+    var sellerReturns by mutableStateOf<List<ReturnRequestResponseDto>>(emptyList())
+        private set
+    var isSellerReturnsLoading by mutableStateOf(false)
+        private set
+    var sellerReturnsErrorMessage by mutableStateOf<String?>(null)
         private set
 
     private val recentSearchesUseCase = RecentSearchesUseCase()
@@ -345,8 +353,14 @@ class NotWhatAppState(
         val result = serviceLocator.returnRepository.listMyReturns(token)
 
         when (result) {
-            is NetworkResult.Success -> buyerReturns = result.data
-            is NetworkResult.Failure -> buyerReturnsErrorMessage = result.error.userMessage()
+            is NetworkResult.Success -> {
+                buyerReturns = result.data
+                transaction.loadOrders(token)
+            }
+
+            is NetworkResult.Failure -> {
+                buyerReturnsErrorMessage = result.error.userMessage()
+            }
         }
 
         isBuyerReturnsLoading = false
@@ -391,6 +405,70 @@ class NotWhatAppState(
 
             is NetworkResult.Failure -> {
                 buyerReturnsErrorMessage = result.error.userMessage()
+            }
+        }
+
+        return result
+    }
+
+    suspend fun loadSellerReturns(): NetworkResult<List<ReturnRequestResponseDto>> {
+        val token = authState.currentSession?.authToken
+        if (token.isNullOrBlank()) return NetworkResult.Failure(AppError.Api(401, "Sign in again to view seller returns."))
+
+        isSellerReturnsLoading = true
+        sellerReturnsErrorMessage = null
+
+        val result = serviceLocator.returnRepository.listSellerReturns(token)
+
+        when (result) {
+            is NetworkResult.Success -> sellerReturns = result.data
+            is NetworkResult.Failure -> sellerReturnsErrorMessage = result.error.userMessage()
+        }
+
+        isSellerReturnsLoading = false
+        return result
+    }
+
+    suspend fun approveSellerReturn(returnId: String): NetworkResult<ReturnRequestResponseDto> {
+        val token = authState.currentSession?.authToken
+        if (token.isNullOrBlank()) return NetworkResult.Failure(AppError.Api(401, "Sign in again to approve returns."))
+
+        val result = serviceLocator.returnRepository.approveReturn(returnId, token)
+
+        when (result) {
+            is NetworkResult.Success -> {
+                loadSellerReturns()
+            }
+
+            is NetworkResult.Failure -> {
+                sellerReturnsErrorMessage = result.error.userMessage()
+            }
+        }
+
+        return result
+    }
+
+    suspend fun rejectSellerReturn(
+        returnId: String,
+        reason: String,
+    ): NetworkResult<ReturnRequestResponseDto> {
+        val token = authState.currentSession?.authToken
+        if (token.isNullOrBlank()) return NetworkResult.Failure(AppError.Api(401, "Sign in again to reject returns."))
+
+        val result =
+            serviceLocator.returnRepository.rejectReturn(
+                returnId = returnId,
+                request = RejectReturnRequestDto(reason.ifBlank { "Rejected by seller" }),
+                bearerToken = token,
+            )
+
+        when (result) {
+            is NetworkResult.Success -> {
+                loadSellerReturns()
+            }
+
+            is NetworkResult.Failure -> {
+                sellerReturnsErrorMessage = result.error.userMessage()
             }
         }
 

@@ -251,6 +251,7 @@ internal fun OrderOperationsScreen(
         "packed" -> "Packed"
         "shipped" -> "Shipped"
         "delivered" -> "Delivered"
+        "partially_delivered" -> "Delivered"
         "cancelled", "seller_rejected" -> "Cancelled"
         "return_requested" -> "Return Req."
         "refunded" -> "Refunded"
@@ -261,7 +262,7 @@ internal fun OrderOperationsScreen(
         "awaiting_seller_acceptance" -> Color(0xFFF59E0B)
         "confirmed", "processing", "packed" -> Color(0xFF3B82F6)
         "shipped" -> Color(0xFF8B5CF6)
-        "delivered" -> Color(0xFF10B981)
+        "delivered", "partially_delivered" -> Color(0xFF10B981)
         "cancelled", "seller_rejected" -> Color(0xFFEF4444)
         "return_requested", "refunded" -> Color(0xFFF97316)
         else -> muted
@@ -273,7 +274,7 @@ internal fun OrderOperationsScreen(
             "New" -> status == "awaiting_seller_acceptance"
             "Processing" -> status in listOf("confirmed", "processing", "packed")
             "Shipped" -> status == "shipped"
-            "Delivered" -> status == "delivered"
+            "Delivered" -> status in listOf("delivered", "partially_delivered")
             "Cancelled" -> status in listOf("cancelled", "seller_rejected")
             else -> true
         }
@@ -541,8 +542,18 @@ internal fun OrderOperationsScreen(
                                     onClick = {
                                         isActing = true
                                         scope.launch {
-                                            state.sellerContent.markDelivered(order.id, token ?: "")
-                                            actionNote = "Order marked as Delivered."
+                                            val result = state.sellerContent.markDelivered(order.id, token ?: "")
+                                            actionNote =
+                                                if (result is com.notwhat.shared.core.NetworkResult.Success) {
+                                                    selectedLane = "Delivered"
+                                                    expandedOrderId = null
+                                                    "Order marked as Delivered."
+                                                } else {
+                                                    (result as? com.notwhat.shared.core.NetworkResult.Failure)
+                                                        ?.error
+                                                        ?.userMessage()
+                                                        ?: "Could not mark order as delivered."
+                                                }
                                             isActing = false
                                         }
                                     },

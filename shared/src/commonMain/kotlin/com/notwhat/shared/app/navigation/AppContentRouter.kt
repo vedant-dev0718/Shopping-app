@@ -164,9 +164,10 @@ internal fun AppContentRouter(
 
     if (flow.route is AppRoute.OrderDetail) {
         val route = flow.route as AppRoute.OrderDetail
+        val resolvedOrder = state.transaction.orders.firstOrNull { it.id == route.order.id } ?: route.order
         OrderDetailScreen(
             modifier = Modifier.padding(padding),
-            order = route.order,
+            order = resolvedOrder,
             state = state,
             onBack = { flow.onEvent(AppNavEvent.CloseCurrent) },
         )

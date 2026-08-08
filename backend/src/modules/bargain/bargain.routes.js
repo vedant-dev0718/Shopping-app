@@ -19,6 +19,7 @@ router.get('/my-bids', authenticate, requireBuyer, bargainController.getMyBids);
 router.post('/products/:productId/schedule', authenticate, requireSeller, scheduleValidation, validate, bargainController.scheduleBargain);
 router.post('/products/:productId/bid-order', authenticate, requireBuyer, createBidOrderValidation, validate, bargainController.createBidOrder);
 router.post('/products/:productId/bids', authenticate, requireBuyer, placeBidValidation, validate, bargainController.placeBid);
+router.get('/products/:productId/bids/summary', authenticate, requireBuyer, productIdValidation, validate, bargainController.getProductBidSummary);
 router.post('/products/:productId/bids/:bidId/accept', authenticate, requireSeller, acceptBidValidation, validate, bargainController.acceptBid);
 router.post('/products/:productId/bids/:bidId/close-window', authenticate, requireSeller, sellerBidActionValidation, validate, bargainController.closeBidPaymentWindow);
 router.post('/products/:productId/bids/:bidId/reopen-negotiation', authenticate, requireSeller, sellerBidActionValidation, validate, bargainController.reopenBidNegotiation);

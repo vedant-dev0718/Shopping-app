@@ -7,6 +7,7 @@ const safetyService = require('../safety/safety.service');
 const Product = require('./product.model');
 
 const PUBLIC_PRODUCT_STATUSES = ['active', 'sold_out'];
+const ALLOWED_PRODUCT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -20,6 +21,20 @@ const normalizeStringArray = (value) => {
   return value
     .map((item) => String(item).trim())
     .filter(Boolean);
+};
+
+const normalizeProductSizes = (value) => {
+  const dedupedSizes = new Set();
+
+  normalizeStringArray(value)
+    .map((size) => size.toUpperCase())
+    .forEach((size) => {
+      if (ALLOWED_PRODUCT_SIZES.includes(size)) {
+        dedupedSizes.add(size);
+      }
+    });
+
+  return Array.from(dedupedSizes);
 };
 
 const applyStockStatus = (productData) => {
@@ -347,6 +362,7 @@ const createSellerProduct = async (user, data) => {
     originalPrice: data.originalPrice ?? null,
     discountPercent: data.discountPercent ?? null,
     stock: data.stock ?? 0,
+    sizes: normalizeProductSizes(data.sizes),
     tags: normalizeStringArray(data.tags),
     imageUrls: normalizeStringArray(data.imageUrls),
     featured: data.featured || false,
@@ -408,6 +424,10 @@ const updateSellerProduct = async (user, productId, data) => {
 
   if (data.tags !== undefined) {
     product.tags = normalizeStringArray(data.tags);
+  }
+
+  if (data.sizes !== undefined) {
+    product.sizes = normalizeProductSizes(data.sizes);
   }
 
   if (data.imageUrls !== undefined) {

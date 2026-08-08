@@ -14,6 +14,12 @@ class BargainRepository(
     suspend fun getMyBids(bearerToken: String): NetworkResult<List<BuyerBidDto>> =
         runCatchingNetwork { client.get("bargain/my-bids", bearerToken = bearerToken) }
 
+    suspend fun getProductBidSummary(
+        productId: String,
+        bearerToken: String,
+    ): NetworkResult<ProductBidSummaryDto> =
+        runCatchingNetwork { client.get("bargain/products/$productId/bids/summary", bearerToken = bearerToken) }
+
     suspend fun placeBid(
         productId: String,
         amount: Double,

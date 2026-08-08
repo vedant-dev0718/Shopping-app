@@ -927,34 +927,6 @@ internal fun SellerBargainCreateScreen(
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Text(selectedProduct.displayPrice, color = accent, style = MaterialTheme.typography.labelMedium)
-
-                            val selectedSchedule = activeSchedulesByProductId[selectedProduct.id]
-                            if (selectedSchedule != null) {
-                                val selectedBidSummary = activeBidSummaryByProductId[selectedProduct.id]
-                                Text(
-                                    "Active bids: ${selectedBidSummary?.activeBidCount ?: 0}",
-                                    color = text,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                selectedBidSummary?.highestActiveBidAmount?.let { highest ->
-                                    Text(
-                                        "Highest active: ${formatSellerMoney(highest)}",
-                                        color = accent,
-                                        style = MaterialTheme.typography.labelSmall,
-                                    )
-                                }
-                                Text(
-                                    "Config: Reserve ${formatSellerMoney(selectedSchedule.reservePrice)}",
-                                    color = muted,
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                                Text(
-                                    "Time remaining: ${formatSellerTimerLabel(selectedSchedule.endDate, nowMs)}",
-                                    color = muted,
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            }
                         }
                         TextButton(onClick = { step = 1 }) { Text("Change", color = muted, style = MaterialTheme.typography.labelSmall) }
                     }

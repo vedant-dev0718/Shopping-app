@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const ALLOWED_PRODUCT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
 const productSchema = new mongoose.Schema({
   sellerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -77,6 +79,11 @@ const productSchema = new mongoose.Schema({
     min: 0,
     default: 0
   },
+  sizes: [{
+    type: String,
+    enum: ALLOWED_PRODUCT_SIZES,
+    trim: true
+  }],
   reservedStock: {
     type: Number,
     min: 0,

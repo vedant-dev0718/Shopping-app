@@ -1,5 +1,6 @@
 package com.notwhat.shared.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BorderStroke
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,8 +67,17 @@ internal fun OrderDetailScreen(
 
     val canShowTracking = order.status.lowercase() in setOf("shipped", "delivered")
     val statusStyle = orderDetailStatusStyle(order.status)
-    val isDelivered = order.status.lowercase() == "delivered"
-    val alreadyReturnRequested = order.status.lowercase() in setOf("return_requested", "returned", "refunded")
+    val normalizedOrderStatus = order.status.lowercase()
+    val isDelivered = normalizedOrderStatus == "delivered"
+    val alreadyReturnRequested =
+        normalizedOrderStatus in
+            setOf(
+                "return_requested",
+                "return_approved",
+                "return_rejected",
+                "returned",
+                "refunded",
+            )
 
     var showReturnSheet by remember { mutableStateOf(false) }
     var selectedReason by remember { mutableStateOf<ReturnReason?>(null) }
@@ -479,13 +488,21 @@ internal fun OrderDetailScreen(
 
                             when {
                                 returnSuccess || alreadyReturnRequested -> {
+                                    val buyerReturnMessage =
+                                        when (normalizedOrderStatus) {
+                                            "return_approved" -> "Return approved. Your order will be picked up shortly."
+                                            "return_rejected" -> "Return request was rejected. You can contact support for help."
+                                            "returned" -> "Return received by seller. Refund will be processed shortly."
+                                            "refunded" -> "Refund completed for this return request."
+                                            else -> "Return request submitted. Our team will review it shortly."
+                                        }
                                     Surface(
                                         color = Color(0xFF10B981).copy(alpha = 0.12f),
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.fillMaxWidth(),
                                     ) {
                                         Text(
-                                            "Return request submitted. Our team will review it shortly.",
+                                            buyerReturnMessage,
                                             color = Color(0xFF10B981),
                                             modifier = Modifier.padding(12.dp),
                                             style = MaterialTheme.typography.bodySmall,
@@ -550,7 +567,7 @@ private fun orderDetailStatusStyle(status: String): OrderDetailStatusStyle {
             "awaiting_seller_acceptance" -> Color(0xFF9A6700)
             "processing", "confirmed", "placed" -> NotWhatColors.primary
             "shipped", "delivered" -> Color(0xFF1E7A43)
-            "return_requested", "returned", "refunded" -> Color(0xFFD97706)
+            "return_requested", "return_approved", "return_rejected", "returned", "refunded" -> Color(0xFFD97706)
             "cancelled", "rejected" -> Color(0xFFB42318)
             else -> NotWhatColors.onSurfaceVariant
         }

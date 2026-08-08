@@ -15,3 +15,9 @@ yarn-error.log*
 .vscode/
 .github/
 .maestro/
+qa/ui-regression/bargain-day-burst-1.png
+qa/ui-regression/bargain-day-burst-2.png
+qa/ui-regression/bargain-day-burst-3.png
+qa/ui-regression/bargain-day-burst-4.png
+qa/ui-regression/bargain-day-burst-5.png
+qa/ui-regression/bargain-day-current.png

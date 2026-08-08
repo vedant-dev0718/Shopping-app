@@ -20,10 +20,6 @@ const sellerOrderBaseQuery = (sellerId) => ({
 const buildSellerOrderQuery = (sellerId, filters = {}) => {
   const query = sellerOrderBaseQuery(sellerId);
 
-  if (filters.status) {
-    query.orderStatus = filters.status;
-  }
-
   if (filters.paymentStatus) {
     query.paymentStatus = filters.paymentStatus;
   }
@@ -58,8 +54,53 @@ const filterSellerItems = (items = [], sellerId) => {
     .map(normalizeOrderItem);
 };
 
+const deriveSellerOrderStatus = (order = {}, sellerItems = []) => {
+  if (sellerItems.length === 0) {
+    return order.orderStatus || 'processing';
+  }
+
+  if (
+    order.orderStatus === 'awaiting_seller_acceptance'
+    && sellerItems.some((item) => item.itemAcceptanceStatus === 'pending')
+  ) {
+    return 'awaiting_seller_acceptance';
+  }
+
+  if (sellerItems.some((item) => item.itemStatus === 'return_requested')) {
+    return 'return_requested';
+  }
+
+  if (sellerItems.some((item) => item.itemStatus === 'return_approved')) {
+    return 'return_approved';
+  }
+
+  if (sellerItems.some((item) => item.itemStatus === 'return_rejected')) {
+    return 'return_rejected';
+  }
+
+  if (sellerItems.every((item) => item.itemStatus === 'cancelled')) {
+    return 'cancelled';
+  }
+
+  if (sellerItems.some((item) => item.itemStatus === 'delivered')) {
+    if (sellerItems.every((item) => item.itemStatus === 'delivered')) {
+      return 'delivered';
+    }
+    if (sellerItems.every((item) => ['delivered', 'cancelled'].includes(item.itemStatus))) {
+      return 'partially_delivered';
+    }
+  }
+
+  if (sellerItems.some((item) => item.itemStatus === 'shipped')) {
+    return 'shipped';
+  }
+
+  return 'processing';
+};
+
 const toSellerOrderView = (order, sellerId) => {
   const items = filterSellerItems(order.items, sellerId);
+  const sellerOrderStatus = deriveSellerOrderStatus(order, items);
   const sellerSubtotal = items.reduce((total, item) => total + (item.itemTotal || 0), 0);
   const orderSubtotalFromItems = (order.items || [])
     .map(normalizeOrderItem)
@@ -79,7 +120,7 @@ const toSellerOrderView = (order, sellerId) => {
     pickupAddressSnapshot: order.pickupAddressSnapshot || {},
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
-    orderStatus: order.orderStatus,
+    orderStatus: sellerOrderStatus,
     payoutStatus: order.payoutStatus || 'pending',
     trackingNumber: order.trackingNumber || '',
     trackingCarrier: order.trackingCarrier || '',
@@ -402,7 +443,17 @@ const getSellerOrders = async (sellerId, filters = {}) => {
     .sort({ createdAt: -1 })
     .lean();
 
-  return orders.map((order) => toSellerOrderView(order, sellerId));
+  const mappedOrders = orders.map((order) => toSellerOrderView(order, sellerId));
+
+  if (!filters.status) {
+    return mappedOrders;
+  }
+
+  if (filters.status === 'delivered') {
+    return mappedOrders.filter((order) => ['delivered', 'partially_delivered'].includes(order.orderStatus));
+  }
+
+  return mappedOrders.filter((order) => order.orderStatus === filters.status);
 };
 
 const getNewSellerOrders = async (sellerId) => {

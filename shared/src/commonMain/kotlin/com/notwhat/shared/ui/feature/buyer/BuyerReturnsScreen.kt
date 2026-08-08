@@ -342,6 +342,18 @@ fun BuyerReturnsContentScreen(
 
                     if (isSelected) {
                         HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                        Surface(
+                            color = surfaceHigh,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                request.canonicalStatus.buyerStatusMessage(),
+                                color = text,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                            )
+                        }
                         ReturnTimelineBlock(currentStatus = canonical, text = text, muted = muted, accent = accent)
 
                         if (canonical == ReturnCanonicalStatus.rejected && !request.rejectionReason.isNullOrBlank()) {
@@ -511,4 +523,20 @@ private fun ReturnCanonicalStatus.badgeColor(): Color =
         ReturnCanonicalStatus.refunded -> Color(0xFF9AE6A6)
         ReturnCanonicalStatus.closed -> Color(0xFFB0BEC5)
         ReturnCanonicalStatus.unknown -> Color(0xFFB0BEC5)
+    }
+
+private fun ReturnCanonicalStatus.buyerStatusMessage(): String =
+    when (this) {
+        ReturnCanonicalStatus.requested -> "Return request received. Seller review is pending."
+        ReturnCanonicalStatus.seller_review -> "Seller is reviewing your return request."
+        ReturnCanonicalStatus.approved -> "Return approved. Your order will be picked up shortly."
+        ReturnCanonicalStatus.rejected -> "Return request rejected. Contact support if you want to appeal."
+        ReturnCanonicalStatus.reverse_pickup -> "Pickup has been scheduled. Keep the item ready."
+        ReturnCanonicalStatus.in_transit -> "Return parcel has been picked up and is on the way to seller."
+        ReturnCanonicalStatus.delivered_to_seller -> "Return delivered to seller. Quality check will happen next."
+        ReturnCanonicalStatus.qc_passed -> "Quality check passed. Refund will be processed shortly."
+        ReturnCanonicalStatus.qc_failed -> "Quality check failed. Support team will share next steps."
+        ReturnCanonicalStatus.refunded -> "Refund completed. Amount should reflect in your payment method soon."
+        ReturnCanonicalStatus.closed -> "Return flow is complete."
+        ReturnCanonicalStatus.unknown -> "Status update received. Please refresh after a short while."
     }

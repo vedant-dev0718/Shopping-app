@@ -1,5 +1,6 @@
 package com.notwhat.shared.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BorderStroke
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -289,7 +289,7 @@ private fun orderStatusStyle(status: String): OrderStatusStyle {
             "awaiting_seller_acceptance" -> Color(0xFF9A6700)
             "processing", "confirmed", "placed" -> NotWhatColors.primary
             "shipped", "delivered" -> Color(0xFF1E7A43)
-            "return_requested", "returned" -> Color(0xFFD97706)
+            "return_requested", "return_approved", "return_rejected", "returned", "refunded" -> Color(0xFFD97706)
             "cancelled", "rejected" -> Color(0xFFB42318)
             else -> NotWhatColors.onSurfaceVariant
         }

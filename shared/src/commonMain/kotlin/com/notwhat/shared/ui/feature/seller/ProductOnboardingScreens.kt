@@ -77,6 +77,8 @@ val PRODUCT_REGIONS =
         "Uttar Pradesh",
     )
 
+val PRODUCT_SIZES = listOf("XS", "S", "M", "L", "XL", "XXL", "3XL")
+
 @Composable
 internal fun ProductOnboardingScreen(
     modifier: Modifier,
@@ -98,6 +100,7 @@ internal fun ProductOnboardingScreen(
     var region by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var stock by remember { mutableStateOf("") }
+    var selectedSizes by remember { mutableStateOf(setOf<String>()) }
     var sku by remember { mutableStateOf("") }
     var productLink by remember { mutableStateOf("") }
     var tags by remember { mutableStateOf(listOf<String>()) }
@@ -335,6 +338,15 @@ internal fun ProductOnboardingScreen(
                             onPriceChange = { price = it },
                             stock = stock,
                             onStockChange = { stock = it },
+                            selectedSizes = selectedSizes,
+                            onToggleSize = { size ->
+                                selectedSizes =
+                                    if (selectedSizes.contains(size)) {
+                                        selectedSizes - size
+                                    } else {
+                                        selectedSizes + size
+                                    }
+                            },
                             sku = sku,
                             onSkuChange = { sku = it },
                             tags = tags,
@@ -363,6 +375,7 @@ internal fun ProductOnboardingScreen(
                             region = region,
                             price = price,
                             stock = stock,
+                            sizes = selectedSizes.toList(),
                             imageUrl = imagePreviewUrls.firstOrNull() ?: imageUrls.firstOrNull(),
                             tags = tags,
                             surface = surface,
@@ -425,6 +438,7 @@ internal fun ProductOnboardingScreen(
                                         price = parsedPrice,
                                         sku = sku.trim().ifBlank { null },
                                         stock = parsedStock,
+                                        sizes = selectedSizes.toList(),
                                         tags = tags,
                                         imageUrls = imageUrls,
                                         productLink = productLink.trim().ifBlank { null },
@@ -477,8 +491,6 @@ private fun ProductOnboardingBasicInfoStep(
     text: Color,
     muted: Color,
 ) {
-    val accent = NotWhatAuthTokens.accent
-
     Surface(
         color = surface,
         shape = SellerUiTokens.radiusInnerCard,
@@ -724,6 +736,8 @@ private fun ProductOnboardingPricingStep(
     onPriceChange: (String) -> Unit,
     stock: String,
     onStockChange: (String) -> Unit,
+    selectedSizes: Set<String>,
+    onToggleSize: (String) -> Unit,
     sku: String,
     onSkuChange: (String) -> Unit,
     tags: List<String>,
@@ -765,6 +779,39 @@ private fun ProductOnboardingPricingStep(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
+
+            Text("Available Sizes (Optional)", color = text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+            Text(
+                "Select all sizes currently in stock. Leave empty for free-size products.",
+                color = text.copy(alpha = 0.65f),
+                style = MaterialTheme.typography.labelSmall,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PRODUCT_SIZES.chunked(4).forEach { rowSizes ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        rowSizes.forEach { size ->
+                            val isSelected = selectedSizes.contains(size)
+                            Surface(
+                                modifier = Modifier.clickable { onToggleSize(size) },
+                                color = if (isSelected) accent.copy(alpha = 0.16f) else Color.Transparent,
+                                shape = RoundedCornerShape(12.dp),
+                                border =
+                                    androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        if (isSelected) accent else Color(0xFFD4C4B8),
+                                    ),
+                            ) {
+                                Text(
+                                    size,
+                                    color = if (isSelected) accent else text,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             Text("SKU (Optional)", color = text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(
@@ -849,6 +896,7 @@ private fun ProductOnboardingReviewStep(
     region: String,
     price: String,
     stock: String,
+    sizes: List<String>,
     imageUrl: String?,
     tags: List<String>,
     surface: Color,
@@ -884,6 +932,7 @@ private fun ProductOnboardingReviewStep(
             ReviewItemRow("Region", region, text, muted)
             ReviewItemRow("Price", "₹$price", text, muted)
             ReviewItemRow("Stock", "$stock units", text, muted)
+            ReviewItemRow("Available Sizes", if (sizes.isEmpty()) "Free Size" else sizes.joinToString(", "), text, muted)
 
             Text("Description", color = text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
             Text(description, color = muted, style = MaterialTheme.typography.bodySmall)

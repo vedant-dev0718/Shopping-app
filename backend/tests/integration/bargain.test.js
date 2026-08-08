@@ -182,3 +182,47 @@ describe('seller accept bid endpoint', () => {
     expect(rejected.body.message).toContain('Bid payment authorization has expired');
   });
 });
+
+describe('buyer product bid summary endpoint', () => {
+  test('returns anonymized market summary for an active bargain product', async () => {
+    const seller = await createSeller();
+    const buyerA = await createBuyer();
+    const buyerB = await createBuyer();
+    const product = await createProduct(seller, { price: 1300, stock: 3, bargainEnabled: true });
+    const window = activeScheduleWindow();
+
+    await BargainSchedule.create({
+      productId: product._id,
+      sellerId: seller._id,
+      startDate: window.startDate,
+      endDate: window.endDate,
+      reservePrice: 0,
+      status: 'active'
+    });
+
+    await api()
+      .post(`/api/bargain/products/${product._id}/bids`)
+      .set('Authorization', authHeader(buyerA))
+      .send({ amount: 840, quantity: 1, shippingInfo })
+      .expect(201);
+
+    await api()
+      .post(`/api/bargain/products/${product._id}/bids`)
+      .set('Authorization', authHeader(buyerB))
+      .send({ amount: 910, quantity: 2, shippingInfo: { ...shippingInfo, email: 'summary-b@example.com' } })
+      .expect(201);
+
+    const summary = await api()
+      .get(`/api/bargain/products/${product._id}/bids/summary`)
+      .set('Authorization', authHeader(buyerA))
+      .expect(200);
+
+    expect(summary.body.data.productId.toString()).toBe(product._id.toString());
+    expect(summary.body.data.totalBids).toBe(2);
+    expect(summary.body.data.highestBidAmount).toBe(910);
+    expect(summary.body.data.isBargainOpen).toBe(true);
+    expect(Array.isArray(summary.body.data.recentBids)).toBe(true);
+    expect(summary.body.data.recentBids.length).toBe(2);
+    expect(summary.body.data.recentBids[0].bidderLabel).toMatch(/^Bidder\s[A-F0-9]{4}$/);
+  });
+});

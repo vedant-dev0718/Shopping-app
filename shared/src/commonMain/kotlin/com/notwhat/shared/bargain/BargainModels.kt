@@ -118,6 +118,29 @@ data class BuyerBidDto(
 )
 
 @Serializable
+data class PublicBidEventDto(
+    val amount: Double = 0.0,
+    val quantity: Int = 1,
+    val status: String = "",
+    val createdAt: String? = null,
+    val bidderLabel: String = "",
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class ProductBidSummaryDto(
+    @Serializable(with = FlexibleObjectIdSerializer::class) val productId: String = "",
+    val totalBids: Int = 0,
+    val highestBidAmount: Double? = null,
+    val highestBidQuantity: Int? = null,
+    val highestBidAt: String? = null,
+    val recentBids: List<PublicBidEventDto> = emptyList(),
+    val isBargainOpen: Boolean = false,
+    val scheduleStatus: String = "inactive",
+    val scheduleEndDate: String? = null,
+)
+
+@Serializable
 data class PlaceBidRequestDto(
     val amount: Double,
     val quantity: Int = 1,

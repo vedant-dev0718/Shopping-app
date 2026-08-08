@@ -575,6 +575,66 @@ const getProductBids = async (seller, productId) => {
     .lean();
 };
 
+const toBidderLabel = (buyerId) => {
+  const id = String(buyerId || '').trim();
+
+  if (!id) {
+    return 'Bidder';
+  }
+
+  return `Bidder ${id.slice(-4).toUpperCase()}`;
+};
+
+const getProductBidSummary = async (_buyer, productId) => {
+  const product = await Product.findById(productId).select('status stock bargainEnabled').lean();
+
+  if (!product || product.status !== 'active' || product.stock <= 0 || !product.bargainEnabled) {
+    throw new AppError('Product is not available for bidding', 400);
+  }
+
+  const now = new Date();
+  const schedule = await getActiveScheduleForProduct(productId);
+  const isBargainOpen = scheduleIsCurrentlyOpen(schedule, now);
+  const scheduleStatus = schedule?.status || 'inactive';
+  const scheduleEndDate = schedule?.endDate || null;
+
+  const summaryBidFilter = {
+    productId,
+    bidStatus: { $nin: ['draft', 'cancelled', 'withdrawn'] }
+  };
+
+  const [highestBid, recentBids, totalBids] = await Promise.all([
+    Bid.findOne(summaryBidFilter)
+      .sort({ amount: -1, createdAt: 1 })
+      .select('amount quantity createdAt')
+      .lean(),
+    Bid.find(summaryBidFilter)
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('amount quantity createdAt bidStatus buyerId')
+      .lean(),
+    Bid.countDocuments(summaryBidFilter)
+  ]);
+
+  return {
+    productId: productId.toString(),
+    totalBids,
+    highestBidAmount: highestBid?.amount ?? null,
+    highestBidQuantity: highestBid?.quantity ?? null,
+    highestBidAt: highestBid?.createdAt ?? null,
+    recentBids: recentBids.map((bid) => ({
+      amount: bid.amount,
+      quantity: bid.quantity,
+      status: bid.bidStatus,
+      createdAt: bid.createdAt,
+      bidderLabel: toBidderLabel(bid.buyerId)
+    })),
+    isBargainOpen,
+    scheduleStatus,
+    scheduleEndDate
+  };
+};
+
 const acceptBid = async (seller, productId, bidId) => {
   const product = await getSellerProduct(productId, seller.id);
   const schedule = await getActiveScheduleForProduct(product._id);
@@ -1000,5 +1060,6 @@ module.exports = {
   reopenBidNegotiation,
   closeBargain,
   withdrawBid,
-  getActiveBargains
+  getActiveBargains,
+  getProductBidSummary
 };

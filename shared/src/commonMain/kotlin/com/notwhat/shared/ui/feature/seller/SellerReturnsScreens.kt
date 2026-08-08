@@ -29,10 +29,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +42,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.notwhat.shared.core.NetworkResult
+import com.notwhat.shared.returns.ReturnRequestResponseDto
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun SellerReturnsScreen(
@@ -58,41 +63,49 @@ internal fun SellerReturnsScreen(
     val approvedTone = Color(0xFF1F6A38)
     val listGap = 14.dp
     val cardInnerGap = 10.dp
+    val scope = rememberCoroutineScope()
 
     var selectedTab by remember { mutableStateOf("Requested") }
-    val liveReturnRequests =
-        state.sellerContent.orders
-            .filter { it.status in listOf("return_requested", "cancelled", "refunded") }
-            .map { order ->
-                DemoSellerReturnRequest(
-                    orderId = order.id,
-                    productName = order.items.firstOrNull()?.titleSnapshot ?: "-",
-                    size = "-",
-                    color = "-",
-                    status = "Requested",
-                    reason = order.cancelReason ?: "Return requested by buyer",
-                    buyerNote = "",
-                    suggestedRefund = "\u20b9${order.totalAmount.toInt()}",
-                    buyerPhotoCount = 0,
-                )
-            }
-
-    val returnRequests = liveReturnRequests
-    var selectedRequest by remember { mutableStateOf<DemoSellerReturnRequest?>(returnRequests.firstOrNull()) }
+    val returnRequests = state.sellerReturns
+    var selectedRequestId by remember { mutableStateOf<String?>(null) }
     val requestStatusById = remember { mutableStateMapOf<String, String>() }
     var actionMessage by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(state.currentSession?.authToken) {
+        state.loadSellerReturns()
+    }
+
+    LaunchedEffect(returnRequests.map { it.id }.joinToString("|")) {
+        if (selectedRequestId == null && returnRequests.isNotEmpty()) {
+            selectedRequestId = returnRequests.first().id
+        }
+        if (selectedRequestId != null && returnRequests.none { it.id == selectedRequestId }) {
+            selectedRequestId = returnRequests.firstOrNull()?.id
+        }
+    }
+
     val tabs = listOf("Requested", "Approved", "Completed")
+
+    fun bucketStatus(request: ReturnRequestResponseDto): String {
+        val local = requestStatusById[request.id]
+        if (local != null) return local
+        return when (request.status.lowercase()) {
+            "requested", "return_requested", "seller_review", "under_review" -> "Requested"
+            "approved", "return_approved", "pickup_scheduled", "reverse_pickup", "reverse_pickup_scheduled", "picked_up", "reverse_in_transit", "in_transit" -> "Approved"
+            else -> "Completed"
+        }
+    }
+
     val countsByStatus =
         mapOf(
-            "Requested" to returnRequests.count { (requestStatusById[it.orderId] ?: it.status) == "Requested" },
-            "Approved" to returnRequests.count { (requestStatusById[it.orderId] ?: it.status) == "Approved" },
-            "Completed" to returnRequests.count { (requestStatusById[it.orderId] ?: it.status) == "Completed" },
+            "Requested" to returnRequests.count { bucketStatus(it) == "Requested" },
+            "Approved" to returnRequests.count { bucketStatus(it) == "Approved" },
+            "Completed" to returnRequests.count { bucketStatus(it) == "Completed" },
         )
 
     val filteredRequests =
         returnRequests.filter { request ->
-            val status = requestStatusById[request.orderId] ?: request.status
+            val status = bucketStatus(request)
             when (selectedTab) {
                 "Requested" -> status == "Requested"
                 "Approved" -> status == "Approved"
@@ -266,14 +279,14 @@ internal fun SellerReturnsScreen(
             }
 
             items(filteredRequests) { request ->
-                val status = requestStatusById[request.orderId] ?: request.status
+                val status = bucketStatus(request)
                 val statusTone =
                     when (status) {
                         "Requested" -> requestedTone
                         "Approved" -> approvedTone
                         else -> muted
                     }
-                val isSelected = selectedRequest?.orderId == request.orderId
+                val isSelected = selectedRequestId == request.id
                 val cardInteraction = remember { MutableInteractionSource() }
                 val cardPressed by cardInteraction.collectIsPressedAsState()
                 val cardScale by animateFloatAsState(if (cardPressed) 0.992f else 1f)
@@ -288,7 +301,7 @@ internal fun SellerReturnsScreen(
                             }.clickable(
                                 interactionSource = cardInteraction,
                                 indication = LocalIndication.current,
-                            ) { selectedRequest = request },
+                            ) { selectedRequestId = request.id },
                     color = surface,
                     shape = SellerUiTokens.radiusInnerCard,
                     border = BorderStroke(1.dp, statusTone.copy(alpha = 0.28f)),
@@ -326,12 +339,12 @@ internal fun SellerReturnsScreen(
                                     }
                                 }
                                 Text(
-                                    request.productName,
+                                    request.description?.takeIf { it.isNotBlank() } ?: "Return request",
                                     color = text,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
-                                Text("Size ${request.size} • ${request.color}", color = muted, style = MaterialTheme.typography.bodySmall)
+                                Text("Status source: ${request.status}", color = muted, style = MaterialTheme.typography.bodySmall)
                             }
                             Surface(
                                 shape = RoundedCornerShape(999.dp),
@@ -357,12 +370,16 @@ internal fun SellerReturnsScreen(
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("Reason", color = text, fontWeight = FontWeight.Bold, modifier = Modifier.width(56.dp))
-                                    Text(request.reason.ifBlank { "No reason supplied." }, color = text, modifier = Modifier.weight(1f))
+                                    Text(
+                                        request.reason.replace('_', ' ').ifBlank { "No reason supplied." },
+                                        color = text,
+                                        modifier = Modifier.weight(1f),
+                                    )
                                 }
                                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("Note", color = text, fontWeight = FontWeight.Bold, modifier = Modifier.width(56.dp))
                                     Text(
-                                        request.buyerNote.ifBlank { "No buyer note yet." },
+                                        request.description?.ifBlank { "No buyer note yet." } ?: "No buyer note yet.",
                                         color = muted,
                                         modifier = Modifier.weight(1f),
                                     )
@@ -375,8 +392,8 @@ internal fun SellerReturnsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("Buyer photos (${request.buyerPhotoCount})", color = muted, style = MaterialTheme.typography.labelMedium)
-                            Text("Suggested ${request.suggestedRefund}", color = accent, fontWeight = FontWeight.Bold)
+                            Text("Buyer photos (0)", color = muted, style = MaterialTheme.typography.labelMedium)
+                            Text("Suggested \u20b9${request.refundAmount.toInt()}", color = accent, fontWeight = FontWeight.Bold)
                         }
 
                         if (isSelected) {
@@ -401,21 +418,63 @@ internal fun SellerReturnsScreen(
                         HorizontalDivider(color = NotWhatColors.surfaceVariant.copy(alpha = 0.8f), thickness = 1.dp)
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                            Button(
-                                onClick = {
-                                    requestStatusById[request.orderId] = "Approved"
-                                    actionMessage = "${request.orderId} approved for return."
-                                },
-                                modifier = Modifier.weight(1f).height(50.dp),
-                                shape = SellerUiTokens.radiusButton,
-                                colors = ButtonDefaults.buttonColors(containerColor = accent),
-                            ) {
-                                Text("Approve Return", color = Color.White, fontWeight = FontWeight.Black)
+                            if (status == "Requested") {
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            when (val result = state.approveSellerReturn(request.id)) {
+                                                is NetworkResult.Success -> {
+                                                    requestStatusById[request.id] = "Approved"
+                                                    actionMessage = "${request.orderId} approved for return."
+                                                    selectedTab = "Approved"
+                                                }
+
+                                                is NetworkResult.Failure -> {
+                                                    actionMessage = result.error.userMessage()
+                                                }
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).height(50.dp),
+                                    shape = SellerUiTokens.radiusButton,
+                                    colors = ButtonDefaults.buttonColors(containerColor = accent),
+                                ) {
+                                    Text("Approve Return", color = Color.White, fontWeight = FontWeight.Black)
+                                }
                             }
                             Button(
                                 onClick = {
-                                    requestStatusById[request.orderId] = "Completed"
-                                    actionMessage = "${request.orderId} marked completed after rejection review."
+                                    scope.launch {
+                                        when (
+                                            val result =
+                                                state.rejectSellerReturn(
+                                                    returnId = request.id,
+                                                    reason =
+                                                        if (status ==
+                                                            "Approved"
+                                                        ) {
+                                                            "Approval reversed by seller"
+                                                        } else {
+                                                            "Rejected by seller"
+                                                        },
+                                                )
+                                        ) {
+                                            is NetworkResult.Success -> {
+                                                requestStatusById[request.id] = "Completed"
+                                                actionMessage =
+                                                    if (status == "Approved") {
+                                                        "${request.orderId} return approval reversed."
+                                                    } else {
+                                                        "${request.orderId} return request rejected."
+                                                    }
+                                                selectedTab = "Completed"
+                                            }
+
+                                            is NetworkResult.Failure -> {
+                                                actionMessage = result.error.userMessage()
+                                            }
+                                        }
+                                    }
                                 },
                                 modifier = Modifier.weight(1f).height(50.dp),
                                 shape = SellerUiTokens.radiusButton,

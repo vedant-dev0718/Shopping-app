@@ -68,6 +68,15 @@ const getProductBids = asyncHandler(async (req, res) => {
   });
 });
 
+const getProductBidSummary = asyncHandler(async (req, res) => {
+  const summary = await bargainService.getProductBidSummary(req.user, req.params.productId);
+
+  return successResponse(res, {
+    message: 'Product bid summary fetched successfully',
+    data: summary
+  });
+});
+
 const getMyBids = asyncHandler(async (req, res) => {
   const bids = await bargainService.getBuyerBids(req.user);
 
@@ -113,6 +122,7 @@ module.exports = {
   reopenBidNegotiation,
   getMyBids,
   getProductBids,
+  getProductBidSummary,
   closeBargain,
   withdrawBid,
   getActiveBargains

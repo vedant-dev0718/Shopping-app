@@ -1,5 +1,7 @@
 const { body, param, query } = require('express-validator');
 
+const ALLOWED_PRODUCT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
 // Accepts any http/https URL including localhost (for dev S3 proxy URLs)
 const isValidUrl = (value) => /^https?:\/\/.+/.test(value);
 const productIdValidation = [
@@ -31,6 +33,15 @@ const createProductValidation = [
   body('originalPrice').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Original price must be zero or greater').toFloat(),
   body('discountPercent').optional({ nullable: true }).isFloat({ min: 0, max: 99 }).withMessage('Discount percent must be between 0 and 99').toFloat(),
   body('stock').optional().isInt({ min: 0 }).withMessage('Stock must be zero or greater').toInt(),
+  body('sizes').optional().isArray().withMessage('Sizes must be an array'),
+  body('sizes.*')
+    .optional()
+    .isString()
+    .withMessage('Each size must be a string')
+    .trim()
+    .toUpperCase()
+    .isIn(ALLOWED_PRODUCT_SIZES)
+    .withMessage(`Each size must be one of: ${ALLOWED_PRODUCT_SIZES.join(', ')}`),
   body('tags').optional().isArray().withMessage('Tags must be an array'),
   body('tags.*').optional().isString().withMessage('Each tag must be a string').trim(),
   body('imageUrls').optional().isArray().withMessage('Image URLs must be an array'),
@@ -58,6 +69,15 @@ const updateProductValidation = [
   body('originalPrice').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Original price must be zero or greater').toFloat(),
   body('discountPercent').optional({ nullable: true }).isFloat({ min: 0, max: 99 }).withMessage('Discount percent must be between 0 and 99').toFloat(),
   body('stock').optional().isInt({ min: 0 }).withMessage('Stock must be zero or greater').toInt(),
+  body('sizes').optional().isArray().withMessage('Sizes must be an array'),
+  body('sizes.*')
+    .optional()
+    .isString()
+    .withMessage('Each size must be a string')
+    .trim()
+    .toUpperCase()
+    .isIn(ALLOWED_PRODUCT_SIZES)
+    .withMessage(`Each size must be one of: ${ALLOWED_PRODUCT_SIZES.join(', ')}`),
   body('tags').optional().isArray().withMessage('Tags must be an array'),
   body('tags.*').optional().isString().withMessage('Each tag must be a string').trim(),
   body('imageUrls').optional().isArray().withMessage('Image URLs must be an array'),
