@@ -22,7 +22,19 @@ describe('reels API', () => {
       })
       .expect(201);
 
+    expect(created.body.data.storeId?.storeName).toBeTruthy();
+    expect(created.body.data.taggedProductIds?.[0]?.title).toBe(product.title);
+
     const reelId = created.body.data._id;
+    await api()
+      .get('/api/seller/reels')
+      .set('Authorization', authHeader(seller))
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.data[0].storeId?.storeName).toBeTruthy();
+        expect(res.body.data[0].taggedProductIds?.[0]?.title).toBe(product.title);
+      });
+
     await api().get('/api/reels').expect(200).expect((res) => {
       expect(res.body.data[0].storeId).toBeTruthy();
       expect(res.body.data[0].taggedProducts || res.body.data[0].taggedProductIds).toBeTruthy();

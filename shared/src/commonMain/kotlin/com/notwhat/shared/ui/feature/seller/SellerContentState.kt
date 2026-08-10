@@ -256,6 +256,19 @@ internal class SellerContentState(
             )
         return repo.reopenBidNegotiation(productId, bidId, bearerToken)
     }
+
+    suspend fun closeBargain(
+        productId: String,
+        force: Boolean,
+        bearerToken: String,
+    ): String {
+        val repo = bargainRepository ?: return "Bargain service not available"
+        val result = repo.closeBargain(productId = productId, force = force, bearerToken = bearerToken)
+        return when (result) {
+            is NetworkResult.Success -> ""
+            is NetworkResult.Failure -> result.error.message ?: "Failed to close Bargain Day"
+        }
+    }
 }
 
 // Bridge: DemoSellerReel rendering still used by SellerReelListScreen components

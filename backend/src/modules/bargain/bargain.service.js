@@ -1006,11 +1006,17 @@ const getActiveBargains = async () => {
     .sort({ endDate: 1 })
     .lean();
 
-  return activeSchedules.filter((schedule) => {
-    return schedule.productId
-      && schedule.productId.status === 'active'
-      && schedule.productId.stock > 0;
-  });
+  return activeSchedules
+    .filter((schedule) => {
+      return schedule.productId
+        && schedule.productId.status === 'active'
+        && schedule.productId.stock > 0;
+    })
+    .map((schedule) => ({
+      ...schedule,
+      product: schedule.productId,
+      productId: (schedule.productId._id || schedule.productId).toString(),
+    }));
 };
 
 const getBuyerBids = async (buyer) => {

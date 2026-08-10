@@ -91,6 +91,7 @@ internal fun ProductOnboardingScreen(
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
+    val surfaceHigh = NotWhatColors.surfaceContainerHigh
     val text = NotWhatColors.onSurface
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
@@ -218,7 +219,7 @@ internal fun ProductOnboardingScreen(
                             .weight(1f)
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(if (index <= currentStep) accent else surface),
+                            .background(if (index <= currentStep) accent else surfaceHigh),
                 )
             }
         }
@@ -240,10 +241,14 @@ internal fun ProductOnboardingScreen(
         ) {
             submitError?.let { message ->
                 item {
-                    Surface(color = Color(0xFF4A1F1F), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Surface(
+                        color = Color(0xFFEF4444).copy(alpha = 0.15f),
+                        shape = SellerUiTokens.radiusInnerCard,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
                         Text(
                             text = message,
-                            color = Color(0xFFFFC9C9),
+                            color = Color(0xFFEF4444),
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                         )
@@ -557,7 +562,7 @@ private fun CategoryDropdown(
         OutlinedButton(
             onClick = { expanded = true },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
+            shape = SellerUiTokens.radiusStatus,
         ) {
             Text(
                 selectedCategory.ifBlank { "Select Category" },
@@ -599,7 +604,7 @@ private fun RegionDropdown(
         OutlinedButton(
             onClick = { expanded = true },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
+            shape = SellerUiTokens.radiusStatus,
         ) {
             Text(
                 selectedRegion.ifBlank { "Select Region" },
@@ -662,7 +667,7 @@ private fun ProductOnboardingMediaStep(
                 ) {
                     itemsIndexed(imageUrls) { index, imageUrl ->
                         Box(
-                            modifier = Modifier.size(100.dp).clip(RoundedCornerShape(12.dp)),
+                            modifier = Modifier.size(100.dp).clip(SellerUiTokens.radiusInnerCard),
                         ) {
                             AsyncImage(
                                 model = imageUrl,
@@ -677,7 +682,7 @@ private fun ProductOnboardingMediaStep(
                                         .align(Alignment.TopEnd)
                                         .padding(4.dp)
                                         .size(20.dp)
-                                        .background(Color.Black.copy(alpha = 0.55f), shape = RoundedCornerShape(10.dp))
+                                        .background(Color.Black.copy(alpha = 0.55f), shape = SellerUiTokens.radiusStatus)
                                         .clickable { onRemoveImageAt(index) },
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -776,7 +781,7 @@ private fun ProductOnboardingPricingStep(
                             Surface(
                                 modifier = Modifier.clickable { onToggleSize(size) },
                                 color = if (isSelected) accent.copy(alpha = 0.16f) else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp),
+                                shape = SellerUiTokens.radiusChip,
                                 border =
                                     androidx.compose.foundation.BorderStroke(
                                         1.dp,
@@ -834,7 +839,7 @@ private fun ProductOnboardingPricingStep(
                     items(tags) { tag ->
                         Surface(
                             color = accent.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(20.dp),
+                            shape = SellerUiTokens.radiusChip,
                             modifier = Modifier.clickable { onRemoveTag(tag) },
                         ) {
                             Text(
@@ -849,7 +854,7 @@ private fun ProductOnboardingPricingStep(
             }
 
             // Bargain toggle
-            Surface(color = accent.copy(alpha = 0.08f), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = accent.copy(alpha = 0.08f), shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -904,7 +909,7 @@ private fun ProductOnboardingReviewStep(
                         Modifier
                             .fillMaxWidth()
                             .height(200.dp)
-                            .clip(RoundedCornerShape(12.dp)),
+                            .clip(SellerUiTokens.radiusInnerCard),
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                 )
             }
@@ -925,7 +930,7 @@ private fun ProductOnboardingReviewStep(
                     items(tags) { tag ->
                         Surface(
                             color = NotWhatAuthTokens.accent.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(20.dp),
+                            shape = SellerUiTokens.radiusChip,
                         ) {
                             Text(
                                 tag,

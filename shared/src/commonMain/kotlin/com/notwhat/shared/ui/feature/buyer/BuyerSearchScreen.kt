@@ -134,8 +134,18 @@ internal fun SearchScreen(
                 OutlinedTextField(
                     value = state.query,
                     onValueChange = state::updateQuery,
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Search for drops, stores, or vibes...", color = searchMuted) },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    placeholder = {
+                        Text(
+                            "Search drops, stores, vibes...",
+                            color = searchMuted,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    minLines = 1,
+                    maxLines = 1,
                     singleLine = true,
                     colors =
                         OutlinedTextFieldDefaults.colors(
@@ -148,9 +158,12 @@ internal fun SearchScreen(
                         ),
                     shape = RoundedCornerShape(28.dp),
                 )
-                Button(onClick = {
-                    state.submitSearch()
-                }, colors = ButtonDefaults.buttonColors(containerColor = searchAccent), shape = RoundedCornerShape(16.dp)) {
+                Button(
+                    onClick = { state.submitSearch() },
+                    modifier = Modifier.height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = searchAccent),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
                     Text("Go", color = Color.White)
                 }
             }

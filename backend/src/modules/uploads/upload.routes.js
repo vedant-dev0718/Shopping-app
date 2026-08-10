@@ -41,6 +41,7 @@ const mediaReadLimiter = rateLimit({
 
 // Public media proxy endpoint for persisted S3 objects.
 uploadRoutes.get('/media/:objectKey(*)', mediaReadLimiter, uploadController.streamMediaObject);
+uploadRoutes.get('/remote-image', mediaReadLimiter, uploadController.proxyRemoteImage);
 
 // reel video — seller only
 uploadRoutes.post(

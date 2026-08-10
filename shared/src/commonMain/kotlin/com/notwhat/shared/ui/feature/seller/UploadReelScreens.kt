@@ -232,7 +232,11 @@ internal fun UploadReelScreen(
         // Upload progress banner
         uploadStage?.let { stage ->
             item {
-                Surface(color = NotWhatColors.surfaceContainerHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    color = NotWhatColors.surfaceContainerHigh,
+                    shape = SellerUiTokens.radiusInnerCard,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -262,13 +266,17 @@ internal fun UploadReelScreen(
 
         shareStatus?.let { message ->
             item {
-                Surface(color = Color(0xFF1A3A2A), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    color = Color(0xFF10B981).copy(alpha = 0.15f),
+                    shape = SellerUiTokens.radiusInnerCard,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(message, color = Color(0xFF6FCF97), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                        Text(message, color = Color(0xFF10B981), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                         Text(
                             "✓ Done",
                             color = accent,
@@ -333,7 +341,7 @@ internal fun UploadReelScreen(
                     Text("CAPTION", color = text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                     Text("${caption.length}/2000", color = muted, style = MaterialTheme.typography.labelSmall)
                 }
-                Surface(color = panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                Surface(color = panel, shape = SellerUiTokens.radiusStatus, modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = caption,
                         onValueChange = { if (it.length <= 2000) caption = it },
@@ -458,7 +466,7 @@ private fun VideoPickerCard(
                     Button(
                         onClick = onPickVideo,
                         enabled = !isPickingVideo,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = SellerUiTokens.radiusButton,
                         colors = ButtonDefaults.buttonColors(containerColor = accent),
                     ) {
                         if (isPickingVideo) {
@@ -475,7 +483,7 @@ private fun VideoPickerCard(
             OutlinedButton(
                 onClick = onPickVideo,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(14.dp),
+                shape = SellerUiTokens.radiusButton,
                 border = BorderStroke(1.dp, accent),
                 enabled = !isPickingVideo && !isSharing,
             ) {
@@ -513,7 +521,7 @@ private fun BargainingToggle(
             }
             Surface(
                 color = if (allowBargaining) accent else Color(0xFFCCBB88),
-                shape = RoundedCornerShape(16.dp),
+                shape = SellerUiTokens.radiusChip,
                 modifier = Modifier.clickable { onToggle() },
             ) {
                 Row(
@@ -521,7 +529,7 @@ private fun BargainingToggle(
                     horizontalArrangement = if (allowBargaining) Arrangement.End else Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Surface(color = Color.White, shape = RoundedCornerShape(8.dp), modifier = Modifier.size(16.dp)) {}
+                    Surface(color = Color.White, shape = SellerUiTokens.radiusStatus, modifier = Modifier.size(16.dp)) {}
                 }
             }
         }
@@ -563,7 +571,7 @@ private fun TagProductsCard(
                     items(taggedProducts) { product ->
                         Surface(
                             color = accentSoft,
-                            shape = RoundedCornerShape(16.dp),
+                            shape = SellerUiTokens.radiusChip,
                             modifier = Modifier.clickable { onRemoveProduct(product) },
                         ) {
                             Text(
@@ -650,7 +658,7 @@ private fun ThumbnailPickerCard(
                     OutlinedButton(
                         onClick = onPick,
                         enabled = !isPicking && !isSharing,
-                        shape = RoundedCornerShape(10.dp),
+                        shape = SellerUiTokens.radiusStatus,
                         border = BorderStroke(1.dp, border),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     ) {
@@ -667,7 +675,7 @@ private fun ThumbnailPickerCard(
                         Modifier
                             .fillMaxWidth()
                             .height(180.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(SellerUiTokens.radiusButton)
                             .background(panelSoft),
                 ) {
                     AsyncImage(
@@ -684,7 +692,7 @@ private fun ThumbnailPickerCard(
                         Modifier
                             .fillMaxWidth()
                             .height(120.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(SellerUiTokens.radiusButton)
                             .background(panelSoft)
                             .clickable(enabled = !isPicking && !isSharing, onClick = onPick),
                     contentAlignment = Alignment.Center,

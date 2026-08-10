@@ -87,7 +87,9 @@ const getMyBids = asyncHandler(async (req, res) => {
 });
 
 const closeBargain = asyncHandler(async (req, res) => {
-  const data = await bargainService.closeBargain(req.user, req.params.productId);
+  const data = await bargainService.closeBargain(req.user, req.params.productId, {
+    force: req.body?.force === true
+  });
 
   return successResponse(res, {
     message: 'Bargain closed successfully',

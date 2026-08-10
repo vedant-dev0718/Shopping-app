@@ -72,7 +72,7 @@ const createSellerReel = asyncHandler(async (req, res) => {
   return successResponse(res, {
     statusCode: 201,
     message: 'Reel created successfully',
-    data: reel
+    data: rewriteReelVideoUrl(req, reel)
   });
 });
 
@@ -81,7 +81,7 @@ const listSellerReels = asyncHandler(async (req, res) => {
 
   return successResponse(res, {
     message: 'Seller reels fetched successfully',
-    data: reels
+    data: reels.map((reel) => rewriteReelVideoUrl(req, reel))
   });
 });
 
@@ -90,7 +90,7 @@ const updateSellerReel = asyncHandler(async (req, res) => {
 
   return successResponse(res, {
     message: 'Reel updated successfully',
-    data: reel
+    data: rewriteReelVideoUrl(req, reel)
   });
 });
 

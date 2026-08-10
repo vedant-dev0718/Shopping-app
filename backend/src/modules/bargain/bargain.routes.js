@@ -9,6 +9,7 @@ const {
   bidIdValidation,
   acceptBidValidation,
   sellerBidActionValidation,
+  closeBargainValidation,
   scheduleValidation,
   createBidOrderValidation,
   placeBidValidation
@@ -25,6 +26,6 @@ router.post('/products/:productId/bids/:bidId/close-window', authenticate, requi
 router.post('/products/:productId/bids/:bidId/reopen-negotiation', authenticate, requireSeller, sellerBidActionValidation, validate, bargainController.reopenBidNegotiation);
 router.delete('/bids/:bidId', authenticate, requireBuyer, bidIdValidation, validate, bargainController.withdrawBid);
 router.get('/products/:productId/bids', authenticate, requireSeller, productIdValidation, validate, bargainController.getProductBids);
-router.post('/products/:productId/close', authenticate, requireSeller, productIdValidation, validate, bargainController.closeBargain);
+router.post('/products/:productId/close', authenticate, requireSeller, closeBargainValidation, validate, bargainController.closeBargain);
 
 module.exports = router;

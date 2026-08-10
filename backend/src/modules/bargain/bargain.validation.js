@@ -52,11 +52,17 @@ const sellerBidActionValidation = [
   param('bidId').isMongoId().withMessage('A valid bid id is required')
 ];
 
+const closeBargainValidation = [
+  param('productId').isMongoId().withMessage('A valid product id is required'),
+  body('force').optional().isBoolean().withMessage('force must be a boolean').toBoolean()
+];
+
 module.exports = {
   productIdValidation,
   bidIdValidation,
   acceptBidValidation,
   sellerBidActionValidation,
+  closeBargainValidation,
   scheduleValidation,
   createBidOrderValidation,
   placeBidValidation

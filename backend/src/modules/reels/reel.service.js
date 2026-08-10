@@ -288,12 +288,18 @@ const getTaggedProductsForSeller = async (taggedProductIds, sellerId, storeId) =
   return products;
 };
 
+const getHydratedReelById = async (reelId) => {
+  return Reel.findById(reelId)
+    .populate(reelPopulate)
+    .lean();
+};
+
 const createSellerReel = async (user, data) => {
   const store = await findSellerStore(user.id, data.storeId);
   const taggedProductIds = data.taggedProductIds || [];
   const taggedProducts = await getTaggedProductsForSeller(taggedProductIds, user.id, store._id);
 
-  return Reel.create({
+  const created = await Reel.create({
     sellerId: user.id,
     storeId: store._id,
     videoUrl: data.videoUrl,
@@ -312,6 +318,8 @@ const createSellerReel = async (user, data) => {
     mimeType: data.mimeType || '',
     processingStatus: data.processingStatus || 'ready'
   });
+
+  return getHydratedReelById(created._id);
 };
 
 const getSellerReels = async (sellerId) => {
@@ -381,7 +389,8 @@ const updateSellerReel = async (user, reelId, data) => {
 
   reel.status = resolveReelStatus(data.status, taggedProducts, reel.status);
 
-  return reel.save();
+  await reel.save();
+  return getHydratedReelById(reel._id);
 };
 
 const deleteSellerReel = async (user, reelId) => {

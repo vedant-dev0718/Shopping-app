@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,7 +21,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import com.notwhat.shared.network.defaultApiBaseUrl
+import io.ktor.http.encodeURLQueryComponent
 
 /** Shared image primitive used across all buyer and seller screens. */
 @Composable
@@ -27,6 +32,44 @@ internal fun DemoImage(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(18.dp),
 ) {
+    val modelUrl = url.trim()
+
+    fun telemetryPrefix(candidateUrl: String): String {
+        val host = candidateUrl.substringAfter("//", missingDelimiterValue = "").substringBefore('/').substringBefore(':')
+        val scheme = candidateUrl.substringBefore(":", missingDelimiterValue = "")
+        val shortPath = candidateUrl.substringAfter(host, missingDelimiterValue = candidateUrl).take(80)
+        return "[ImageTelemetry] scheme=$scheme host=${if (host.isBlank()) "n/a" else host} path=$shortPath"
+    }
+
+    fun shouldRetryViaProxy(candidateUrl: String): Boolean {
+        if (!candidateUrl.startsWith("https://")) return false
+        val host =
+            candidateUrl
+                .substringAfter("https://", missingDelimiterValue = "")
+                .substringBefore('/')
+                .substringBefore(':')
+                .lowercase()
+        return host == "images.unsplash.com" || host == "plus.unsplash.com"
+    }
+
+    fun toRemoteImageProxyUrl(candidateUrl: String): String {
+        val apiBase = defaultApiBaseUrl().trimEnd('/')
+        val serverBase = apiBase.removeSuffix("/api")
+        return "$serverBase/api/uploads/remote-image?url=${candidateUrl.encodeURLQueryComponent()}"
+    }
+
+    val useProxyOnFirstAttempt = remember(modelUrl) { preferProxyImageLoad() && shouldRetryViaProxy(modelUrl) }
+    var activeUrl by remember(modelUrl) {
+        mutableStateOf(
+            if (useProxyOnFirstAttempt) {
+                toRemoteImageProxyUrl(modelUrl)
+            } else {
+                modelUrl
+            },
+        )
+    }
+    var hasRetriedByProxy by remember(modelUrl) { mutableStateOf(useProxyOnFirstAttempt) }
+
     Box(
         modifier =
             modifier
@@ -34,11 +77,23 @@ internal fun DemoImage(
                 .background(NotWhatColors.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
-        AsyncImage(
-            model = url,
+        PlatformNetworkImage(
+            url = activeUrl,
             contentDescription = contentDescription,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
+            onSuccess = {
+                println("${telemetryPrefix(activeUrl)} status=success")
+            },
+            onError = { errorMessage ->
+                println("${telemetryPrefix(activeUrl)} status=error reason=$errorMessage")
+
+                if (!hasRetriedByProxy && shouldRetryViaProxy(activeUrl)) {
+                    hasRetriedByProxy = true
+                    activeUrl = toRemoteImageProxyUrl(activeUrl)
+                    println("${telemetryPrefix(activeUrl)} status=retry_via_proxy")
+                }
+            },
         )
     }
 }

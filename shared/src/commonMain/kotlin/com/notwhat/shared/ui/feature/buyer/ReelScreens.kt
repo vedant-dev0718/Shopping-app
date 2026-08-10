@@ -119,23 +119,26 @@ internal fun BargainsScreen(
                     DemoImage(
                         url = reel.thumbnailUrl,
                         contentDescription = storeName,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().clickable { onOpenReel(reel) },
                         shape = RoundedCornerShape(0.dp),
                     )
 
                     // Gradient overlay
                     Box(
                         modifier =
-                            Modifier.fillMaxSize().background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        Color.Black.copy(alpha = 0.3f),
-                                        Color.Transparent,
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = 0.75f),
+                            Modifier
+                                .fillMaxSize()
+                                .clickable { onOpenReel(reel) }
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color.Black.copy(alpha = 0.3f),
+                                            Color.Transparent,
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.75f),
+                                        ),
                                     ),
                                 ),
-                            ),
                     )
 
                     // Store name top-left
@@ -155,7 +158,7 @@ internal fun BargainsScreen(
 
                     // Caption + tap hint bottom
                     Column(
-                        modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+                        modifier = Modifier.align(Alignment.BottomStart).padding(16.dp).clickable { onOpenReel(reel) },
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         Text(

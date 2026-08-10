@@ -236,10 +236,14 @@ internal fun SellerReelListScreen(
 
         deleteError?.let { message ->
             item {
-                Surface(color = Color(0xFF4A1F1F), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    color = Color(0xFFEF4444).copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Text(
                         text = message,
-                        color = Color(0xFFFFC9C9),
+                        color = Color(0xFFEF4444),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                     )
@@ -393,23 +397,31 @@ private fun SellerReelCard(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Surface(
-                            color = if (reel.isShared) Color(0xFF1A3A28) else surfaceHigh,
-                            shape = RoundedCornerShape(8.dp),
+                            color = if (reel.isShared) Color(0xFF10B981).copy(alpha = 0.15f) else surfaceHigh,
+                            shape = SellerUiTokens.radiusStatus,
                         ) {
                             Text(
                                 if (reel.isShared) "LIVE" else "DRAFT",
-                                color = if (reel.isShared) Color(0xFF4CAF50) else muted,
+                                color = if (reel.isShared) Color(0xFF10B981) else muted,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             )
                         }
-                        Text(
-                            "${reel.taggedProducts.size} products",
-                            color = accent,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        if (reel.taggedProducts.isNotEmpty()) {
+                            Surface(
+                                color = accent.copy(alpha = 0.12f),
+                                shape = SellerUiTokens.radiusStatus,
+                            ) {
+                                Text(
+                                    "${reel.taggedProducts.size} tagged",
+                                    color = accent,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -562,8 +574,8 @@ internal fun ReelProductTagSheet(
     ) {
         Surface(color = surface, modifier = Modifier.fillMaxWidth()) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -594,12 +606,12 @@ internal fun ReelProductTagSheet(
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
                         "TAG PRODUCTS",
                         color = text,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Black,
                     )
                     Text(
@@ -608,59 +620,35 @@ internal fun ReelProductTagSheet(
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
                     )
-
-                    Surface(
-                        color = accent.copy(alpha = 0.12f),
-                        shape = SellerUiTokens.radiusChip,
-                    ) {
-                        Text(
-                            "Choose up to 3 products",
-                            color = accent,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        )
-                    }
                 }
 
-                Surface(
-                    color = surfaceHigh,
-                    shape = SellerUiTokens.radiusInnerCard,
-                    border = BorderStroke(1.dp, border.copy(alpha = 0.4f)),
-                    modifier = Modifier.fillMaxWidth(),
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(SellerUiTokens.radiusInnerCard)
+                            .background(accent.copy(alpha = 0.08f))
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Surface(
-                            color = accent.copy(alpha = 0.15f),
-                            shape = CircleShape,
-                            modifier = Modifier.size(18.dp),
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("i", color = accent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                        Text(
-                            "Selected products appear in the buyer feed when this reel is shared.",
-                            color = muted,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+                    Text("⬡", color = accent, style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "Select 1–3 products. They appear in the buyer feed when this reel is shared.",
+                        color = text,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
 
-        HorizontalDivider(color = border.copy(alpha = 0.28f))
+        HorizontalDivider(color = border.copy(alpha = 0.35f))
 
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(allProducts, key = { it.id }) { product ->
@@ -670,15 +658,18 @@ internal fun ReelProductTagSheet(
                 val isDisabled = atLimit
 
                 Surface(
-                    color = if (isSelected) accent.copy(alpha = 0.1f) else surface,
+                    color =
+                        when {
+                            isSelected -> accent.copy(alpha = 0.13f)
+                            isDisabled -> surface.copy(alpha = 0.6f)
+                            else -> surface
+                        },
                     shape = SellerUiTokens.radiusInnerCard,
                     border =
                         BorderStroke(
-                            1.dp,
-                            if (isSelected) accent else border.copy(alpha = 0.45f),
+                            if (isSelected) 1.5.dp else 1.dp,
+                            if (isSelected) accent else border.copy(alpha = 0.35f),
                         ),
-                    tonalElevation = if (isSelected) 2.dp else 0.dp,
-                    shadowElevation = if (isSelected) 1.dp else 0.dp,
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -694,52 +685,37 @@ internal fun ReelProductTagSheet(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 12.dp),
+                                .padding(horizontal = 12.dp, vertical = 11.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AsyncImage(
-                            model = product.displayImageUrl,
+                        DemoImage(
+                            url = product.displayImageUrl,
                             contentDescription = product.displayTitle,
-                            modifier =
-                                Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(14.dp)),
-                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(56.dp),
+                            shape = RoundedCornerShape(10.dp),
                         )
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                product.displayTitle,
-                                color = if (isDisabled) muted.copy(alpha = 0.5f) else text,
-                                style = MaterialTheme.typography.titleSmall,
+                                product.displayTitle.ifBlank { "Unnamed product" },
+                                color = if (isDisabled) muted.copy(alpha = 0.45f) else text,
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
                                     product.displayPrice,
                                     color = if (isDisabled) accent.copy(alpha = 0.45f) else accent,
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                 )
-                                Surface(
-                                    color = accent.copy(alpha = if (isDisabled) 0.12f else 0.16f),
-                                    shape = SellerUiTokens.radiusChip,
-                                ) {
-                                    Text(
-                                        product.category,
-                                        color = if (isDisabled) muted.copy(alpha = 0.6f) else accent,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    product.category,
+                                    color = muted.copy(alpha = if (isDisabled) 0.45f else 1f),
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
                                 Text(
                                     if (isOutOfStock) "Out of stock" else "${product.stock} in stock",
                                     color = if (isOutOfStock) Color(0xFFE53935) else muted.copy(alpha = if (isDisabled) 0.45f else 0.85f),
@@ -759,7 +735,7 @@ internal fun ReelProductTagSheet(
                             color = if (isSelected) accent else Color.Transparent,
                             shape = CircleShape,
                             border = BorderStroke(1.5.dp, indicatorColor),
-                            modifier = Modifier.size(30.dp),
+                            modifier = Modifier.size(28.dp),
                         ) {
                             if (isSelected) {
                                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {

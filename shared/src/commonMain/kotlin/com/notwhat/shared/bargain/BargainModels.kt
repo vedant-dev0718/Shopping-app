@@ -83,6 +83,7 @@ data class BargainScheduleDto(
     val reservePrice: Double = 0.0,
     val status: String = "active", // active | closed | cancelled
     val winningBidId: String? = null,
+    val product: ProductDto? = null,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -163,6 +164,11 @@ data class ScheduleBargainRequestDto(
     val startDate: String,
     val endDate: String,
     val reservePrice: Double = 0.0,
+)
+
+@Serializable
+data class CloseBargainRequestDto(
+    val force: Boolean = false,
 )
 
 fun seedActiveBargains(): List<BargainScheduleDto> {

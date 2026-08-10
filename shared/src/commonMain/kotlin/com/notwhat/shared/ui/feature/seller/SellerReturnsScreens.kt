@@ -137,7 +137,7 @@ internal fun SellerReturnsScreen(
                         Text("Returns & Refunds", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                         Text("Seller operations", color = muted, style = MaterialTheme.typography.labelSmall)
                     }
-                    Surface(shape = RoundedCornerShape(10.dp), color = surfaceHigh) {
+                    Surface(shape = SellerUiTokens.radiusStatus, color = surfaceHigh) {
                         Text(
                             "${filteredRequests.size}",
                             color = text,
@@ -153,7 +153,7 @@ internal fun SellerReturnsScreen(
                 item {
                     Surface(
                         color = surfaceHigh,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = SellerUiTokens.radiusInnerCard,
                         tonalElevation = 1.dp,
                         shadowElevation = 1.dp,
                         modifier = Modifier.fillMaxWidth(),
@@ -363,7 +363,7 @@ internal fun SellerReturnsScreen(
 
                         Surface(
                             color = NotWhatColors.surfaceContainer,
-                            shape = RoundedCornerShape(12.dp),
+                            shape = SellerUiTokens.radiusInnerCard,
                             border = BorderStroke(1.dp, NotWhatColors.surfaceVariant.copy(alpha = 0.8f)),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
@@ -399,7 +399,7 @@ internal fun SellerReturnsScreen(
                         if (isSelected) {
                             Surface(
                                 color = surfaceHigh,
-                                shape = RoundedCornerShape(12.dp),
+                                shape = SellerUiTokens.radiusInnerCard,
                                 border = BorderStroke(1.dp, NotWhatColors.surfaceVariant),
                                 tonalElevation = 1.dp,
                                 modifier = Modifier.fillMaxWidth(),
@@ -527,7 +527,7 @@ private fun QueueMetricPill(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = SellerUiTokens.radiusInnerCard,
         color = tone.copy(alpha = 0.12f),
         border = BorderStroke(1.dp, tone.copy(alpha = 0.25f)),
     ) {

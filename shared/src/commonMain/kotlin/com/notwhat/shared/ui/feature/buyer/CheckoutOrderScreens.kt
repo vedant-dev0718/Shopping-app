@@ -586,7 +586,16 @@ internal fun CartSavedPaymentsScreen(
             return@LaunchedEffect
         }
 
-        paymentMethods = liveMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
+        val visibleMethods = liveMethods.filter { it == CheckoutPaymentMethod.UPI }
+        if (visibleMethods.isEmpty()) {
+            paymentMethods = emptyList()
+            selectedPaymentIndex = -1
+            paymentMethodsError = "Only UPI is enabled right now."
+            emitPaymentMethodsFailure(code = "PAYMENT_METHODS_UPI_ONLY", message = paymentMethodsError)
+            return@LaunchedEffect
+        }
+
+        paymentMethods = visibleMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
         selectedPaymentIndex = 0
     }
 
@@ -613,7 +622,16 @@ internal fun CartSavedPaymentsScreen(
             return
         }
 
-        paymentMethods = liveMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
+        val visibleMethods = liveMethods.filter { it == CheckoutPaymentMethod.UPI }
+        if (visibleMethods.isEmpty()) {
+            paymentMethods = emptyList()
+            selectedPaymentIndex = -1
+            paymentMethodsError = "Only UPI is enabled right now."
+            emitPaymentMethodsFailure(code = "PAYMENT_METHODS_UPI_ONLY", message = paymentMethodsError)
+            return
+        }
+
+        paymentMethods = visibleMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
         selectedPaymentIndex = 0
     }
 
@@ -651,7 +669,12 @@ internal fun CartSavedPaymentsScreen(
                                 fontWeight = FontWeight.Bold,
                             )
                             TextButton(onClick = onChangeAddress) {
-                                Text("Change", color = cartAccent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Change",
+                                    color = cartAccent,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
                             }
                         }
                         if (state.transaction.addresses.isEmpty()) {

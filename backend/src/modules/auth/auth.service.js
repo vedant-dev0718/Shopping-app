@@ -452,6 +452,8 @@ const verifySignupEmail = async ({ verificationId, otp }) => {
 
 const login = async ({ email, password, totpCode }) => {
   const normalizedEmail = normalizeEmail(email);
+  const rawPassword = typeof password === 'string' ? password : '';
+  const trimmedPassword = rawPassword.trim();
   const user = await User.findOne({
     email: normalizedEmail,
     accountStatus: { $nin: ['deleted', 'suspended', 'banned'] }
@@ -474,7 +476,13 @@ const login = async ({ email, password, totpCode }) => {
     throw new AppError('Invalid email or password', 401);
   }
 
-  const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+  let passwordMatches = await bcrypt.compare(rawPassword, user.passwordHash);
+
+  // Mobile keyboards/autofill can accidentally append trailing spaces.
+  // Retry with trimmed input before counting the attempt as failed.
+  if (!passwordMatches && trimmedPassword !== rawPassword) {
+    passwordMatches = await bcrypt.compare(trimmedPassword, user.passwordHash);
+  }
 
   if (!passwordMatches) {
     user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;

@@ -45,6 +45,7 @@ class BargainUseCase(
 
     suspend fun closeBargain(
         productId: String,
+        force: Boolean = false,
         bearerToken: String,
-    ): NetworkResult<BargainScheduleDto> = repository.closeBargain(productId, bearerToken)
+    ): NetworkResult<BargainScheduleDto> = repository.closeBargain(productId, force, bearerToken)
 }

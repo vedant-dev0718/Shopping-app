@@ -81,7 +81,14 @@ class BargainRepository(
 
     suspend fun closeBargain(
         productId: String,
+        force: Boolean = false,
         bearerToken: String,
     ): NetworkResult<BargainScheduleDto> =
-        runCatchingNetwork { client.post("bargain/products/$productId/close", emptyMap<String, String>(), bearerToken) }
+        runCatchingNetwork {
+            client.post(
+                "bargain/products/$productId/close",
+                CloseBargainRequestDto(force = force),
+                bearerToken,
+            )
+        }
 }

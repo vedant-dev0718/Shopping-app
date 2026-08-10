@@ -16,4 +16,5 @@ internal object SellerUiTokens {
     val radiusInnerCard = RoundedCornerShape(16.dp)
     val radiusChip = RoundedCornerShape(16.dp)
     val radiusButton = RoundedCornerShape(14.dp)
+    val radiusStatus = RoundedCornerShape(8.dp)
 }

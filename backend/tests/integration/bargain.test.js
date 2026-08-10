@@ -59,6 +59,39 @@ describe('bargain bid checkout flow', () => {
 });
 
 describe('seller accept bid endpoint', () => {
+  test('seller can force-close bargain day for a specific product', async () => {
+    const seller = await createSeller();
+    const buyer = await createBuyer();
+    const product = await createProduct(seller, { price: 1000, stock: 2 });
+    const window = activeScheduleWindow();
+
+    await BargainSchedule.create({
+      productId: product._id,
+      sellerId: seller._id,
+      startDate: window.startDate,
+      endDate: window.endDate,
+      reservePrice: 0,
+      status: 'active'
+    });
+
+    await api()
+      .post(`/api/bargain/products/${product._id}/bids`)
+      .set('Authorization', authHeader(buyer))
+      .send({ amount: 740, quantity: 1, shippingInfo })
+      .expect(201);
+
+    const closeResponse = await api()
+      .post(`/api/bargain/products/${product._id}/close`)
+      .set('Authorization', authHeader(seller))
+      .send({ force: true })
+      .expect(200);
+
+    expect(closeResponse.body.data.schedule.status).toBe('closed');
+
+    const schedule = await BargainSchedule.findOne({ productId: product._id }).lean();
+    expect(schedule.status).toBe('closed');
+  });
+
   test('accepting a bid marks it accepted, closes schedule, and rejects competing bids', async () => {
     const seller = await createSeller();
     const buyerA = await createBuyer();

@@ -189,27 +189,22 @@ internal fun ProductLifecycleScreen(
                     )
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(product.displayTitle, color = text, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Surface(color = accent.copy(alpha = 0.18f), shape = RoundedCornerShape(10.dp)) {
+                            Text(product.displayTitle, color = text, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                            Surface(color = accent.copy(alpha = 0.15f), shape = SellerUiTokens.radiusStatus) {
                                 Text(
                                     product.status,
                                     color = accent,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
                                     maxLines = 1,
                                 )
                             }
                         }
                         Text(product.category, color = muted, style = MaterialTheme.typography.bodySmall)
-                        Text("Stock ${product.stock} · ${product.displayPrice}", color = text)
+                        Text("₹${product.price.toInt()} · ${product.stock} in stock", color = muted, style = MaterialTheme.typography.bodySmall)
                     }
-                    Button(
-                        onClick = { editingProductId = product.id },
-                        shape = SellerUiTokens.radiusButton,
-                        colors = ButtonDefaults.buttonColors(containerColor = accent),
-                    ) {
-                        Text("Edit", color = Color.White)
-                    }
+                    Text("›", color = muted, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Light)
                 }
             }
         }
@@ -362,12 +357,12 @@ internal fun OrderOperationsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(bg),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
     ) {
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("Back", color = accent) }
+                TextButton(onClick = onBack) { Text("← Back", color = accent, fontWeight = FontWeight.SemiBold) }
                 Text("Order Operations", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                 Box(modifier = Modifier.size(48.dp))
             }
@@ -415,7 +410,7 @@ internal fun OrderOperationsScreen(
 
             Surface(
                 color = surface,
-                shape = RoundedCornerShape(16.dp),
+                shape = SellerUiTokens.radiusInnerCard,
                 modifier = Modifier.fillMaxWidth().clickable { expandedOrderId = if (isExpanded) null else order.id },
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -426,7 +421,7 @@ internal fun OrderOperationsScreen(
                             Text("Order #$shortId", color = text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                             order.createdAt?.take(10)?.let { Text(it, color = muted, style = MaterialTheme.typography.labelSmall) }
                         }
-                        Surface(color = sColor.copy(alpha = 0.18f), shape = RoundedCornerShape(8.dp)) {
+                        Surface(color = sColor.copy(alpha = 0.15f), shape = SellerUiTokens.radiusStatus) {
                             Text(sLabel, color = sColor, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                 style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                         }
@@ -442,7 +437,7 @@ internal fun OrderOperationsScreen(
 
                         Surface(
                             color = surfaceHigh,
-                            shape = RoundedCornerShape(10.dp),
+                            shape = SellerUiTokens.radiusStatus,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(enabled = itemProductId != null) {
@@ -496,7 +491,7 @@ internal fun OrderOperationsScreen(
                                         onClick = { rejectOrderId = order.id },
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.buttonColors(containerColor = surfaceHigh),
-                                        shape = RoundedCornerShape(12.dp),
+                                        shape = SellerUiTokens.radiusButton,
                                         enabled = !isActing,
                                     ) { Text("Reject", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold) }
                                     Button(
@@ -510,7 +505,7 @@ internal fun OrderOperationsScreen(
                                         },
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                                        shape = RoundedCornerShape(12.dp),
+                                        shape = SellerUiTokens.radiusButton,
                                         enabled = !isActing,
                                     ) { Text("Accept Order", color = Color.White, fontWeight = FontWeight.Bold) }
                                 }
@@ -532,7 +527,7 @@ internal fun OrderOperationsScreen(
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = SellerUiTokens.radiusButton,
                                     enabled = !isActing,
                                 ) { Text("Mark as Shipped", color = Color.White, fontWeight = FontWeight.Bold) }
                                 TextButton(onClick = { trackingOrderId = order.id }, modifier = Modifier.fillMaxWidth()) {
@@ -568,19 +563,19 @@ internal fun OrderOperationsScreen(
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = SellerUiTokens.radiusButton,
                                     enabled = !isActing,
                                 ) { Text("Mark as Delivered", color = Color.White, fontWeight = FontWeight.Bold) }
                             }
                             "return_requested" -> {
-                                Surface(color = Color(0xFFF97316).copy(alpha = 0.12f), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                Surface(color = Color(0xFFF97316).copy(alpha = 0.15f), shape = SellerUiTokens.radiusStatus, modifier = Modifier.fillMaxWidth()) {
                                     Text("Buyer has requested a return for this order.",
                                         color = Color(0xFFF97316), modifier = Modifier.padding(10.dp),
                                         style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                             "delivered" -> {
-                                Surface(color = Color(0xFF10B981).copy(alpha = 0.12f), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                                Surface(color = Color(0xFF10B981).copy(alpha = 0.12f), shape = SellerUiTokens.radiusStatus, modifier = Modifier.fillMaxWidth()) {
                                     Text("This order has been delivered to the buyer.",
                                         color = Color(0xFF10B981), modifier = Modifier.padding(10.dp),
                                         style = MaterialTheme.typography.bodySmall)
@@ -612,7 +607,7 @@ private fun SellerFilterChip(
         modifier = Modifier.clickable { onClick() },
         shape = SellerUiTokens.radiusChip,
         color = if (selected) accent.copy(alpha = 0.2f) else surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) accent else Color.White.copy(alpha = 0.12f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) accent else NotWhatColors.outline.copy(alpha = 0.45f)),
     ) {
         Text(
             label,
@@ -622,6 +617,7 @@ private fun SellerFilterChip(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.labelMedium,
         )
     }
 }

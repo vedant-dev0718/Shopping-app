@@ -76,10 +76,19 @@ internal fun ProductDetailScreen(
     val detailAccent = NotWhatAuthTokens.accent
     val scope = rememberCoroutineScope()
     val resolvedProduct = state.content.products.firstOrNull { it.id == product.id } ?: product
+    val allowedSizeOrder = listOf("XS", "S", "M", "L", "XL", "XXL", "3XL")
+    val availableSizes =
+        resolvedProduct.sizes
+            .asSequence()
+            .map { it.trim().uppercase() }
+            .filter { it in allowedSizeOrder }
+            .distinct()
+            .sortedBy { allowedSizeOrder.indexOf(it) }
+            .toList()
     val bargainScenario = BargainFixtures.forProduct(resolvedProduct)
     val pricingMeta = resolvedProduct.resolvePricingMeta()
 
-    var selectedSize by remember { mutableStateOf("M") }
+    var selectedSize by remember(resolvedProduct.id) { mutableStateOf(availableSizes.firstOrNull().orEmpty()) }
     var showBidSheet by remember { mutableStateOf(false) }
     var bidInput by remember(resolvedProduct.id) { mutableStateOf(suggestedBidInput(resolvedProduct.price)) }
     var addedToCart by remember(resolvedProduct.id) { mutableStateOf(false) }
@@ -415,16 +424,20 @@ internal fun ProductDetailScreen(
                 Surface(color = detailSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Select Size", color = detailMuted, style = MaterialTheme.typography.labelMedium)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf("S", "M", "L", "XL").forEach { size ->
-                                val active = selectedSize == size
-                                Surface(
-                                    modifier = Modifier.clickable { selectedSize = size },
-                                    color = if (active) detailAccent.copy(alpha = 0.2f) else detailSurfaceHigh,
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (active) detailAccent else Color(0xFFD4C4B8)),
-                                ) {
-                                    Text(size, color = if (active) detailAccent else detailText, modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), fontWeight = FontWeight.Bold)
+                        if (availableSizes.isEmpty()) {
+                            Text("Size not specified", color = detailMuted, style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                availableSizes.forEach { size ->
+                                    val active = selectedSize == size
+                                    Surface(
+                                        modifier = Modifier.clickable { selectedSize = size },
+                                        color = if (active) detailAccent.copy(alpha = 0.2f) else detailSurfaceHigh,
+                                        shape = RoundedCornerShape(12.dp),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, if (active) detailAccent else Color(0xFFD4C4B8)),
+                                    ) {
+                                        Text(size, color = if (active) detailAccent else detailText, modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }

@@ -153,15 +153,16 @@ internal fun AppContentRouter(
 
     if (flow.route is AppRoute.CartAddressSelectorRoute) {
         val selectedAddrId = state.transaction.selectedDeliveryAddressId
-        val dummyDraft = CheckoutDraft(
-            items = emptyList(),
-            selectedPayment = DemoSavedPayment(label = "", maskedNumber = "", holderName = "", isDefault = false),
-            subtotal = "₹0",
-            shipping = "Free",
-            total = "₹0",
-            shippingAddress = "",
-            selectedAddressId = selectedAddrId,
-        )
+        val dummyDraft =
+            CheckoutDraft(
+                items = emptyList(),
+                selectedPayment = DemoSavedPayment(label = "", maskedNumber = "", holderName = "", isDefault = false),
+                subtotal = "₹0",
+                shipping = "Free",
+                total = "₹0",
+                shippingAddress = "",
+                selectedAddressId = selectedAddrId,
+            )
         CheckoutAddressSelectorScreen(
             modifier = Modifier.padding(padding),
             state = state,

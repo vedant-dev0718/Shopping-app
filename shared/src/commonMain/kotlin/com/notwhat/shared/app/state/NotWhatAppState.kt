@@ -120,6 +120,9 @@ class NotWhatAppState(
     var sellerReturnsErrorMessage by mutableStateOf<String?>(null)
         private set
 
+    var sellerBargainRefreshVersion by mutableStateOf(0)
+        private set
+
     private val recentSearchesUseCase = RecentSearchesUseCase()
     private val analyticsSessionId = "returns-${kotlin.random.Random.nextInt(100000, 999999)}"
     internal val returnsAnalyticsTracker =
@@ -236,6 +239,10 @@ class NotWhatAppState(
 
     fun clearRecentSearches() {
         recentSearches = recentSearchesUseCase.clear()
+    }
+
+    fun notifySellerBargainDataChanged() {
+        sellerBargainRefreshVersion += 1
     }
 
     suspend fun fetchCheckoutPaymentMethods(): List<CheckoutPaymentMethod>? {

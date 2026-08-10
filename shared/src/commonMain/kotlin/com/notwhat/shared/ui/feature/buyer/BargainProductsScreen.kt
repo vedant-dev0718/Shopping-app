@@ -148,14 +148,18 @@ internal fun BargainProductsScreen(
         activeSchedules
             .filter { it.status.equals("active", ignoreCase = true) }
             .associateBy { it.productId }
+    // Use the product embedded in the schedule response; fall back to the paginated cache
     val bargainProducts =
-        state.content.products
-            .filter { product ->
-                product.status.equals("active", ignoreCase = true) &&
-                    product.stock > 0 &&
-                    scheduleByProductId.containsKey(product.id)
+        scheduleByProductId.values
+            .mapNotNull { schedule ->
+                val product = schedule.product
+                    ?: state.content.products.firstOrNull { it.id == schedule.productId }
+                product?.takeIf {
+                    it.status.equals("active", ignoreCase = true) && it.stock > 0
+                }?.let { it to schedule }
             }
-            .sortedBy { scheduleByProductId[it.id]?.endDate ?: "9999-12-31T23:59:59.000Z" }
+            .sortedBy { (_, schedule) -> schedule.endDate }
+            .map { (product, _) -> product }
     val acceptedBids = myBids.filter { it.canProceedToPayment && it.product != null }
     val pendingBids = myBids.filter { it.status.lowercase() in setOf("active", "pending_seller_decision") }
 

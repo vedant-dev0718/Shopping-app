@@ -1,6 +1,12 @@
 const { successResponse } = require('../../utils/apiResponse');
 const asyncHandler = require('../../utils/asyncHandler');
+const AppError = require('../../utils/AppError');
 const uploadService = require('./upload.service');
+
+const REMOTE_IMAGE_HOST_WHITELIST = new Set([
+  'images.unsplash.com',
+  'plus.unsplash.com'
+]);
 
 const resolveBaseUrl = (req) => {
   const forwardedProto = req.get('x-forwarded-proto');
@@ -139,11 +145,66 @@ const streamMediaObject = asyncHandler(async (req, res, next) => {
   media.stream.pipe(res);
 });
 
+const proxyRemoteImage = asyncHandler(async (req, res) => {
+  const source = String(req.query.url || '').trim();
+
+  if (!source) {
+    throw new AppError('Image URL is required', 400);
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(source);
+  } catch (_error) {
+    throw new AppError('Invalid image URL', 400);
+  }
+
+  if (parsed.protocol !== 'https:') {
+    throw new AppError('Only https image URLs are allowed', 400);
+  }
+
+  if (!REMOTE_IMAGE_HOST_WHITELIST.has(parsed.hostname)) {
+    throw new AppError('Image host is not allowed', 400);
+  }
+
+  const upstream = await fetch(parsed.toString(), {
+    redirect: 'follow',
+    headers: {
+      'User-Agent': 'NotWhat-ImageProxy/1.0',
+      Accept: 'image/*,*/*;q=0.8'
+    }
+  });
+
+  if (!upstream.ok) {
+    throw new AppError(`Upstream image fetch failed (${upstream.status})`, 502);
+  }
+
+  const contentType = upstream.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().startsWith('image/')) {
+    throw new AppError('Upstream did not return an image', 502);
+  }
+
+  const contentLength = Number(upstream.headers.get('content-length') || 0);
+  if (contentLength > 10 * 1024 * 1024) {
+    throw new AppError('Image is too large', 413);
+  }
+
+  const payload = Buffer.from(await upstream.arrayBuffer());
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', upstream.headers.get('cache-control') || 'public, max-age=86400');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+  return res.status(200).send(payload);
+});
+
 module.exports = {
   uploadVideo,
   uploadImage,
   uploadProductImages,
   uploadAvatar,
   uploadStoreBanner,
-  streamMediaObject
+  streamMediaObject,
+  proxyRemoteImage
 };

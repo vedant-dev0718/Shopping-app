@@ -21,12 +21,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -92,6 +99,19 @@ internal fun SellerShellScreen(
     var selectedTimeRange by remember { mutableStateOf("7d") }
     var selectedDrillDownTitle by remember { mutableStateOf<String?>(null) }
     var previewRoute by remember { mutableStateOf<SellerReelPreviewRoute?>(null) }
+    val shellScope = rememberCoroutineScope()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val drawerItems =
+        listOf(
+            "Dashboard" to SellerShellRoute.Dashboard,
+            "Insights" to SellerShellRoute.Insights,
+            "Products" to SellerShellRoute.ProductLifecycleStub,
+            "Orders" to SellerShellRoute.OrderOperationsStub,
+            "Returns" to SellerShellRoute.ReturnsRefunds,
+            "Reels" to SellerShellRoute.SellerReelList,
+            "Accepted Bids" to SellerShellRoute.SellerAcceptedBidsQueue,
+            "Bargain Day" to SellerShellRoute.SellerBargainCreate,
+        )
 
     // Phase 2: use the real buyer ReelDetailScreen so preview matches exactly what buyer sees
     previewRoute?.let { preview ->
@@ -259,11 +279,41 @@ internal fun SellerShellScreen(
         return
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize().background(bg),
-        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
-        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text("Seller Navigation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = text)
+                    Text("Switch sections", style = MaterialTheme.typography.bodySmall, color = muted)
+                }
+                drawerItems.forEach { (label, targetRoute) ->
+                    NavigationDrawerItem(
+                        label = { Text(label) },
+                        selected = route == targetRoute || (targetRoute == SellerShellRoute.SellerReelList && route == SellerShellRoute.UploadReel),
+                        onClick = {
+                            onRouteChange(targetRoute)
+                            shellScope.launch { drawerState.close() }
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedContainerColor = accent.copy(alpha = 0.18f),
+                            selectedTextColor = text,
+                            unselectedTextColor = muted,
+                        ),
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+                    )
+                }
+            }
+        },
     ) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize().background(bg),
+            contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+        ) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -301,91 +351,29 @@ internal fun SellerShellScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    IconButton(onClick = { shellScope.launch { drawerState.open() } }) {
+                        Text("☰", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
 
         item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(SellerUiTokens.chipGap)) {
-                item {
-                    SellerRouteChip(
-                        label = "Dashboard",
-                        selected = route == SellerShellRoute.Dashboard,
-                        onClick = { onRouteChange(SellerShellRoute.Dashboard) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
+            Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        "Section: ${drawerItems.firstOrNull { it.second == route }?.first ?: "Seller"}",
+                        color = text,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                }
-                item {
-                    SellerRouteChip(
-                        label = "Insights",
-                        selected = route == SellerShellRoute.Insights,
-                        onClick = { onRouteChange(SellerShellRoute.Insights) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
-                }
-                item {
-                    SellerRouteChip(
-                        label = "Products",
-                        selected = route == SellerShellRoute.ProductLifecycleStub,
-                        onClick = { onRouteChange(SellerShellRoute.ProductLifecycleStub) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
-                }
-                item {
-                    SellerRouteChip(
-                        label = "Orders",
-                        selected = route == SellerShellRoute.OrderOperationsStub,
-                        onClick = { onRouteChange(SellerShellRoute.OrderOperationsStub) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
-                }
-                item {
-                    SellerRouteChip(
-                        label = "Returns",
-                        selected = route == SellerShellRoute.ReturnsRefunds,
-                        onClick = { onRouteChange(SellerShellRoute.ReturnsRefunds) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
-                }
-                item {
-                    SellerRouteChip(
-                        label = "Reels",
-                        selected = route == SellerShellRoute.SellerReelList || route == SellerShellRoute.UploadReel,
-                        onClick = { onRouteChange(SellerShellRoute.SellerReelList) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
-                }
-                item {
-                    SellerRouteChip(
-                        label = "Accepted Bids",
-                        selected = route == SellerShellRoute.SellerAcceptedBidsQueue,
-                        onClick = { onRouteChange(SellerShellRoute.SellerAcceptedBidsQueue) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
-                }
-                item {
-                    SellerRouteChip(
-                        label = "Bargain Day",
-                        selected = route == SellerShellRoute.SellerBargainCreate,
-                        onClick = { onRouteChange(SellerShellRoute.SellerBargainCreate) },
-                        accent = accent,
-                        surface = surface,
-                        text = text,
-                    )
+                    TextButton(onClick = { shellScope.launch { drawerState.open() } }) {
+                        Text("Open Menu", color = accent, style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
         }
@@ -430,8 +418,8 @@ internal fun SellerShellScreen(
                     items(kpis) { kpi ->
                         Surface(
                             color = surface,
-                            shape = SellerUiTokens.radiusChip,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                            shape = SellerUiTokens.radiusInnerCard,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, NotWhatColors.outline.copy(alpha = 0.3f)),
                             modifier = Modifier.width(154.dp),
                         ) {
                             Column(
@@ -547,6 +535,7 @@ internal fun SellerShellScreen(
                 )
             }
         }
+        }
     }
 }
 
@@ -563,7 +552,7 @@ private fun SellerRouteChip(
         modifier = Modifier.clickable { onClick() },
         shape = SellerUiTokens.radiusChip,
         color = if (selected) accent.copy(alpha = 0.2f) else surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) accent else Color.White.copy(alpha = 0.12f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) accent else NotWhatColors.outline.copy(alpha = 0.45f)),
     ) {
         Text(
             label,
@@ -572,6 +561,7 @@ private fun SellerRouteChip(
             maxLines = 1,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.labelMedium,
         )
     }
 }
@@ -809,6 +799,10 @@ internal fun SellerBargainCreateScreen(
     var activeBidSummaryByProductId by remember { mutableStateOf<Map<String, SellerActiveBidSummary>>(emptyMap()) }
     var isBidMetadataLoading by remember { mutableStateOf(false) }
     var bidMetadataError by remember { mutableStateOf<String?>(null) }
+    var isManualRefreshing by remember { mutableStateOf(false) }
+    var closingProductId by remember { mutableStateOf<String?>(null) }
+    var closeActionMessage by remember { mutableStateOf<String?>(null) }
+    var closeActionError by remember { mutableStateOf<String?>(null) }
     var nowMs by remember { mutableLongStateOf(Clock.System.now().toEpochMilliseconds()) }
     var bargainRefreshTrigger by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
@@ -827,7 +821,12 @@ internal fun SellerBargainCreateScreen(
         }
     }
 
-    LaunchedEffect(state.currentSession?.authToken, products.map { it.id }.joinToString("|"), bargainRefreshTrigger) {
+    LaunchedEffect(
+        state.currentSession?.authToken,
+        products.map { it.id }.joinToString("|"),
+        bargainRefreshTrigger,
+        state.sellerBargainRefreshVersion,
+    ) {
         val token = state.currentSession?.authToken
         isBidMetadataLoading = true
         bidMetadataError = null
@@ -847,7 +846,7 @@ internal fun SellerBargainCreateScreen(
             }
         }
 
-        val activeStatuses = setOf("active", "pending_seller_decision")
+        val activeStatuses = setOf("active")
         val bidSummaryMap = mutableMapOf<String, SellerActiveBidSummary>()
 
         if (!token.isNullOrBlank()) {
@@ -1022,6 +1021,7 @@ internal fun SellerBargainCreateScreen(
                             isSubmitting = false
                             if (errorMsg.isBlank()) {
                                 submitSuccess = true
+                                state.notifySellerBargainDataChanged()
                             } else {
                                 submitError = errorMsg
                             }
@@ -1057,7 +1057,34 @@ internal fun SellerBargainCreateScreen(
             ) {
                 TextButton(onClick = onBack) { Text("Back", color = accent) }
                 Text("Bargain Day", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                Spacer(modifier = Modifier.width(56.dp))
+                TextButton(
+                    onClick = {
+                        val token = state.currentSession?.authToken
+                        if (token.isNullOrBlank()) {
+                            bidMetadataError = "Please sign in again to refresh."
+                            return@TextButton
+                        }
+
+                        scope.launch {
+                            isManualRefreshing = true
+                            bidMetadataError = null
+                            state.sellerContent.load(token)
+                            state.notifySellerBargainDataChanged()
+                            bargainRefreshTrigger++
+                            isManualRefreshing = false
+                        }
+                    },
+                    enabled = !isManualRefreshing,
+                ) {
+                    Text(
+                        if (isManualRefreshing) {
+                            "Refreshing..."
+                        } else {
+                            "Refresh"
+                        },
+                        color = accent,
+                    )
+                }
             }
         }
 
@@ -1123,6 +1150,27 @@ internal fun SellerBargainCreateScreen(
             }
         }
 
+        closeActionMessage?.let { message ->
+            item {
+                Surface(color = Color(0xFF1A3A28), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        message,
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(12.dp),
+                    )
+                }
+            }
+        }
+
+        closeActionError?.let { err ->
+            item {
+                Surface(color = danger.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(err, color = danger, modifier = Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
         if (products.isEmpty()) {
             item {
                 Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
@@ -1151,6 +1199,8 @@ internal fun SellerBargainCreateScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
+                        val activeSchedule = activeSchedulesByProductId[product.id]
+                        val isClosingThisProduct = closingProductId == product.id
                         DemoImage(
                             url = product.displayImageUrl,
                             contentDescription = product.displayTitle,
@@ -1179,7 +1229,6 @@ internal fun SellerBargainCreateScreen(
                                 style = MaterialTheme.typography.labelSmall,
                             )
 
-                            val activeSchedule = activeSchedulesByProductId[product.id]
                             if (activeSchedule != null) {
                                 val bidSummary = activeBidSummaryByProductId[product.id]
                                 Text(
@@ -1207,7 +1256,67 @@ internal fun SellerBargainCreateScreen(
                                 )
                             }
                         }
-                        if (selected) Text("✓", color = accent, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            if (activeSchedule != null) {
+                                if (isClosingThisProduct) {
+                                    CircularProgressIndicator(
+                                        color = danger,
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    TextButton(
+                                        onClick = {
+                                            val token = state.currentSession?.authToken
+                                            if (token.isNullOrBlank()) {
+                                                closeActionError = "Please sign in again to close this Bargain Day."
+                                                return@TextButton
+                                            }
+
+                                            closeActionMessage = null
+                                            closeActionError = null
+                                            closingProductId = product.id
+
+                                            scope.launch {
+                                                val errorMessage =
+                                                    state.sellerContent.closeBargain(
+                                                        productId = product.id,
+                                                        force = true,
+                                                        bearerToken = token,
+                                                    )
+                                                if (errorMessage.isBlank()) {
+                                                    closeActionMessage = "Closed Bargain Day for ${product.displayTitle}."
+                                                    state.notifySellerBargainDataChanged()
+                                                    bargainRefreshTrigger++
+                                                    if (selectedProductId == product.id) {
+                                                        selectedProductId = null
+                                                    }
+                                                } else {
+                                                    closeActionError = errorMessage
+                                                }
+                                                if (closingProductId == product.id) {
+                                                    closingProductId = null
+                                                }
+                                            }
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    ) {
+                                        Text(
+                                            "Close",
+                                            color = danger,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    }
+                                }
+                            }
+                            if (selected) {
+                                Text("✓", color = accent, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
                     }
                 }
             }
@@ -1463,7 +1572,10 @@ internal fun SellerAcceptedBidsQueueScreen(
                                     val result = state.sellerContent.closeBidPaymentWindow(queueItem.product.id, queueItem.bid.id, token)
                                     actionNote =
                                         when (result) {
-                                            is NetworkResult.Success -> "Closed payment window for ${queueItem.product.displayTitle}."
+                                            is NetworkResult.Success -> {
+                                                state.notifySellerBargainDataChanged()
+                                                "Closed payment window for ${queueItem.product.displayTitle}."
+                                            }
                                             is NetworkResult.Failure -> result.error.userMessage()
                                         }
                                     refreshQueue()
@@ -1500,7 +1612,10 @@ internal fun SellerAcceptedBidsQueueScreen(
                                     val result = state.sellerContent.reopenBidNegotiation(queueItem.product.id, queueItem.bid.id, token)
                                     actionNote =
                                         when (result) {
-                                            is NetworkResult.Success -> "Re-opened negotiation for ${queueItem.product.displayTitle}."
+                                            is NetworkResult.Success -> {
+                                                state.notifySellerBargainDataChanged()
+                                                "Re-opened negotiation for ${queueItem.product.displayTitle}."
+                                            }
                                             is NetworkResult.Failure -> result.error.userMessage()
                                         }
                                     refreshQueue()
