@@ -13,6 +13,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .vscode/
+.idea/
 .github/
 .maestro/
 qa/ui-regression/bargain-day-burst-1.png
@@ -22,3 +23,6 @@ qa/ui-regression/bargain-day-burst-4.png
 qa/ui-regression/bargain-day-burst-5.png
 qa/ui-regression/bargain-day-current.png
 backend/.mongo-data/
+.tmp/*
+/scripts/
+ios/SourcePackages/

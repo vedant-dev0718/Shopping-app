@@ -33,7 +33,9 @@ import com.notwhat.shared.session.UserRole
 import com.notwhat.shared.session.UserSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class NotWhatAppState(
@@ -124,6 +126,7 @@ class NotWhatAppState(
         private set
 
     private val recentSearchesUseCase = RecentSearchesUseCase()
+    private var searchDebounceJob: Job? = null
     private val analyticsSessionId = "returns-${kotlin.random.Random.nextInt(100000, 999999)}"
     internal val returnsAnalyticsTracker =
         ReturnsAnalyticsTracker(
@@ -200,6 +203,21 @@ class NotWhatAppState(
 
     fun updateQuery(value: String) {
         query = value
+
+        val trimmed = value.trim()
+        if (trimmed.length < 3) {
+            searchDebounceJob?.cancel()
+            searchResults = null
+            isSearching = false
+            return
+        }
+
+        searchDebounceJob?.cancel()
+        searchDebounceJob =
+            scope.launch {
+                delay(300L)
+                submitSearch()
+            }
     }
 
     fun updateFilters(newFilters: SearchFilters) {
@@ -209,6 +227,16 @@ class NotWhatAppState(
     fun selectCategory(category: String?) {
         selectedCategory = category
         filters = filters.copy(category = category)
+        if (category != null) {
+            activeTab = NotWhatTab.Search
+            isSearching = true
+            searchDebounceJob?.cancel()
+            searchDebounceJob =
+                scope.launch {
+                    searchResults = searchUseCase.search("", category)
+                    isSearching = false
+                }
+        }
     }
 
     fun clearFilters() {
@@ -218,15 +246,17 @@ class NotWhatAppState(
 
     fun submitSearch() {
         val term = query.trim()
-        if (term.isNotEmpty()) {
-            recentSearches = recentSearchesUseCase.remember(recentSearches, term)
-            isSearching = true
-            scope.launch {
-                searchResults = searchUseCase.search(term, selectedCategory)
-                isSearching = false
-            }
-        } else {
+        if (term.length < 3) {
             searchResults = null
+            isSearching = false
+            return
+        }
+
+        recentSearches = recentSearchesUseCase.remember(recentSearches, term)
+        isSearching = true
+        scope.launch {
+            searchResults = searchUseCase.search(term, selectedCategory)
+            isSearching = false
         }
     }
 
@@ -245,11 +275,25 @@ class NotWhatAppState(
         sellerBargainRefreshVersion += 1
     }
 
-    suspend fun fetchCheckoutPaymentMethods(): List<CheckoutPaymentMethod>? {
+    suspend fun fetchCheckoutSession(): CheckoutStartResponseDto? {
         val token = authState.currentSession?.authToken ?: return null
-        val result = serviceLocator.checkoutRepository.startCheckout(token).getOrNull() ?: return null
-        return result.normalizedPaymentMethods()
+        return serviceLocator.checkoutRepository.startCheckout(token).getOrNull()
     }
+
+    suspend fun fetchStoreUpi(): com.notwhat.shared.finance.StoreUpiDto? {
+        val token = authState.currentSession?.authToken ?: return null
+        return serviceLocator.financeRepository.getStoreUpi(token).getOrNull()
+    }
+
+    suspend fun updateStoreUpi(upiId: String): NetworkResult<com.notwhat.shared.finance.StoreUpiDto> {
+        val token =
+            authState.currentSession?.authToken
+                ?: return NetworkResult.Failure(AppError.Api(401, "Sign in again to update payment details."))
+
+        return serviceLocator.financeRepository.updateStoreUpi(upiId.trim(), token)
+    }
+
+    suspend fun fetchCheckoutPaymentMethods(): List<CheckoutPaymentMethod>? = fetchCheckoutSession()?.normalizedPaymentMethods()
 
     internal suspend fun startOnlineCheckoutSession(): NetworkResult<CheckoutStartResponseDto> {
         val token = authState.currentSession?.authToken

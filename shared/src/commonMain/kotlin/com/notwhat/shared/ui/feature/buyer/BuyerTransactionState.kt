@@ -199,6 +199,46 @@ internal class BuyerTransactionState(
             bearerToken,
         )
 
+    /** Quantity below 1 removes the line instead of sending an invalid update. */
+    suspend fun updateCartItemQuantity(
+        itemId: String,
+        quantity: Int,
+        bearerToken: String,
+    ): NetworkResult<CartDto> {
+        if (quantity < 1) return removeCartItem(itemId, bearerToken)
+
+        cartErrorMessage = null
+        return when (val result = cartUseCase.updateItem(itemId, quantity, bearerToken)) {
+            is NetworkResult.Success -> {
+                cart = result.data
+                result
+            }
+
+            is NetworkResult.Failure -> {
+                cartErrorMessage = result.error.userMessage()
+                result
+            }
+        }
+    }
+
+    suspend fun removeCartItem(
+        itemId: String,
+        bearerToken: String,
+    ): NetworkResult<CartDto> {
+        cartErrorMessage = null
+        return when (val result = cartUseCase.removeItem(itemId, bearerToken)) {
+            is NetworkResult.Success -> {
+                cart = result.data
+                result
+            }
+
+            is NetworkResult.Failure -> {
+                cartErrorMessage = result.error.userMessage()
+                result
+            }
+        }
+    }
+
     fun selectDeliveryAddress(addressId: String) {
         selectedDeliveryAddressId = addressId
     }

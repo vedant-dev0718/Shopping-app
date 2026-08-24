@@ -21,11 +21,19 @@ const searchStores = asyncHandler(async (req, res) => {
 });
 
 const searchProducts = asyncHandler(async (req, res) => {
-  const products = await searchService.searchProducts(req.query, req.user);
+  const [products, totalCount] = await Promise.all([
+    searchService.searchProducts(req.query, req.user),
+    searchService.countSearchProducts(req.query, req.user)
+  ]);
 
   return successResponse(res, {
     message: 'Product search results fetched successfully',
-    data: products
+    data: products,
+    meta: {
+      totalCount,
+      limit: Number(req.query.limit || 20),
+      returnedCount: products.length
+    }
   });
 });
 

@@ -7,6 +7,7 @@ const analyticsService = require('../analytics/analytics.service');
 const financeService = require('../finance/finance.service');
 const Product = require('../products/product.model');
 const User = require('../users/user.model');
+const SellerProfile = require('../sellers/sellerProfile.model');
 const Bid = require('../bargain/bid.model');
 const cartService = require('../cart/cart.service');
 const Order = require('../orders/order.model');
@@ -18,6 +19,7 @@ const {
   verifyPaymentSignature
 } = require('../../utils/razorpay');
 const { sendEmail } = require('../../utils/email');
+const { buildUpiQrPayload } = require('../../utils/upiQr');
 const {
   buildOrderConfirmationEmail,
   buildNewOrderAlertEmail
@@ -27,6 +29,87 @@ const ONLINE_PAYMENT_METHODS = ['UPI', 'card', 'netbanking', 'wallet'];
 const COD_PAYMENT_METHOD = 'COD';
 
 const roundMoney = (value) => Math.round(value * 100) / 100;
+
+const storeKeyOf = (product) => (product?.storeId?._id || product?.storeId || '').toString();
+
+/** Splits cart-level shipping across store orders so the buyer total matches the checkout quote. */
+const splitShippingAcrossGroups = (groupSubtotals, totalShipping) => {
+  const combined = groupSubtotals.reduce((total, value) => total + value, 0);
+
+  if (totalShipping <= 0 || combined <= 0) {
+    return groupSubtotals.map(() => 0);
+  }
+
+  const shares = groupSubtotals.map((subtotal) => roundMoney(totalShipping * (subtotal / combined)));
+  const drift = roundMoney(totalShipping - shares.reduce((total, value) => total + value, 0));
+  shares[shares.length - 1] = roundMoney(shares[shares.length - 1] + drift);
+
+  return shares;
+};
+
+const buildStorePaymentGroups = async (cart) => {
+  const groups = new Map();
+
+  for (const item of cart.items || []) {
+    const product = item.productId;
+    const storeId = product?.storeId?._id || product?.storeId || '';
+    const storeName = product?.storeId?.storeName || 'Store';
+    const sellerId = product?.sellerId || '';
+
+    if (!storeId) {
+      continue;
+    }
+
+    if (!groups.has(storeId.toString())) {
+      groups.set(storeId.toString(), {
+        storeId: storeId.toString(),
+        sellerId: sellerId.toString ? sellerId.toString() : '',
+        storeName,
+        paymentMethods: [COD_PAYMENT_METHOD],
+        amount: 0,
+        currency: 'INR',
+        items: []
+      });
+    }
+
+    const group = groups.get(storeId.toString());
+    const itemTotal = roundMoney(Number(item.quantity || 0) * Number(item.priceSnapshot || 0));
+
+    group.items.push({
+      productId: product?._id || '',
+      title: product?.title || '',
+      quantity: item.quantity,
+      itemTotal
+    });
+    group.amount += itemTotal;
+  }
+
+  const sellerIds = Array.from(groups.values())
+    .map((group) => group.sellerId)
+    .filter(Boolean);
+  const sellerProfiles = sellerIds.length > 0
+    ? await SellerProfile.find({ userId: { $in: sellerIds } }).select('userId upiId').lean()
+    : [];
+  const upiIdBySellerId = new Map(
+    sellerProfiles.map((profile) => [profile.userId.toString(), profile.upiId || ''])
+  );
+
+  return Array.from(groups.values()).map((group) => {
+    const amount = roundMoney(group.amount);
+    const upiId = upiIdBySellerId.get(group.sellerId) || '';
+    const qrCode = buildUpiQrPayload({ upiId, storeName: group.storeName, amount });
+
+    return {
+      ...group,
+      amount,
+      upiId,
+      qrCode,
+      qrCodeLabel: qrCode
+        ? `Scan to pay ${group.storeName}`
+        : `Pay ${COD_PAYMENT_METHOD} to ${group.storeName}`
+    };
+  });
+};
 const toPaise = (value) => Math.round(roundMoney(Number(value) || 0) * 100);
 
 const getSellerAcceptanceExpiresAt = () => {
@@ -145,9 +228,15 @@ const mapOrderPaymentStatusToBidPaymentStatus = (orderPaymentStatus) => {
   return 'authorized';
 };
 
-const syncBargainBidsForOrder = async ({ cart, buyerId, order, session }) => {
+const syncBargainBidsForOrder = async ({ cart, buyerId, order, session, productIds = null }) => {
+  const scopedCartItems = cart.items.filter((cartItem) => {
+    if (!productIds) return true;
+    const productId = (cartItem.productId?._id || cartItem.productId || '').toString();
+    return productIds.has(productId);
+  });
+
   const bargainBidIds = [...new Set(
-    cart.items
+    scopedCartItems
       .map((item) => item.bargainBidId)
       .filter(Boolean)
       .map((value) => value.toString())
@@ -165,7 +254,7 @@ const syncBargainBidsForOrder = async ({ cart, buyerId, order, session }) => {
   const now = new Date();
   const nextBidPaymentStatus = mapOrderPaymentStatusToBidPaymentStatus(order.paymentStatus);
 
-  for (const cartItem of cart.items) {
+  for (const cartItem of scopedCartItems) {
     if (!cartItem.bargainBidId) {
       continue;
     }
@@ -219,10 +308,10 @@ const validatePaymentAmountMatchesCart = (payment, cart) => {
 
 const getSupportedPaymentMethods = () => {
   if (env.enableCodCheckout) {
-    return [...ONLINE_PAYMENT_METHODS, COD_PAYMENT_METHOD];
+    return [COD_PAYMENT_METHOD];
   }
 
-  return [...ONLINE_PAYMENT_METHODS];
+  return [];
 };
 
 const startCheckout = async (buyerId) => {
@@ -279,7 +368,8 @@ const startCheckout = async (buyerId) => {
         amount: cart.shipping
       }
     ],
-    paymentMethods: getSupportedPaymentMethods()
+    paymentMethods: getSupportedPaymentMethods(),
+    storePaymentGroups: await buildStorePaymentGroups(cart)
   };
 };
 
@@ -565,7 +655,7 @@ const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
     throw new AppError('paymentMethod must be COD for this endpoint', 400);
   }
 
-  let order;
+  let orders = [];
   let items = [];
   const buyer = await User.findById(buyerId).select('email').lean();
   const delivery = await addressService.resolveDeliveryAddressForOrder(buyerId, addressInput);
@@ -577,112 +667,145 @@ const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
   await runMaybeTransaction(async (session) => {
     const cart = await getCheckoutCart(buyerId, { session });
     const checkoutItems = await validateCartForCheckout(cart, { session });
-    const orderNumber = generateOrderNumber();
-    items = applyPendingAcceptanceDefaults(await financeService.applyFinancialsToOrderItems(checkoutItems.map((item) => ({
-      productId: item.product._id,
-      sellerId: item.product.sellerId,
-      storeId: item.product.storeId,
-      titleSnapshot: item.product.title,
-      imageSnapshot: Array.isArray(item.product.imageUrls) && item.product.imageUrls.length > 0
-        ? item.product.imageUrls[0]
-        : '',
-      quantity: item.quantity,
-      priceSnapshot: item.priceSnapshot,
-      itemTotal: item.itemTotal
-    }))));
-    const sellerIds = [...new Set(items.map((item) => item.sellerId.toString()))];
-    const financialTotals = financeService.summarizeOrderFinancials(items, cart.shipping);
-    const commission = calculateCommission(cart.subtotal);
-    const gstAmount = extractGSTFromInclusivePrice(cart.finalTotal);
+
+    // One order per store so each seller fulfils and is paid independently.
+    const groupedByStore = new Map();
+    for (const checkoutItem of checkoutItems) {
+      const storeKey = storeKeyOf(checkoutItem.product);
+      if (!groupedByStore.has(storeKey)) {
+        groupedByStore.set(storeKey, []);
+      }
+      groupedByStore.get(storeKey).push(checkoutItem);
+    }
+
+    const storeGroups = [...groupedByStore.values()];
+    const groupSubtotals = storeGroups.map((group) => roundMoney(
+      group.reduce((total, item) => total + (item.itemTotal || 0), 0)
+    ));
+    const groupShipping = splitShippingAcrossGroups(groupSubtotals, cart.shipping);
     const sellerAcceptanceExpiresAt = getSellerAcceptanceExpiresAt();
 
-    const [createdOrder] = await Order.create([{
-      buyerId,
-      orderNumber,
-      sellerIds,
-      items,
-      shippingInfo: delivery.shippingInfo,
-      shippingAddressSnapshot: delivery.snapshot,
-      paymentMethod: COD_PAYMENT_METHOD,
-      paymentCaptureMode: 'automatic',
-      paymentStatus: 'pending',
-      orderStatus: 'awaiting_seller_acceptance',
-      trackingStatus: 'Waiting for seller confirmation',
-      sellerAcceptance: {
-        status: 'pending',
-        expiresAt: sellerAcceptanceExpiresAt
-      },
-      paymentFlow: {
-        captureAfterSellerAcceptance: false,
-        signatureVerified: false
-      },
-      razorpay: {
-        signatureVerified: false
-      },
-      inventoryConfirmation: {
-        confirmedAvailable: false
-      },
-      inventoryReservation: {
-        reservationIds: [],
-        expiresAt: sellerAcceptanceExpiresAt,
-        status: 'active'
-      },
-      subtotal: cart.subtotal,
-      shipping: cart.shipping,
-      finalTotal: cart.finalTotal,
-      commissionRate: PLATFORM_COMMISSION_RATE,
-      commissionAmount: financialTotals.totalPlatformCommission || commission.commissionAmount,
-      sellerPayoutAmount: financialTotals.totalSellerEarnings || commission.sellerPayoutAmount,
-      ...financialTotals,
-      payoutStatus: 'pending',
-      gstAmount,
-      gstRate: GST_RATE,
-      emailSent: false
-    }], { session });
+    for (let index = 0; index < storeGroups.length; index += 1) {
+      const groupItems = storeGroups[index];
+      const orderNumber = generateOrderNumber();
+      const orderItems = applyPendingAcceptanceDefaults(
+        await financeService.applyFinancialsToOrderItems(groupItems.map((item) => ({
+          productId: item.product._id,
+          sellerId: item.product.sellerId,
+          storeId: item.product.storeId,
+          titleSnapshot: item.product.title,
+          imageSnapshot: Array.isArray(item.product.imageUrls) && item.product.imageUrls.length > 0
+            ? item.product.imageUrls[0]
+            : '',
+          quantity: item.quantity,
+          priceSnapshot: item.priceSnapshot,
+          itemTotal: item.itemTotal
+        })))
+      );
+      const sellerIds = [...new Set(orderItems.map((item) => item.sellerId.toString()))];
+      const orderSubtotal = groupSubtotals[index];
+      const orderShipping = groupShipping[index];
+      const orderFinalTotal = roundMoney(orderSubtotal + orderShipping);
+      const financialTotals = financeService.summarizeOrderFinancials(orderItems, orderShipping);
+      const commission = calculateCommission(orderSubtotal);
+      const gstAmount = extractGSTFromInclusivePrice(orderFinalTotal);
 
-    await syncBargainBidsForOrder({
-      cart,
-      buyerId,
-      order: createdOrder,
-      session
-    });
+      const [createdOrder] = await Order.create([{
+        buyerId,
+        orderNumber,
+        sellerIds,
+        items: orderItems,
+        shippingInfo: delivery.shippingInfo,
+        shippingAddressSnapshot: delivery.snapshot,
+        paymentMethod: COD_PAYMENT_METHOD,
+        paymentCaptureMode: 'automatic',
+        paymentStatus: 'pending',
+        orderStatus: 'awaiting_seller_acceptance',
+        trackingStatus: 'Waiting for seller confirmation',
+        sellerAcceptance: {
+          status: 'pending',
+          expiresAt: sellerAcceptanceExpiresAt
+        },
+        paymentFlow: {
+          captureAfterSellerAcceptance: false,
+          signatureVerified: false
+        },
+        razorpay: {
+          signatureVerified: false
+        },
+        inventoryConfirmation: {
+          confirmedAvailable: false
+        },
+        inventoryReservation: {
+          reservationIds: [],
+          expiresAt: sellerAcceptanceExpiresAt,
+          status: 'active'
+        },
+        subtotal: orderSubtotal,
+        shipping: orderShipping,
+        finalTotal: orderFinalTotal,
+        commissionRate: PLATFORM_COMMISSION_RATE,
+        commissionAmount: financialTotals.totalPlatformCommission || commission.commissionAmount,
+        sellerPayoutAmount: financialTotals.totalSellerEarnings || commission.sellerPayoutAmount,
+        ...financialTotals,
+        payoutStatus: 'pending',
+        gstAmount,
+        gstRate: GST_RATE,
+        emailSent: false
+      }], { session });
+
+      await syncBargainBidsForOrder({
+        cart,
+        buyerId,
+        order: createdOrder,
+        session,
+        productIds: new Set(groupItems.map((item) => item.product._id.toString()))
+      });
+
+      orders.push(createdOrder);
+      items.push(...orderItems);
+    }
 
     await cartService.clearCart(buyerId, { session });
-    order = createdOrder;
   });
 
-  await Promise.all(items.map((item) => {
-    return analyticsService.trackEventSafe({
+  const order = orders[0];
+
+  for (const placedOrder of orders) {
+    await Promise.all(placedOrder.items.map((item) => analyticsService.trackEventSafe({
       userId: buyerId,
       sellerId: item.sellerId,
       storeId: item.storeId,
       productId: item.productId,
       eventType: 'order_placed',
       metadata: {
-        orderId: order._id,
-        orderNumber: order.orderNumber,
+        orderId: placedOrder._id,
+        orderNumber: placedOrder.orderNumber,
         quantity: item.quantity,
         itemTotal: item.itemTotal,
         paymentMethod: COD_PAYMENT_METHOD
       }
-    });
-  }));
-  await Promise.all(items.map((item) => analyticsService.trackEventSafe({
-    userId: buyerId,
-    sellerId: item.sellerId,
-    storeId: item.storeId,
-    productId: item.productId,
-    eventType: 'order_awaiting_seller_acceptance',
-    metadata: {
-      orderId: order._id,
-      orderNumber: order.orderNumber,
-      quantity: item.quantity,
-      itemTotal: item.itemTotal
-    }
-  })));
-  await sendOrderEmails(order);
+    })));
+    await Promise.all(placedOrder.items.map((item) => analyticsService.trackEventSafe({
+      userId: buyerId,
+      sellerId: item.sellerId,
+      storeId: item.storeId,
+      productId: item.productId,
+      eventType: 'order_awaiting_seller_acceptance',
+      metadata: {
+        orderId: placedOrder._id,
+        orderNumber: placedOrder.orderNumber,
+        quantity: item.quantity,
+        itemTotal: item.itemTotal
+      }
+    })));
+    await sendOrderEmails(placedOrder);
+  }
 
-  return buildOrderConfirmation(order);
+  return {
+    ...buildOrderConfirmation(order),
+    orders: orders.map(buildOrderConfirmation)
+  };
 };
 
 module.exports = {

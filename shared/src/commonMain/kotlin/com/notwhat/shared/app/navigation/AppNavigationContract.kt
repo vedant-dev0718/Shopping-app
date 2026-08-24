@@ -20,6 +20,10 @@ internal sealed interface AppRoute {
         val store: StoreDto,
     ) : AppRoute
 
+    data class CategoryProducts(
+        val category: String,
+    ) : AppRoute
+
     data object Cart : AppRoute
 
     data object BuyerOrders : AppRoute
@@ -65,6 +69,10 @@ internal sealed interface AppNavEvent {
 
     data class OpenStore(
         val store: StoreDto,
+    ) : AppNavEvent
+
+    data class OpenCategory(
+        val category: String,
     ) : AppNavEvent
 
     data object OpenCart : AppNavEvent

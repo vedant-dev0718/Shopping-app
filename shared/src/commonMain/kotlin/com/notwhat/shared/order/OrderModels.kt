@@ -86,6 +86,16 @@ data class ReturnInfoSnapshotDto(
     val rejectionReason: String? = null,
 )
 
+@Serializable
+data class StorePaymentSnapshotDto(
+    val storeName: String = "",
+    val upiId: String = "",
+    val amount: Double = 0.0,
+    val currency: String = "INR",
+    val qrCode: String? = null,
+    val qrCodeLabel: String = "",
+)
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class OrderDto(
@@ -110,6 +120,7 @@ data class OrderDto(
     val trackingNumber: String? = null,
     val trackingCarrier: String? = null,
     val trackingUrl: String? = null,
+    val storePayment: StorePaymentSnapshotDto? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )

@@ -19,4 +19,12 @@ class FinanceRepository(
 
     suspend fun getRazorpayOnboardingStatus(bearerToken: String): NetworkResult<RazorpayOnboardingStatusDto> =
         runCatchingNetwork { client.get("sellers/me/razorpay/status", bearerToken = bearerToken) }
+
+    suspend fun getStoreUpi(bearerToken: String): NetworkResult<StoreUpiDto> =
+        runCatchingNetwork { client.get("sellers/me/payment", bearerToken = bearerToken) }
+
+    suspend fun updateStoreUpi(
+        upiId: String,
+        bearerToken: String,
+    ): NetworkResult<StoreUpiDto> = runCatchingNetwork { client.patch("sellers/me/payment", UpdateStoreUpiRequestDto(upiId), bearerToken) }
 }

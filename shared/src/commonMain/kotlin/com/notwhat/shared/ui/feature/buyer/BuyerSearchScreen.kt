@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -169,47 +170,81 @@ internal fun SearchScreen(
             }
         }
 
-        // always show products grid (browse mode or results mode)
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                filteredProducts.chunked(2).forEach { rowProducts ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        rowProducts.forEach { product ->
-                            ElevatedCard(
-                                modifier =
-                                    Modifier.weight(1f).clickable {
-                                        actions.onOpenProduct(product)
-                                    },
-                                colors = CardDefaults.elevatedCardColors(containerColor = searchSurface),
-                            ) {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    DemoImage(
-                                        url = product.displayImageUrl,
-                                        contentDescription = product.displayTitle,
-                                        modifier = Modifier.fillMaxWidth().height(170.dp),
-                                        shape = RoundedCornerShape(14.dp),
-                                    )
-                                    Column(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                                    ) {
-                                        Text(product.displayStoreName, color = searchMuted, style = MaterialTheme.typography.labelSmall)
-                                        Text(product.displayTitle, color = searchText, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text(product.displayPrice, color = searchAccent, fontWeight = FontWeight.Bold)
+        if (!isResultsMode) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    filteredProducts.chunked(2).forEach { rowProducts ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                            rowProducts.forEach { product ->
+                                ElevatedCard(
+                                    modifier =
+                                        Modifier.weight(1f).clickable {
+                                            actions.onOpenProduct(product)
+                                        },
+                                    colors = CardDefaults.elevatedCardColors(containerColor = searchSurface),
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        DemoImage(
+                                            url = product.displayImageUrl,
+                                            contentDescription = product.displayTitle,
+                                            modifier = Modifier.fillMaxWidth().height(170.dp),
+                                            shape = RoundedCornerShape(14.dp),
+                                        )
+                                        Column(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        ) {
+                                            Text(product.displayStoreName, color = searchMuted, style = MaterialTheme.typography.labelSmall)
+                                            Text(product.displayTitle, color = searchText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Text(product.displayPrice, color = searchAccent, fontWeight = FontWeight.Bold)
+                                        }
                                     }
                                 }
                             }
+                            if (rowProducts.size == 1) Spacer(modifier = Modifier.weight(1f))
                         }
-                        if (rowProducts.size == 1) Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        if (state.selectedCategory != null) {
+            item {
+                Surface(
+                    color = searchSurface2,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Browsing ${state.selectedCategory}", color = searchText, fontWeight = FontWeight.Bold)
+                            Text("Products from this category", color = searchMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                        TextButton(onClick = state::clearFilters) { Text("Clear", color = searchAccent) }
                     }
                 }
             }
         }
 
         if (isResultsMode) {
+            if (state.isSearching) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = searchAccent)
+                    }
+                }
+            }
+
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("All", "Products", "Stores", "Reels").forEach { tab ->
+                    listOf("All", "Products", "Reels").forEach { tab ->
                         val selected = resultTab == tab
                         Text(
                             tab,
@@ -257,154 +292,67 @@ internal fun SearchScreen(
                 }
             }
 
-            if ((resultTab == "All" || resultTab == "Stores") && filteredStores.isNotEmpty()) {
-                item {
-                    ElevatedCard(
-                        colors =
-                            CardDefaults.elevatedCardColors(
-                                containerColor = searchSurface,
-                            ),
-                        modifier =
-                            Modifier.fillMaxWidth().clickable {
-                                actions.onOpenStore(filteredStores.first())
-                            },
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                DemoImage(
-                                    url = filteredStores.first().displayImageUrl,
-                                    contentDescription = filteredStores.first().storeName,
-                                    modifier = Modifier.size(54.dp),
-                                    shape = RoundedCornerShape(27.dp),
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(filteredStores.first().storeName, color = searchText, fontWeight = FontWeight.Bold)
-                                    Text("Top Rated Store", color = searchMuted, style = MaterialTheme.typography.bodySmall)
-                                }
-                                Button(onClick = {
-                                    state.updateQuery(filteredStores.first().storeName)
-                                    state.submitSearch()
-                                }, shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = searchAccent)) {
-                                    Text("Follow", color = Color.White)
-                                }
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                                state.content.products.take(3).forEach { product ->
-                                    DemoImage(
-                                        url = product.displayImageUrl,
-                                        contentDescription = product.displayTitle,
-                                        modifier = Modifier.weight(1f).height(86.dp),
-                                        shape = RoundedCornerShape(8.dp),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             if (resultTab == "All" || resultTab == "Products") {
                 item {
-                    Text("Products ${filteredProducts.size}", style = MaterialTheme.typography.titleMedium, color = searchText)
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        filteredProducts.chunked(2).forEach { rowProducts ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                                rowProducts.forEach { product ->
-                                    ElevatedCard(
-                                        modifier =
-                                            Modifier.weight(1f).clickable {
-                                                actions.onOpenProduct(product)
-                                            },
-                                        colors = CardDefaults.elevatedCardColors(containerColor = searchSurface),
-                                    ) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            DemoImage(
-                                                url = product.displayImageUrl,
-                                                contentDescription = product.displayTitle,
-                                                modifier = Modifier.fillMaxWidth().height(170.dp),
-                                                shape = RoundedCornerShape(14.dp),
-                                            )
-                                            Column(
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                                            ) {
-                                                Text(
-                                                    product.displayStoreName,
-                                                    color = searchMuted,
-                                                    style = MaterialTheme.typography.labelSmall,
+                    Text(
+                        if (state.selectedCategory !=
+                            null
+                        ) {
+                            "${state.selectedCategory} · ${filteredProducts.size} products"
+                        } else {
+                            "Products ${filteredProducts.size}"
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = searchText,
+                    )
+                    if (!state.isSearching) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            filteredProducts.chunked(2).forEach { rowProducts ->
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                                    rowProducts.forEach { product ->
+                                        ElevatedCard(
+                                            modifier =
+                                                Modifier.weight(1f).clickable {
+                                                    actions.onOpenProduct(product)
+                                                },
+                                            colors = CardDefaults.elevatedCardColors(containerColor = searchSurface),
+                                        ) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                DemoImage(
+                                                    url = product.displayImageUrl,
+                                                    contentDescription = product.displayTitle,
+                                                    modifier = Modifier.fillMaxWidth().height(170.dp),
+                                                    shape = RoundedCornerShape(14.dp),
                                                 )
-                                                Text(
-                                                    product.displayTitle,
-                                                    color = searchText,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                                Text(product.displayPrice, color = searchAccent, fontWeight = FontWeight.Bold)
+                                                Column(
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                                ) {
+                                                    Text(
+                                                        product.displayStoreName,
+                                                        color = searchMuted,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                    )
+                                                    Text(
+                                                        product.displayTitle,
+                                                        color = searchText,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                    )
+                                                    Text(product.displayPrice, color = searchAccent, fontWeight = FontWeight.Bold)
+                                                }
                                             }
                                         }
                                     }
+                                    if (rowProducts.size == 1) Spacer(modifier = Modifier.weight(1f))
                                 }
-                                if (rowProducts.size == 1) Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
                 }
             }
 
-            if ((resultTab == "All" || resultTab == "Reels") && filteredReels.isNotEmpty()) {
-                item {
-                    Text("Style Reels", style = MaterialTheme.typography.titleMedium, color = searchText)
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        filteredReels.chunked(3).forEach { rowReels ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                rowReels.forEach { reel ->
-                                    ElevatedCard(
-                                        modifier =
-                                            Modifier.weight(1f).height(170.dp).clickable {
-                                                actions.onOpenProduct(reel.toProductDtoStub())
-                                            },
-                                        colors = CardDefaults.elevatedCardColors(containerColor = searchSurface),
-                                    ) {
-                                        Box(modifier = Modifier.fillMaxSize()) {
-                                            DemoImage(
-                                                url = reel.thumbnailUrl,
-                                                contentDescription = reel.displayCreator,
-                                                modifier = Modifier.fillMaxSize(),
-                                                shape = RoundedCornerShape(10.dp),
-                                            )
-                                            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.32f)))
-                                            Text(
-                                                reel.displayLabel,
-                                                color = Color.White,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier =
-                                                    Modifier
-                                                        .align(
-                                                            Alignment.TopStart,
-                                                        ).padding(
-                                                            8.dp,
-                                                        ).background(
-                                                            searchAccent,
-                                                            RoundedCornerShape(8.dp),
-                                                        ).padding(horizontal = 6.dp, vertical = 3.dp),
-                                            )
-                                            Text(
-                                                reel.displayCreator,
-                                                color = Color.White,
-                                                modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
-                                            )
-                                        }
-                                    }
-                                }
-                                if (rowReels.size < 3) repeat(3 - rowReels.size) { Spacer(modifier = Modifier.weight(1f)) }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (filteredProducts.isEmpty() && filteredStores.isEmpty() && filteredReels.isEmpty()) {
+            if (filteredProducts.isEmpty() && filteredStores.isEmpty()) {
                 item {
                     Surface(color = searchSurface, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(
@@ -419,18 +367,6 @@ internal fun SearchScreen(
                                 state.submitSearch()
                             }) { Text("Try Trending", color = searchAccent) }
                         }
-                    }
-                }
-            }
-
-            item {
-                if (state.filters.hasActiveFilters()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Filters active", color = searchMuted)
-                        TextButton(
-                            onClick = { state.removeFilter(SearchFilterKind.CATEGORY) },
-                        ) { Text("Clear category", color = searchAccent) }
-                        TextButton(onClick = state::clearFilters) { Text("Clear all", color = searchAccent) }
                     }
                 }
             }

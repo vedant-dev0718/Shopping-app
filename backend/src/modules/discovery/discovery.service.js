@@ -180,9 +180,18 @@ const getCategories = async () => {
     { $match: { status: { $in: PUBLIC_PRODUCT_STATUSES } } },
     { $group: { _id: '$category', productCount: { $sum: 1 } } }
   ]);
-  const productCountMap = new Map(productCounts.map((item) => [item._id, item.productCount]));
+  const categoryNames = [...FEED_CATEGORIES];
+  productCounts
+    .map((item) => item._id)
+    .filter((category) => typeof category === 'string' && category.trim())
+    .sort((left, right) => left.localeCompare(right))
+    .forEach((category) => {
+      if (!categoryNames.some((existing) => existing.toLowerCase() === category.toLowerCase())) {
+        categoryNames.push(category);
+      }
+    });
 
-  return FEED_CATEGORIES.map((category) => {
+  return categoryNames.map((category) => {
     if (category === 'For You') {
       return {
         name: category,
@@ -193,8 +202,12 @@ const getCategories = async () => {
 
     return {
       name: category,
-      productCount: productCountMap.get(category) || 0,
-      reelCount: availableReelCounts[category] || 0
+      productCount: productCounts
+        .filter((item) => item._id && String(item._id).toLowerCase() === category.toLowerCase())
+        .reduce((total, item) => total + item.productCount, 0),
+      reelCount: Object.entries(availableReelCounts)
+        .filter(([name]) => name && String(name).toLowerCase() === category.toLowerCase())
+        .reduce((total, [, count]) => total + count, 0)
     };
   });
 };

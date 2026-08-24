@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -171,6 +172,43 @@ internal fun ProductLifecycleScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = accent)
             ) {
                 Text("+ Add New Product", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (state.sellerContent.isLoading && products.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 36.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = accent, modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                }
+            }
+        } else if (state.sellerContent.loadErrorMessage != null && products.isEmpty()) {
+            item {
+                StatusMessage(
+                    title = "Products unavailable",
+                    message = state.sellerContent.loadErrorMessage ?: "We couldn't load your products.",
+                    actionLabel = "Retry",
+                    onAction = {
+                        val token = state.currentSession?.authToken
+                        if (!token.isNullOrBlank()) scope.launch { state.sellerContent.load(token) }
+                    },
+                    accent = accent,
+                    text = text,
+                    muted = muted,
+                    surface = surface,
+                )
+            }
+        } else if (!state.sellerContent.isLoading && products.isEmpty()) {
+            item {
+                StatusMessage(
+                    title = "No products yet",
+                    message = "Add your first product to start building your storefront.",
+                    actionLabel = "Add Product",
+                    onAction = onAddProduct,
+                    accent = accent,
+                    text = text,
+                    muted = muted,
+                    surface = surface,
+                )
             }
         }
 

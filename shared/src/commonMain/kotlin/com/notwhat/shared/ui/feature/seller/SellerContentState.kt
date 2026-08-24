@@ -36,13 +36,30 @@ internal class SellerContentState(
         private set
     var isLoading by mutableStateOf(false)
         private set
+    var loadErrorMessage by mutableStateOf<String?>(null)
+        private set
 
     suspend fun load(bearerToken: String) {
         isLoading = true
-        sellerUseCase.listProducts(bearerToken).getOrNull()?.let { products = it }
-        sellerUseCase.listReels(bearerToken).getOrNull()?.let { reels = it }
-        sellerUseCase.listOrders(bearerToken).getOrNull()?.let { orders = it }
-        isLoading = false
+        loadErrorMessage = null
+        var firstError: String? = null
+        try {
+            when (val result = sellerUseCase.listProducts(bearerToken)) {
+                is NetworkResult.Success -> products = result.data
+                is NetworkResult.Failure -> firstError = result.error.userMessage()
+            }
+            when (val result = sellerUseCase.listReels(bearerToken)) {
+                is NetworkResult.Success -> reels = result.data
+                is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
+            }
+            when (val result = sellerUseCase.listOrders(bearerToken)) {
+                is NetworkResult.Success -> orders = result.data
+                is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
+            }
+            loadErrorMessage = firstError
+        } finally {
+            isLoading = false
+        }
     }
 
     /** Re-fetches orders after a status change. */

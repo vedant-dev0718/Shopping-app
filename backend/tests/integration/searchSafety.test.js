@@ -20,6 +20,20 @@ describe('search and safety API', () => {
     expect(Array.isArray(empty.body.data.reels)).toBe(true);
   });
 
+  test('search returns total count alongside product results', async () => {
+    const seller = await createSeller();
+    await createProduct(seller, { title: 'Counted Search Product One', category: 'Sarees', price: 820 });
+    await createProduct(seller, { title: 'Counted Search Product Two', category: 'Sarees', price: 930 });
+
+    const response = await api().get('/api/search/products?q=Counted').expect(200);
+
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.length).toBeGreaterThanOrEqual(1);
+    expect(response.body.meta).toBeTruthy();
+    expect(response.body.meta.totalCount).toBeGreaterThanOrEqual(2);
+    expect(response.body.meta.returnedCount).toBe(response.body.data.length);
+  });
+
   test('blocked sellers are hidden from authenticated search', async () => {
     const buyer = await createBuyer();
     const seller = await createSeller();

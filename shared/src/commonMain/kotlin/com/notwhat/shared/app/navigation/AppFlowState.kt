@@ -30,6 +30,10 @@ internal class AppFlowState {
                 route = AppRoute.StoreProfile(event.store)
             }
 
+            is AppNavEvent.OpenCategory -> {
+                route = AppRoute.CategoryProducts(event.category)
+            }
+
             AppNavEvent.OpenCart -> {
                 route = AppRoute.Cart
             }

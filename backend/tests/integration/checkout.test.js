@@ -40,7 +40,46 @@ describe('checkout API with mocked Razorpay', () => {
 
       env.enableCodCheckout = true;
       const withCod = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
-      expect(withCod.body.data.paymentMethods).toContain('COD');
+      expect(withCod.body.data.paymentMethods).toEqual(['COD']);
+      expect(withCod.body.data.paymentMethods).not.toContain('UPI');
+      expect(withCod.body.data.paymentMethods).not.toContain('card');
+    } finally {
+      env.enableCodCheckout = originalCodFlag;
+    }
+  });
+
+  test('checkout start groups store-specific COD payment metadata for a multi-store cart', async () => {
+    const originalCodFlag = env.enableCodCheckout;
+    env.enableCodCheckout = true;
+
+    try {
+      const buyer = await createBuyer({ email: 'multi-store-cod-buyer@example.com' });
+      const seller1 = await createSeller({ email: 'multi-store-seller-1@example.com', storeName: 'Store One', upiId: 'storeone@upi' });
+      const seller2 = await createSeller({ email: 'multi-store-seller-2@example.com', storeName: 'Store Two', upiId: 'storetwo@upi' });
+      const product1 = await createProduct(seller1, { price: 299, stock: 3, title: 'Saree A' });
+      const product2 = await createProduct(seller2, { price: 499, stock: 4, title: 'Dupatta B' });
+
+      await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: product1._id, quantity: 1 }).expect(201);
+      await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: product2._id, quantity: 1 }).expect(201);
+
+      const response = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
+
+      expect(response.body.data.paymentMethods).toEqual(['COD']);
+      expect(response.body.data.storePaymentGroups).toHaveLength(2);
+      expect(response.body.data.storePaymentGroups.every((group) => group.paymentMethods.includes('COD'))).toBe(true);
+      expect(response.body.data.storePaymentGroups.every((group) => !group.paymentMethods.includes('UPI'))).toBe(true);
+
+      const qrCodes = response.body.data.storePaymentGroups.map((group) => group.qrCode);
+      expect(qrCodes.every((qrCode) => typeof qrCode === 'string' && qrCode.startsWith('upi://pay?'))).toBe(true);
+      expect(new Set(qrCodes).size).toBe(2);
+
+      const groupByStoreName = new Map(
+        response.body.data.storePaymentGroups.map((group) => [group.storeName, group])
+      );
+      expect(groupByStoreName.get('Store One').qrCode).toContain('pa=storeone%40upi');
+      expect(groupByStoreName.get('Store Two').qrCode).toContain('pa=storetwo%40upi');
+      expect(groupByStoreName.get('Store One').qrCode).toContain('am=299.00');
+      expect(groupByStoreName.get('Store Two').qrCode).toContain('am=499.00');
     } finally {
       env.enableCodCheckout = originalCodFlag;
     }
@@ -77,6 +116,54 @@ describe('checkout API with mocked Razorpay', () => {
 
       const cart = await api().get('/api/cart').set('Authorization', authHeader(buyer)).expect(200);
       expect(cart.body.data.items).toHaveLength(0);
+    } finally {
+      env.enableCodCheckout = originalCodFlag;
+    }
+  });
+
+  test('multi-store COD cart creates one order per store without changing the buyer total', async () => {
+    const originalCodFlag = env.enableCodCheckout;
+    env.enableCodCheckout = true;
+
+    try {
+      const buyer = await createBuyer({ email: 'cod-split-buyer@example.com' });
+      const sellerA = await createSeller({ email: 'cod-split-seller-a@example.com', storeName: 'Split Store A' });
+      const sellerB = await createSeller({ email: 'cod-split-seller-b@example.com', storeName: 'Split Store B' });
+      const productA = await createProduct(sellerA, { price: 300, stock: 5, title: 'Split A' });
+      const productB = await createProduct(sellerB, { price: 700, stock: 5, title: 'Split B' });
+
+      await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: productA._id, quantity: 1 }).expect(201);
+      await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: productB._id, quantity: 1 }).expect(201);
+
+      const checkout = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
+      const quotedTotal = checkout.body.data.cart.finalTotal;
+
+      const placed = await api()
+        .post('/api/checkout/place-cod')
+        .set('Authorization', authHeader(buyer))
+        .send({ paymentMethod: 'COD', shippingInfo })
+        .expect(201);
+
+      expect(placed.body.data.orders).toHaveLength(2);
+
+      const orders = await Order.find({ buyerId: buyer._id }).lean();
+      expect(orders).toHaveLength(2);
+
+      // Each order belongs to exactly one store and one seller.
+      orders.forEach((order) => {
+        const storeIds = [...new Set(order.items.map((item) => item.storeId.toString()))];
+        expect(storeIds).toHaveLength(1);
+        expect(order.sellerIds).toHaveLength(1);
+      });
+
+      const orderNumbers = new Set(orders.map((order) => order.orderNumber));
+      expect(orderNumbers.size).toBe(2);
+
+      const combinedTotal = orders.reduce((total, order) => total + order.finalTotal, 0);
+      expect(Math.round(combinedTotal * 100) / 100).toBe(quotedTotal);
+
+      const subtotals = orders.map((order) => order.subtotal).sort((a, b) => a - b);
+      expect(subtotals).toEqual([300, 700]);
     } finally {
       env.enableCodCheckout = originalCodFlag;
     }

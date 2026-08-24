@@ -215,7 +215,7 @@ class AuthState(
             useCase
                 .login(
                     email = loginEmail.trim(),
-                    password = loginPassword.trim(),
+                    password = loginPassword,
                     isAdmin = loginAsAdmin,
                     selectedRole = if (loginAsAdmin) UserRole.Admin else selectedMockRole,
                 ).foldIntoState()

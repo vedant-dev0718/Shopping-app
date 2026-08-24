@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -251,7 +252,29 @@ internal fun SellerReelListScreen(
             }
         }
 
-        if (reels.isEmpty()) {
+        if (state.sellerContent.isLoading && reels.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = accent, modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                }
+            }
+        } else if (state.sellerContent.loadErrorMessage != null && reels.isEmpty()) {
+            item {
+                StatusMessage(
+                    title = "Reels unavailable",
+                    message = state.sellerContent.loadErrorMessage ?: "We couldn't load your reels.",
+                    actionLabel = "Retry",
+                    onAction = {
+                        val token = state.currentSession?.authToken
+                        if (!token.isNullOrBlank()) scope.launch { state.sellerContent.load(token) }
+                    },
+                    accent = accent,
+                    text = text,
+                    muted = muted,
+                    surface = surface,
+                )
+            }
+        } else if (reels.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),

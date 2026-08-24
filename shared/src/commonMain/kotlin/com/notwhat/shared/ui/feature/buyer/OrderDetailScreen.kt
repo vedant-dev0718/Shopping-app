@@ -1,6 +1,7 @@
 package com.notwhat.shared.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,10 +46,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.notwhat.shared.checkout.CheckoutPaymentMethod
+import com.notwhat.shared.checkout.displayLabel
 import com.notwhat.shared.order.OrderDto
 import com.notwhat.shared.returns.ReturnReason
 import com.notwhat.shared.ui.PlatformImagePicker
 import com.notwhat.shared.ui.PlatformMediaFileReader
+import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import kotlinx.coroutines.launch
 
 @Composable
@@ -494,6 +498,22 @@ internal fun OrderDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
+                            Text("Payment Method", color = muted)
+                            Text(order.paymentMethod.displayPaymentMethodLabel() ?: "Not available", color = text)
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text("Payment Status", color = muted)
+                            Text(order.paymentStatus?.humanizeToken() ?: "Pending", color = text)
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
                             Text("Subtotal", color = muted)
                             Text("₹${formatOrderDetailAmount(order.subtotal)}", color = text)
                         }
@@ -519,7 +539,59 @@ internal fun OrderDetailScreen(
                 }
             }
 
-            // Return action — only shown for delivered orders
+            // Pay-on-delivery block — backend attaches this only once the store's items are delivered.
+            order.storePayment?.let { storePayment ->
+                item {
+                    Surface(
+                        color = surface,
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, outline.copy(alpha = 0.42f)),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                "Pay ${storePayment.storeName}",
+                                color = text,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            val qrData = storePayment.qrCode
+                            if (qrData.isNullOrBlank()) {
+                                Text(
+                                    storePayment.qrCodeLabel.ifBlank { "This store has not set up UPI payments yet." },
+                                    color = muted,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            } else {
+                                Text(
+                                    "Scan this QR to pay the seller for this delivered order.",
+                                    color = muted,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                                Surface(color = Color.White, shape = RoundedCornerShape(12.dp)) {
+                                    Image(
+                                        painter = rememberQrCodePainter(qrData),
+                                        contentDescription = storePayment.qrCodeLabel,
+                                        modifier = Modifier.size(190.dp).padding(12.dp),
+                                    )
+                                }
+                                Text(storePayment.upiId, color = muted, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text(
+                                "₹${formatOrderDetailAmount(storePayment.amount)}",
+                                color = accent,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
+                    }
+                }
+            }
+
             // Return action — only shown for delivered orders
             if (isDelivered || alreadyReturnRequested) {
                 item {
@@ -686,3 +758,24 @@ private fun formatOrderDetailAmount(amount: Double): String {
         amount.toString()
     }
 }
+
+private fun String?.displayPaymentMethodLabel(): String? {
+    val raw = this?.trim().orEmpty()
+    if (raw.isBlank()) return null
+
+    val parsed = CheckoutPaymentMethod.fromRaw(raw)
+    return if (parsed != CheckoutPaymentMethod.UNKNOWN) {
+        parsed.displayLabel()
+    } else {
+        raw.humanizeToken()
+    }
+}
+
+private fun String.humanizeToken(): String =
+    trim()
+        .replace('_', ' ')
+        .split(' ')
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { token ->
+            token.lowercase().replaceFirstChar { ch -> ch.uppercase() }
+        }

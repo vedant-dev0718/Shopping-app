@@ -34,6 +34,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.notwhat.shared.checkout.CheckoutPaymentMethod
+import com.notwhat.shared.checkout.displayLabel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -219,6 +221,9 @@ private fun OrderCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
+                    order.paymentMethodLine()?.let {
+                        Text(it, color = muted, style = MaterialTheme.typography.labelSmall)
+                    }
                     Text("Total", color = muted, style = MaterialTheme.typography.labelSmall)
                     Text(
                         "₹${formatOrderAmount(order.totalAmount)}",
@@ -310,3 +315,34 @@ private fun formatOrderAmount(amount: Double): String {
         amount.toString()
     }
 }
+
+private fun com.notwhat.shared.order.OrderDto.paymentMethodLine(): String? {
+    val method = paymentMethod.displayPaymentMethodLabel() ?: return null
+    val status = paymentStatus?.takeIf { it.isNotBlank() }?.humanizeToken()
+    return if (status.isNullOrBlank()) {
+        method
+    } else {
+        "$method • $status"
+    }
+}
+
+private fun String?.displayPaymentMethodLabel(): String? {
+    val raw = this?.trim().orEmpty()
+    if (raw.isBlank()) return null
+
+    val parsed = CheckoutPaymentMethod.fromRaw(raw)
+    return if (parsed != CheckoutPaymentMethod.UNKNOWN) {
+        parsed.displayLabel()
+    } else {
+        raw.humanizeToken()
+    }
+}
+
+private fun String.humanizeToken(): String =
+    trim()
+        .replace('_', ' ')
+        .split(' ')
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { token ->
+            token.lowercase().replaceFirstChar { ch -> ch.uppercase() }
+        }

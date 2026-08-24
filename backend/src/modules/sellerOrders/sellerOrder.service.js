@@ -524,7 +524,8 @@ const updateSellerOrderStatus = async (sellerId, orderId, orderStatus) => {
   const order = await findSellerOrderForUpdate(sellerId, orderId);
   const sellerItems = getSellerItems(order, sellerId);
 
-  if (order.orderStatus === 'awaiting_seller_acceptance' || sellerItems.some((item) => item.itemAcceptanceStatus === 'pending')) {
+  // Scoped to this seller's items: a co-seller who has not accepted must not block this seller.
+  if (sellerItems.some((item) => item.itemAcceptanceStatus === 'pending')) {
     throw new AppError('Accept this order before moving it into fulfillment', 400);
   }
 
@@ -551,7 +552,8 @@ const markSellerOrderShipped = async (sellerId, orderId, data) => {
   const order = await findSellerOrderForUpdate(sellerId, orderId);
   const sellerItems = getSellerItems(order, sellerId);
 
-  if (order.orderStatus === 'awaiting_seller_acceptance' || sellerItems.some((item) => item.itemAcceptanceStatus === 'pending')) {
+  // Scoped to this seller's items: a co-seller who has not accepted must not block this seller.
+  if (sellerItems.some((item) => item.itemAcceptanceStatus === 'pending')) {
     throw new AppError('Accept this order before marking it shipped', 400);
   }
 

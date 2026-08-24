@@ -3,6 +3,17 @@ package com.notwhat.shared.finance
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class StoreUpiDto(
+    val upiId: String = "",
+    val storeName: String = "",
+)
+
+@Serializable
+data class UpdateStoreUpiRequestDto(
+    val upiId: String,
+)
+
+@Serializable
 data class SellerEarningsSummaryDto(
     val totalSold: Double = 0.0,
     val totalCommissionPaid: Double = 0.0,

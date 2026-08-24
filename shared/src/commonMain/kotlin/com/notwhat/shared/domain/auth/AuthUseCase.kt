@@ -9,6 +9,7 @@ import com.notwhat.shared.auth.PendingSignupVerification
 import com.notwhat.shared.auth.ResetPasswordResponseDto
 import com.notwhat.shared.auth.SellerSignupRequestDto
 import com.notwhat.shared.core.AppConfig
+import com.notwhat.shared.core.AppError
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.session.UserRole
 import com.notwhat.shared.session.UserSession
@@ -42,7 +43,24 @@ class AuthUseCase(
             val role = if (isAdmin) UserRole.Admin else selectedRole
             return NetworkResult.Success(seedSessionForRole(role))
         }
-        return repository.login(email, password, isAdmin)
+        return when (val result = repository.login(email, password, isAdmin)) {
+            is NetworkResult.Success -> {
+                if (!isAdmin && result.data.role != selectedRole) {
+                    NetworkResult.Failure(
+                        AppError.Api(
+                            statusCode = 403,
+                            serverMessage = "Use a ${selectedRole.title.lowercase()} account in this app.",
+                        ),
+                    )
+                } else {
+                    result
+                }
+            }
+
+            is NetworkResult.Failure -> {
+                result
+            }
+        }
     }
 
     // ------------------------------------------------------------------

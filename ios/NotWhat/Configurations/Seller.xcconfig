@@ -1,4 +1,5 @@
 APP_ROLE = seller
 PRODUCT_BUNDLE_IDENTIFIER = com.notwhat.app.seller
 INFOPLIST_KEY_CFBundleDisplayName = NotWhat Seller
-API_BASE_URL = http://localhost:5001/api
+API_SLASH = /
+API_BASE_URL = http:$(API_SLASH)$(API_SLASH)localhost:5001/api

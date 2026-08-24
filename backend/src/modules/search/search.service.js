@@ -435,6 +435,18 @@ const searchStores = async (filters = {}, user = null) => {
     .slice(0, normalizeLimit(filters.limit));
 };
 
+const countSearchProducts = async (filters = {}, user = null) => {
+  const { query, empty } = await buildProductFilters(filters);
+
+  if (empty) {
+    return 0;
+  }
+
+  const safetyContext = await safetyService.getViewerSafetyContext(user);
+
+  return Product.countDocuments(safetyService.applySafetyQuery(query, safetyContext, { targetType: 'product' }));
+};
+
 const searchProducts = async (filters = {}, user = null) => {
   const { query, empty } = await buildProductFilters(filters);
 
@@ -495,5 +507,6 @@ module.exports = {
   globalSearch,
   searchStores,
   searchProducts,
+  countSearchProducts,
   searchReels
 };

@@ -9,14 +9,18 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.catalog.StoreDto
+import kotlinx.coroutines.launch
 
 /** Navigation callbacks for HomeScreen — ISP: callers provide only what the screen needs. */
 internal data class HomeScreenActions(
@@ -42,6 +47,7 @@ internal fun HomeScreen(
     val homeCard = NotWhatColors.surface
     val homeText = NotWhatColors.onSurface
     val homeAccent = NotWhatAuthTokens.accent
+    val scope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(homeBg),
@@ -49,44 +55,143 @@ internal fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(BuyerUiTokens.sectionGap),
     ) {
         item {
-            Text("Shop by Category", style = MaterialTheme.typography.titleMedium, color = homeText, fontWeight = FontWeight.Bold)
+            Surface(
+                modifier = Modifier.fillMaxWidth().clickable(onClick = actions.onSearchTap),
+                color = homeCard,
+                shape = RoundedCornerShape(18.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 15.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text("Search drops, stores, vibes...", color = homeText, modifier = Modifier.weight(1f))
+                    Text("Search", color = homeAccent, fontWeight = FontWeight.Bold)
+                }
+            }
         }
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                state.content.categories.chunked(3).forEach { rowCategories ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        rowCategories.forEach { category ->
-                            Surface(
-                                modifier = Modifier.weight(1f).clickable { state.selectCategory(category.name) },
-                                color = homeCard,
-                                shape = RoundedCornerShape(16.dp),
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp, horizontal = 8.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    DemoImage(
-                                        url = category.imageUrl,
-                                        contentDescription = category.name,
-                                        modifier = Modifier.size(52.dp),
-                                        shape = RoundedCornerShape(26.dp),
-                                    )
-                                    Text(
-                                        category.name,
-                                        color = homeText,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        }
-                        // fill empty cells in last row so grid stays aligned
-                        repeat(3 - rowCategories.size) { Box(modifier = Modifier.weight(1f)) }
+        if (state.content.isLoading && state.content.categories.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CircularProgressIndicator(color = homeAccent, modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                        Text("Loading your storefront...", color = homeText, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
+        } else if (state.content.loadErrorMessage != null && state.content.categories.isEmpty()) {
+            item {
+                StatusMessage(
+                    title = "Home unavailable",
+                    message = state.content.loadErrorMessage ?: "We couldn't load the buyer feed.",
+                    actionLabel = "Retry",
+                    onAction = { scope.launch { state.content.load(state.currentSession?.authToken) } },
+                    accent = homeAccent,
+                    text = homeText,
+                    muted = NotWhatColors.onSurfaceVariant,
+                    surface = homeCard,
+                )
+            }
+        } else if (state.content.categories.isEmpty()) {
+            item {
+                StatusMessage(
+                    title = "No categories available",
+                    message = "Seller categories will appear here as products are added.",
+                    actionLabel = "Refresh",
+                    onAction = { scope.launch { state.content.load(state.currentSession?.authToken) } },
+                    accent = homeAccent,
+                    text = homeText,
+                    muted = NotWhatColors.onSurfaceVariant,
+                    surface = homeCard,
+                )
+            }
+        }
+        if (!state.content.isLoading && state.content.loadErrorMessage != null && state.content.categories.isNotEmpty()) {
+            item {
+                Surface(color = homeCard, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            "Some home content is unavailable.",
+                            color = homeText,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = { scope.launch { state.content.load(state.currentSession?.authToken) } }) {
+                            Text("Retry", color = homeAccent)
+                        }
+                    }
+                }
+            }
+        }
+        if (state.content.categories.isNotEmpty()) {
+            item {
+                Text("Shop by Category", style = MaterialTheme.typography.titleMedium, color = homeText, fontWeight = FontWeight.Bold)
+            }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    state.content.categories.chunked(3).forEach { rowCategories ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                            rowCategories.forEach { category ->
+                                Surface(
+                                    modifier = Modifier.weight(1f).clickable { state.selectCategory(category.name) },
+                                    color = homeCard,
+                                    shape = RoundedCornerShape(18.dp),
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 10.dp),
+                                        horizontalAlignment = Alignment.Start,
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        DemoImage(
+                                            url = category.imageUrl,
+                                            contentDescription = category.name,
+                                            modifier = Modifier.fillMaxWidth().height(96.dp),
+                                            shape = RoundedCornerShape(14.dp),
+                                        )
+                                        Text(
+                                            category.name,
+                                            color = homeText,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                }
+                            }
+                            repeat(3 - rowCategories.size) { Box(modifier = Modifier.weight(1f)) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun StatusMessage(
+    title: String,
+    message: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    accent: androidx.compose.ui.graphics.Color,
+    text: androidx.compose.ui.graphics.Color,
+    muted: androidx.compose.ui.graphics.Color,
+    surface: androidx.compose.ui.graphics.Color,
+) {
+    Surface(color = surface, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(title, color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(message, color = muted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            if (actionLabel != null && onAction != null) TextButton(onClick = onAction) { Text(actionLabel, color = accent) }
         }
     }
 }

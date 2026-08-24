@@ -5,4 +5,9 @@ import androidx.compose.ui.Modifier
 
 /** Inline native video player composable. */
 @Composable
-expect fun NativeVideoPlayer(uri: String, modifier: Modifier = Modifier)
+expect fun NativeVideoPlayer(
+    uri: String,
+    modifier: Modifier = Modifier,
+    onFirstFrame: () -> Unit = {},
+    posterUrl: String = "",
+)

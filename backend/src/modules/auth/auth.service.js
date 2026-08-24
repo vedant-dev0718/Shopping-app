@@ -9,6 +9,7 @@ const generateToken = require('../../utils/generateToken');
 const hashToken = require('../../utils/hashToken');
 const { verifyTotpCode } = require('../../utils/totp');
 const { getDefaultPickupAddress } = require('../../utils/pickupAddressDefaults');
+const { buildDemoUpiId } = require('../../utils/upiQr');
 const googleAuthService = require('../../services/googleAuth.service');
 const appleAuthService = require('../../services/appleAuth.service');
 const { sendPasswordResetOtpEmail, sendSignupOtpEmail } = require('../../utils/resendEmail');
@@ -297,6 +298,7 @@ const createSellerAccount = async ({
     country,
     specialtyRegion,
     storeDescription,
+    upiId: buildDemoUpiId(storeName),
     pickupAddress: getDefaultPickupAddress(user._id)
   }], { session });
 
@@ -1262,6 +1264,7 @@ const completeGoogleSellerProfile = async (authUser, {
       country,
       specialtyRegion,
       storeDescription,
+      upiId: buildDemoUpiId(storeName),
       pickupAddress: getDefaultPickupAddress(user._id)
     }], { session });
 

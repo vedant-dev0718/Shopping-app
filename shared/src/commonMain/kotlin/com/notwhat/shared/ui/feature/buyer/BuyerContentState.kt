@@ -25,19 +25,45 @@ internal class BuyerContentState(
     var stores by mutableStateOf<List<StoreDto>>(emptyList())
     var categories by mutableStateOf<List<DemoCategory>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var loadErrorMessage by mutableStateOf<String?>(null)
+        private set
 
     suspend fun load(bearerToken: String? = null) {
         isLoading = true
-        val liveFeed = discoveryRepository.getFeed(bearerToken = bearerToken).getOrNull().orEmpty()
-        val catalogProducts = catalogUseCase.listProducts().getOrNull().orEmpty()
-        val catalogReels = catalogUseCase.listReels().getOrNull().orEmpty()
+        loadErrorMessage = null
+        var firstError: String? = null
+        try {
+            when (val result = discoveryRepository.getFeed(bearerToken = bearerToken)) {
+                is NetworkResult.Success -> {
+                    feedItems = result.data
+                    products = (result.data.mapNotNull { it.product } + products).distinctBy { it.id }
+                    reels = (result.data.mapNotNull { it.reel } + reels).distinctBy { it.id }
+                }
 
-        feedItems = liveFeed
-        products = (liveFeed.mapNotNull { it.product } + catalogProducts).distinctBy { it.id }
-        reels = (liveFeed.mapNotNull { it.reel } + catalogReels).distinctBy { it.id }
-        catalogUseCase.listStores().getOrNull()?.let { stores = it }
-        discoveryRepository.getCategories().getOrNull()?.let { categories = it.map { c -> c.toDemoCategory() } }
-        isLoading = false
+                is NetworkResult.Failure -> {
+                    firstError = result.error.userMessage()
+                }
+            }
+            when (val result = catalogUseCase.listProducts()) {
+                is NetworkResult.Success -> products = (products + result.data).distinctBy { it.id }
+                is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
+            }
+            when (val result = catalogUseCase.listReels()) {
+                is NetworkResult.Success -> reels = (reels + result.data).distinctBy { it.id }
+                is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
+            }
+            when (val result = catalogUseCase.listStores()) {
+                is NetworkResult.Success -> stores = result.data
+                is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
+            }
+            when (val result = discoveryRepository.getCategories()) {
+                is NetworkResult.Success -> categories = result.data.map { it.toDemoCategory() }
+                is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
+            }
+            loadErrorMessage = firstError
+        } finally {
+            isLoading = false
+        }
     }
 
     suspend fun recordReelView(
@@ -46,6 +72,9 @@ internal class BuyerContentState(
     ) {
         catalogUseCase.recordReelView(reelId, bearerToken)
     }
+
+    suspend fun fetchProductsByCategory(category: String): NetworkResult<List<ProductDto>> =
+        catalogUseCase.listProducts(category = category)
 
     suspend fun recordProductClick(
         productId: String,

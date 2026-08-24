@@ -28,6 +28,8 @@ import androidx.media3.ui.PlayerView
 actual fun NativeVideoPlayer(
     uri: String,
     modifier: Modifier,
+    onFirstFrame: () -> Unit,
+    posterUrl: String,
 ) {
     if (uri.isBlank() || uri.contains("example.com")) {
         Box(modifier = modifier.background(Color.Black))
@@ -39,6 +41,7 @@ actual fun NativeVideoPlayer(
 
     val context = LocalContext.current
     var isBuffering by remember(resolvedUri) { mutableStateOf(true) }
+    var hasFiredFirstFrame by remember(resolvedUri) { mutableStateOf(false) }
 
     val exoPlayer =
         remember(resolvedUri) {
@@ -52,6 +55,10 @@ actual fun NativeVideoPlayer(
                         object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
                                 isBuffering = state == Player.STATE_BUFFERING || state == Player.STATE_IDLE
+                                if (state == Player.STATE_READY && !hasFiredFirstFrame) {
+                                    hasFiredFirstFrame = true
+                                    onFirstFrame()
+                                }
                             }
                         },
                     )

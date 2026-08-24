@@ -34,6 +34,29 @@ data class CheckoutShippingOptionDto(
 )
 
 @Serializable
+data class StorePaymentItemDto(
+    val productId: String = "",
+    val title: String = "",
+    val quantity: Int = 0,
+    val itemTotal: Double = 0.0,
+)
+
+/** Per-store payment block; each store carries its own seller UPI QR payload. */
+@Serializable
+data class StorePaymentGroupDto(
+    val storeId: String = "",
+    val sellerId: String = "",
+    val storeName: String = "",
+    val paymentMethods: List<String> = emptyList(),
+    val amount: Double = 0.0,
+    val currency: String = "INR",
+    val items: List<StorePaymentItemDto> = emptyList(),
+    val upiId: String = "",
+    val qrCode: String? = null,
+    val qrCodeLabel: String = "",
+)
+
+@Serializable
 data class CheckoutStartResponseDto(
     val cart: CartDto? = null,
     @JsonNames("keyId", "razorpayKeyId") val razorpayKeyId: String = "",
@@ -42,6 +65,7 @@ data class CheckoutStartResponseDto(
     val razorpayOrderId: String = "",
     val shippingOptions: List<CheckoutShippingOptionDto> = emptyList(),
     val paymentMethods: List<String> = emptyList(),
+    val storePaymentGroups: List<StorePaymentGroupDto> = emptyList(),
 )
 
 @Serializable
@@ -89,6 +113,10 @@ fun CheckoutStartResponseDto.normalizedPaymentMethods(): List<CheckoutPaymentMet
         .map { CheckoutPaymentMethod.fromRaw(it) }
         .filter { it != CheckoutPaymentMethod.UNKNOWN }
         .distinct()
+
+/** Store groups that carry a scannable QR payload. */
+fun CheckoutStartResponseDto.scannableStorePaymentGroups(): List<StorePaymentGroupDto> =
+    storePaymentGroups.filter { !it.qrCode.isNullOrBlank() }
 
 fun CheckoutPaymentMethod.toRawValue(): String =
     when (this) {

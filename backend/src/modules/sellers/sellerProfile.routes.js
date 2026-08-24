@@ -159,6 +159,34 @@ router.get('/me/kyc', asyncHandler(async (req, res) => {
   });
 }));
 
+const UPI_ID_PATTERN = /^[\w.-]{2,}@[a-zA-Z]{2,}$/;
+
+router.get('/me/payment', asyncHandler(async (req, res) => {
+  const profile = await getSellerProfile(req.user.id);
+
+  return successResponse(res, {
+    message: 'Seller payment details fetched successfully',
+    data: { upiId: profile.upiId || '', storeName: profile.storeName || '' }
+  });
+}));
+
+router.patch('/me/payment', asyncHandler(async (req, res) => {
+  const profile = await getSellerProfile(req.user.id);
+  const upiId = String(req.body.upiId || '').trim();
+
+  if (!UPI_ID_PATTERN.test(upiId)) {
+    throw new AppError('Enter a valid UPI ID, for example store@okaxis', 400);
+  }
+
+  profile.upiId = upiId;
+  await profile.save();
+
+  return successResponse(res, {
+    message: 'UPI ID updated successfully',
+    data: { upiId: profile.upiId, storeName: profile.storeName || '' }
+  });
+}));
+
 // Future phase: add admin-only KYC approval/rejection endpoints for manual review.
 
 router.post('/pickup-address', pickupAddressValidation, validate, asyncHandler(registerSellerPickupAddress));

@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +27,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,7 +75,18 @@ internal fun BargainsScreen(
     Box(
         modifier = modifier.fillMaxSize().background(bg).nestedScroll(pullState.nestedScrollConnection),
     ) {
+        val listState = rememberLazyListState()
+        val activeReelIndex by remember {
+            derivedStateOf {
+                if (listState.firstVisibleItemScrollOffset > listState.layoutInfo.viewportSize.height / 2) {
+                    listState.firstVisibleItemIndex + 1
+                } else {
+                    listState.firstVisibleItemIndex
+                }
+            }
+        }
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize().background(bg),
             contentPadding = PaddingValues(0.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -104,9 +118,14 @@ internal fun BargainsScreen(
                 }
             }
 
-            items(activeReels, key = { it.id }) { reel ->
+            itemsIndexed(activeReels, key = { _, reel -> reel.id }) { index, reel ->
                 val store = findStore(reel)
                 val storeName = store?.storeName ?: reel.displayCreator
+                val isPlayable =
+                    reel.videoUrl.isNotBlank() &&
+                        !reel.videoUrl.contains("example.com") &&
+                        reel.videoUrl.startsWith("http")
+                val isActive = index == activeReelIndex
 
                 Box(
                     modifier =
@@ -115,13 +134,21 @@ internal fun BargainsScreen(
                             .fillParentMaxHeight()
                             .clickable { onOpenReel(reel) },
                 ) {
-                    // Thumbnail as background (video plays on detail screen)
-                    DemoImage(
-                        url = reel.thumbnailUrl,
-                        contentDescription = storeName,
-                        modifier = Modifier.fillMaxSize().clickable { onOpenReel(reel) },
-                        shape = RoundedCornerShape(0.dp),
-                    )
+                    if (reel.thumbnailUrl.isNotBlank()) {
+                        DemoImage(
+                            url = reel.thumbnailUrl,
+                            contentDescription = storeName,
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                        )
+                    }
+                    if (isActive && isPlayable) {
+                        NativeVideoPlayer(
+                            uri = reel.videoUrl,
+                            modifier = Modifier.fillMaxSize(),
+                            posterUrl = reel.thumbnailUrl,
+                        )
+                    }
 
                     // Gradient overlay
                     Box(
@@ -262,18 +289,21 @@ internal fun ReelDetailScreen(
                         reel.videoUrl.startsWith("http")
 
                 Box(modifier = Modifier.fillMaxWidth().height(620.dp).background(Color.Black)) {
-                    if (isPlayable) {
-                        NativeVideoPlayer(
-                            uri = reel.videoUrl,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    } else {
+                    if (reel.thumbnailUrl.isNotBlank()) {
                         DemoImage(
                             url = reel.thumbnailUrl,
                             contentDescription = storeName,
                             modifier = Modifier.fillMaxSize(),
                             shape = RoundedCornerShape(0.dp),
                         )
+                    }
+                    if (isPlayable) {
+                        NativeVideoPlayer(
+                            uri = reel.videoUrl,
+                            modifier = Modifier.fillMaxSize(),
+                            posterUrl = reel.thumbnailUrl,
+                        )
+                    } else {
                         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)))
                         Surface(
                             color = Color.Black.copy(alpha = 0.6f),

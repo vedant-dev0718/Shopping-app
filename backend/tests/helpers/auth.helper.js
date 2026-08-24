@@ -72,6 +72,7 @@ const createSeller = async (overrides = {}) => {
     specialtyRegion: store.region,
     storeDescription: store.description,
     kycStatus: overrides.kycStatus || 'verified',
+    upiId: overrides.upiId || '',
     bankAccount: {
       accountNumber: '',
       ifscCode: '',

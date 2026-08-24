@@ -25,6 +25,78 @@ describe('seller order management API', () => {
     env.razorpayManualCaptureEnabled = originalManualCaptureEnabled;
   });
 
+  test('seller can ship their own items while a co-seller has not accepted yet', async () => {
+    const buyer = await createBuyer({ email: 'multi-seller-ship-buyer@example.com' });
+    const sellerA = await createSeller({ email: 'multi-seller-ship-a@example.com' });
+    const sellerB = await createSeller({ email: 'multi-seller-ship-b@example.com' });
+    const productA = await createProduct(sellerA, { price: 500, stock: 5, title: 'Ship Mine' });
+    const productB = await createProduct(sellerB, { price: 700, stock: 5, title: 'Not Accepted Yet' });
+
+    const order = await Order.create({
+      buyerId: buyer._id,
+      orderNumber: `NW-QA-MULTI-${Date.now()}`,
+      sellerIds: [sellerA._id, sellerB._id],
+      items: [
+        {
+          productId: productA._id,
+          sellerId: sellerA._id,
+          storeId: sellerA.testStore._id,
+          titleSnapshot: productA.title,
+          priceSnapshot: 500,
+          quantity: 1,
+          itemTotal: 500,
+          itemSubtotal: 500,
+          itemStatus: 'processing',
+          itemAcceptanceStatus: 'accepted',
+          payoutStatus: 'pending'
+        },
+        {
+          productId: productB._id,
+          sellerId: sellerB._id,
+          storeId: sellerB.testStore._id,
+          titleSnapshot: productB.title,
+          priceSnapshot: 700,
+          quantity: 1,
+          itemTotal: 700,
+          itemSubtotal: 700,
+          itemStatus: 'awaiting_seller_acceptance',
+          itemAcceptanceStatus: 'pending',
+          payoutStatus: 'pending'
+        }
+      ],
+      subtotal: 1200,
+      shipping: 0,
+      finalTotal: 1200,
+      paymentMethod: 'COD',
+      paymentStatus: 'pending',
+      // Global status stays blocked by the co-seller who has not accepted.
+      orderStatus: 'awaiting_seller_acceptance',
+      sellerAcceptance: { status: 'pending' },
+      shippingInfo: {
+        name: 'Buyer QA',
+        email: 'buyer@example.com',
+        phone: '9999999999',
+        address: '123 QA Street',
+        city: 'Jaipur',
+        state: 'Rajasthan',
+        postalCode: '302001'
+      }
+    });
+
+    await api()
+      .patch(`/api/seller/orders/${order._id}/ship`)
+      .set('Authorization', authHeader(sellerA))
+      .send({ trackingNumber: 'TRK-MULTI-1' })
+      .expect(200);
+
+    const updated = await Order.findById(order._id).lean();
+    const shippedItem = updated.items.find((item) => item.sellerId.toString() === sellerA._id.toString());
+    const pendingItem = updated.items.find((item) => item.sellerId.toString() === sellerB._id.toString());
+
+    expect(shippedItem.itemStatus).toBe('shipped');
+    expect(pendingItem.itemAcceptanceStatus).toBe('pending');
+  });
+
   test('seller sees only own order items and can process and ship with tracking', async () => {
     const buyer = await createBuyer();
     const seller = await createSeller();

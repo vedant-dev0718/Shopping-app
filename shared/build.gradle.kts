@@ -30,6 +30,7 @@ kotlin {
                 implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
                 implementation("io.coil-kt.coil3:coil-compose:3.0.4")
                 implementation("io.coil-kt.coil3:coil-network-ktor2:3.0.4")
+                implementation("io.github.alexzhirkevich:qrose:1.0.1")
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
@@ -179,6 +180,7 @@ afterEvaluate {
     }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
+    kotlinOptions.jvmTarget = "17"
     compilerOptions.freeCompilerArgs.add("-Xexpect-actual-classes")
 }

@@ -1,6 +1,8 @@
 package com.notwhat.shared.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,8 +16,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,20 +42,117 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.notwhat.shared.checkout.CheckoutPaymentMethod
 import com.notwhat.shared.checkout.PaymentBridgeResult
 import com.notwhat.shared.checkout.PlatformPaymentBridge
 import com.notwhat.shared.checkout.RazorpayCheckoutPayload
+import com.notwhat.shared.checkout.StorePaymentGroupDto
 import com.notwhat.shared.checkout.defaultMaskedText
 import com.notwhat.shared.checkout.defaultSubtitle
 import com.notwhat.shared.checkout.displayLabel
+import com.notwhat.shared.checkout.normalizedPaymentMethods
+import com.notwhat.shared.checkout.scannableStorePaymentGroups
 import com.notwhat.shared.core.NetworkResult
+import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
+
+@Composable
+private fun CartQuantityStepper(
+    quantity: Int,
+    enabled: Boolean,
+    text: Color,
+    muted: Color,
+    accent: Color,
+    surface: Color,
+    onChange: (Int) -> Unit,
+) {
+    Surface(color = surface, shape = RoundedCornerShape(10.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            StepperButton(label = "−", enabled = enabled, tint = if (quantity > 1) accent else muted) {
+                onChange(quantity - 1)
+            }
+            Text(
+                "$quantity",
+                color = text,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.widthIn(min = 24.dp),
+                textAlign = TextAlign.Center,
+            )
+            StepperButton(label = "+", enabled = enabled, tint = accent) {
+                onChange(quantity + 1)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepperButton(
+    label: String,
+    enabled: Boolean,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(34.dp)
+                .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = tint, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun StorePaymentQrCard(
+    group: StorePaymentGroupDto,
+    text: Color,
+    muted: Color,
+    accent: Color,
+    surface: Color,
+) {
+    val qrData = group.qrCode ?: return
+
+    Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(group.storeName, color = text, fontWeight = FontWeight.Bold)
+                    Text(group.upiId, color = muted, style = MaterialTheme.typography.bodySmall)
+                }
+                Text("₹${group.amount.toInt()}", color = accent, fontWeight = FontWeight.Bold)
+            }
+            // White backing keeps the QR scannable on the dark theme.
+            Surface(color = Color.White, shape = RoundedCornerShape(10.dp)) {
+                Image(
+                    painter = rememberQrCodePainter(qrData),
+                    contentDescription = group.qrCodeLabel,
+                    modifier = Modifier.size(170.dp).padding(10.dp),
+                )
+            }
+            Text(group.qrCodeLabel, color = muted, style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
 
 @Composable
 internal fun CheckoutConfirmationScreen(
@@ -401,23 +502,13 @@ internal fun CheckoutSummaryHandoffScreen(
         }
 
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = {},
-                    modifier = Modifier.weight(1f).height(52.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NotWhatColors.surfaceContainerHigh),
-                ) {
-                    Text("TRACK PACKAGE", color = text, fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = onDone,
-                    modifier = Modifier.weight(1f).height(52.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accent),
-                ) {
-                    Text("CONTINUE SHOPPING", color = Color.White, fontWeight = FontWeight.Black)
-                }
+            Button(
+                onClick = onDone,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = accent),
+            ) {
+                Text("CONTINUE SHOPPING", color = Color.White, fontWeight = FontWeight.Black)
             }
         }
     }
@@ -534,6 +625,8 @@ internal fun CartSavedPaymentsScreen(
     var selectedPaymentIndex by remember { mutableStateOf(-1) }
     var paymentMethodsLoading by remember { mutableStateOf(false) }
     var paymentMethodsError by remember { mutableStateOf<String?>(null) }
+    var storePaymentGroups by remember { mutableStateOf<List<StorePaymentGroupDto>>(emptyList()) }
+    var mutatingCartItemId by remember { mutableStateOf<String?>(null) }
     val addressesErrorMessage = state.transaction.addressesErrorMessage
     val analytics = state.returnsAnalyticsTracker
     val analyticsContext = state.returnsAnalyticsContext(screenName = "CartSavedPayments", sourceSurface = "cart_saved_payments")
@@ -565,6 +658,20 @@ internal fun CartSavedPaymentsScreen(
         }
     }
 
+    fun applyPaymentMethods(liveMethods: List<CheckoutPaymentMethod>) {
+        val visibleMethods = liveMethods.distinct()
+        if (visibleMethods.isEmpty()) {
+            paymentMethods = emptyList()
+            selectedPaymentIndex = -1
+            paymentMethodsError = "No supported payment methods available from checkout service."
+            emitPaymentMethodsFailure(code = "PAYMENT_METHODS_EMPTY", message = paymentMethodsError)
+            return
+        }
+
+        paymentMethods = visibleMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
+        selectedPaymentIndex = 0
+    }
+
     LaunchedEffect(sessionToken) {
         if (sessionToken.isNullOrBlank()) {
             paymentMethods = emptyList()
@@ -576,27 +683,11 @@ internal fun CartSavedPaymentsScreen(
         state.transaction.loadAddresses(sessionToken)
         paymentMethodsLoading = true
         paymentMethodsError = null
-        val liveMethods = state.fetchCheckoutPaymentMethods().orEmpty()
+        val session = state.fetchCheckoutSession()
+        storePaymentGroups = session?.scannableStorePaymentGroups().orEmpty()
+        val liveMethods = session?.normalizedPaymentMethods().orEmpty()
         paymentMethodsLoading = false
-        if (liveMethods.isEmpty()) {
-            paymentMethods = emptyList()
-            selectedPaymentIndex = -1
-            paymentMethodsError = "No payment methods available from checkout service."
-            emitPaymentMethodsFailure(code = "PAYMENT_METHODS_EMPTY", message = paymentMethodsError)
-            return@LaunchedEffect
-        }
-
-        val visibleMethods = liveMethods.filter { it == CheckoutPaymentMethod.UPI }
-        if (visibleMethods.isEmpty()) {
-            paymentMethods = emptyList()
-            selectedPaymentIndex = -1
-            paymentMethodsError = "Only UPI is enabled right now."
-            emitPaymentMethodsFailure(code = "PAYMENT_METHODS_UPI_ONLY", message = paymentMethodsError)
-            return@LaunchedEffect
-        }
-
-        paymentMethods = visibleMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
-        selectedPaymentIndex = 0
+        applyPaymentMethods(liveMethods)
     }
 
     suspend fun reloadPaymentMethods() {
@@ -611,28 +702,12 @@ internal fun CartSavedPaymentsScreen(
 
         paymentMethodsLoading = true
         paymentMethodsError = null
-        val liveMethods = state.fetchCheckoutPaymentMethods().orEmpty()
+        val session = state.fetchCheckoutSession()
+        storePaymentGroups = session?.scannableStorePaymentGroups().orEmpty()
+        val liveMethods = session?.normalizedPaymentMethods().orEmpty()
         paymentMethodsLoading = false
 
-        if (liveMethods.isEmpty()) {
-            paymentMethods = emptyList()
-            selectedPaymentIndex = -1
-            paymentMethodsError = "No payment methods available from checkout service."
-            emitPaymentMethodsFailure(code = "PAYMENT_METHODS_EMPTY", message = paymentMethodsError)
-            return
-        }
-
-        val visibleMethods = liveMethods.filter { it == CheckoutPaymentMethod.UPI }
-        if (visibleMethods.isEmpty()) {
-            paymentMethods = emptyList()
-            selectedPaymentIndex = -1
-            paymentMethodsError = "Only UPI is enabled right now."
-            emitPaymentMethodsFailure(code = "PAYMENT_METHODS_UPI_ONLY", message = paymentMethodsError)
-            return
-        }
-
-        paymentMethods = visibleMethods.mapIndexed { index, method -> method.toSavedPayment(isDefault = index == 0) }
-        selectedPaymentIndex = 0
+        applyPaymentMethods(liveMethods)
     }
 
     Box(modifier = modifier.fillMaxSize().background(cartBg)) {
@@ -703,14 +778,15 @@ internal fun CartSavedPaymentsScreen(
                                                 Text(address.fullName, color = cartText, fontWeight = FontWeight.SemiBold)
                                                 Text(address.phone, color = cartMuted, style = MaterialTheme.typography.bodySmall)
                                             }
-                                            if (isSelected) {
-                                                Surface(color = cartAccent, shape = RoundedCornerShape(50.dp)) {
-                                                    Text("✓", color = Color.White, modifier = Modifier.padding(6.dp))
-                                                }
-                                            }
+                                            SelectionDot(selected = isSelected, accent = cartAccent, muted = cartMuted)
                                         }
                                         Text(
-                                            "${address.addressLine1}, ${address.addressLine2 ?: ""}, ${address.city}, ${address.state} ${address.pincode}",
+                                            listOfNotNull(
+                                                address.addressLine1.takeIf { it.isNotBlank() },
+                                                address.addressLine2?.takeIf { it.isNotBlank() },
+                                                address.city.takeIf { it.isNotBlank() },
+                                                "${address.state} ${address.pincode}".trim().takeIf { it.isNotBlank() },
+                                            ).joinToString(", "),
                                             color = cartMuted,
                                             style = MaterialTheme.typography.bodySmall,
                                         )
@@ -770,8 +846,9 @@ internal fun CartSavedPaymentsScreen(
 
             items(cartItems) { cartItem ->
                 val product = cartItem.productId
+                val isMutating = mutatingCartItemId == cartItem.id
                 Surface(
-                    modifier = Modifier.fillMaxWidth().clickable { product?.let { onOpenProduct(it) } },
+                    modifier = Modifier.fillMaxWidth(),
                     color = cartSurface,
                     shape = RoundedCornerShape(16.dp),
                 ) {
@@ -783,21 +860,94 @@ internal fun CartSavedPaymentsScreen(
                         CheckoutImage(
                             url = product?.displayImageUrl ?: "",
                             contentDescription = product?.displayTitle ?: "",
-                            modifier = Modifier.size(84.dp),
+                            modifier =
+                                Modifier
+                                    .size(84.dp)
+                                    .clickable { product?.let { onOpenProduct(it) } },
                             shape = RoundedCornerShape(12.dp),
                         )
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(product?.displayTitle ?: "Product", color = cartText, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                product?.displayTitle ?: "Product",
+                                color = cartText,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                modifier = Modifier.clickable { product?.let { onOpenProduct(it) } },
+                            )
                             Text(product?.displayStoreName ?: "", color = cartMuted, style = MaterialTheme.typography.bodySmall)
                             Text("₹${cartItem.priceSnapshot.toInt()}", color = cartAccent, fontWeight = FontWeight.Bold)
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                CartQuantityStepper(
+                                    quantity = cartItem.quantity,
+                                    enabled = !isMutating && !sessionToken.isNullOrBlank(),
+                                    text = cartText,
+                                    muted = cartMuted,
+                                    accent = cartAccent,
+                                    surface = cartSurfaceHigh,
+                                    onChange = { next ->
+                                        val token = sessionToken ?: return@CartQuantityStepper
+                                        mutatingCartItemId = cartItem.id
+                                        scope.launch {
+                                            state.transaction.updateCartItemQuantity(cartItem.id, next, token)
+                                            mutatingCartItemId = null
+                                        }
+                                    },
+                                )
+                                TextButton(
+                                    onClick = {
+                                        val token = sessionToken ?: return@TextButton
+                                        mutatingCartItemId = cartItem.id
+                                        scope.launch {
+                                            state.transaction.removeCartItem(cartItem.id, token)
+                                            mutatingCartItemId = null
+                                        }
+                                    },
+                                    enabled = !isMutating && !sessionToken.isNullOrBlank(),
+                                ) {
+                                    Text("Remove", color = cartMuted, style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
                         }
-                        Surface(color = cartSurfaceHigh, shape = RoundedCornerShape(10.dp)) {
-                            Text(
-                                "Qty ${cartItem.quantity}",
-                                color = cartText,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.labelSmall,
+                        if (isMutating) {
+                            CircularProgressIndicator(
+                                color = cartAccent,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(18.dp),
                             )
+                        }
+                    }
+                }
+            }
+
+            if (storePaymentGroups.isNotEmpty()) {
+                item {
+                    Surface(color = cartSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(
+                                "Pay Each Store",
+                                color = cartText,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                "Your cart has ${storePaymentGroups.size} store" +
+                                    "${if (storePaymentGroups.size > 1) "s" else ""}. Scan a store's QR to pay that seller directly.",
+                                color = cartMuted,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            storePaymentGroups.forEach { group ->
+                                StorePaymentQrCard(
+                                    group = group,
+                                    text = cartText,
+                                    muted = cartMuted,
+                                    accent = cartAccent,
+                                    surface = cartSurfaceHigh,
+                                )
+                            }
                         }
                     }
                 }
@@ -806,7 +956,12 @@ internal fun CartSavedPaymentsScreen(
             item {
                 Surface(color = cartSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Saved Payments", color = cartText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Payment Methods",
+                            color = cartText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
                         if (paymentMethodsLoading) {
                             CircularProgressIndicator(color = cartAccent)
                         } else if (paymentMethods.isEmpty()) {
@@ -825,50 +980,47 @@ internal fun CartSavedPaymentsScreen(
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier.fillMaxWidth().clickable { selectedPaymentIndex = index },
                                 ) {
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
+                                        SelectionDot(selected = isSelected, accent = cartAccent, muted = cartMuted)
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(2.dp),
                                         ) {
-                                            Column {
-                                                Text(payment.titleLine(), color = cartText, fontWeight = FontWeight.SemiBold)
-                                                Text(payment.holderName, color = cartMuted, style = MaterialTheme.typography.bodySmall)
-                                            }
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                if (payment.isDefault) {
-                                                    Surface(color = cartAccent.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp)) {
-                                                        Text(
-                                                            "Default",
-                                                            color = cartAccent,
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                        )
-                                                    }
-                                                }
-                                                if (isSelected) {
-                                                    Surface(color = Color.White.copy(alpha = 0.16f), shape = RoundedCornerShape(8.dp)) {
-                                                        Text(
-                                                            "Selected",
-                                                            color = cartText,
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                        )
-                                                    }
-                                                }
+                                            Text(
+                                                payment.label,
+                                                color = cartText,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                payment.holderName,
+                                                color = cartMuted,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                        if (payment.maskedNumber.isNotBlank()) {
+                                            Surface(color = cartAccent.copy(alpha = 0.16f), shape = RoundedCornerShape(8.dp)) {
+                                                Text(
+                                                    payment.maskedNumber,
+                                                    color = cartAccent,
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    maxLines = 1,
+                                                )
                                             }
                                         }
                                     }
                                 }
                             }
                             Text(
-                                "Payment methods are sourced from checkout service.",
+                                "More payment options are coming soon.",
                                 color = cartMuted,
                                 style = MaterialTheme.typography.bodySmall,
                             )
@@ -975,7 +1127,28 @@ private fun CheckoutPaymentMethod.toSavedPayment(isDefault: Boolean): DemoSavedP
         isDefault = isDefault,
     )
 
-private fun DemoSavedPayment.titleLine(): String = "$label $maskedNumber".trim()
+private fun DemoSavedPayment.titleLine(): String = label.trim()
+
+@Composable
+private fun SelectionDot(
+    selected: Boolean,
+    accent: Color,
+    muted: Color,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .background(if (selected) accent else Color.Transparent)
+                .border(width = if (selected) 0.dp else 2.dp, color = muted.copy(alpha = 0.5f), shape = CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            Text("✓", color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+        }
+    }
+}
 
 @Composable
 private fun CheckoutImage(

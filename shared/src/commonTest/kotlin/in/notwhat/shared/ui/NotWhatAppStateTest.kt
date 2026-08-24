@@ -52,6 +52,16 @@ class NotWhatAppStateTest {
     }
 
     @Test
+    fun selectingCategory_switchesToSearchTab() {
+        val state = freshState()
+
+        state.selectCategory("Sarees")
+
+        assertEquals("Sarees", state.selectedCategory)
+        assertEquals(NotWhatTab.Search, state.activeTab)
+    }
+
+    @Test
     fun signOut_clearsSessionAndSearchState() {
         val state = freshState()
 
