@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --color-cream: #faf6ee;
+  --color-cream-deep: #f2e9d8;
+  --color-ink: #1c1712;
+  --color-charcoal: #211a13;
+  --color-copper: #b87333;
+  --color-copper-bright: #d98c4a;
+  --color-copper-deep: #8a4a1f;
+  --color-silver: #c7c2b8;
+}
+
+@theme inline {
+  --color-background: var(--color-cream);
+  --color-foreground: var(--color-ink);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.copper-text {
+  background: linear-gradient(120deg, var(--color-copper-deep), var(--color-copper-bright) 45%, var(--color-copper) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.copper-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-copper) 50%, transparent);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
