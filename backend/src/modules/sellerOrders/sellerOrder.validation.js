@@ -161,6 +161,8 @@ const rejectOrderValidation = [
     .withMessage('Buyer message must be 500 characters or fewer')
 ];
 
+const confirmPaymentValidation = [...orderIdValidation];
+
 module.exports = {
   ORDER_STATUSES,
   PAYMENT_STATUSES,
@@ -174,5 +176,6 @@ module.exports = {
   returnIdValidation,
   rejectionValidation,
   acceptOrderValidation,
-  rejectOrderValidation
+  rejectOrderValidation,
+  confirmPaymentValidation
 };

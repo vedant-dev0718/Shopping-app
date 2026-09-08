@@ -382,6 +382,21 @@ const sellerAcceptanceSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+const manualPaymentConfirmationSchema = new mongoose.Schema({
+  status: {
+    type: String,
+    enum: ['none', 'buyer_submitted', 'seller_confirmed'],
+    default: 'none'
+  },
+  buyerMarkedPaidAt: { type: Date, default: null },
+  sellerConfirmedAt: { type: Date, default: null },
+  sellerConfirmedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  storeName: { type: String, trim: true, default: '' },
+  upiId: { type: String, trim: true, default: '' },
+  qrCode: { type: String, trim: true, default: '' },
+  amount: { type: Number, min: 0, default: 0 }
+}, { _id: false });
+
 const paymentFlowSchema = new mongoose.Schema({
   captureAfterSellerAcceptance: {
     type: Boolean,
@@ -630,7 +645,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['UPI', 'card', 'netbanking', 'wallet', 'COD'],
+    enum: ['UPI', 'UPI_QR', 'card', 'netbanking', 'wallet', 'COD'],
     required: true
   },
   paymentCaptureMode: {
@@ -645,6 +660,7 @@ const orderSchema = new mongoose.Schema({
       'created',
       'pending',
       'pending_authorization',
+      'pending_seller_confirmation',
       'authorized',
       'capture_pending',
       'captured',
@@ -668,6 +684,7 @@ const orderSchema = new mongoose.Schema({
       'payment_pending',
       'payment_authorization_pending',
       'placed',
+      'payment_pending_confirmation',
       'awaiting_seller_acceptance',
       'seller_accepted',
       'confirmed',
@@ -771,6 +788,10 @@ const orderSchema = new mongoose.Schema({
   },
   sellerAcceptance: {
     type: sellerAcceptanceSchema,
+    default: () => ({})
+  },
+  manualPaymentConfirmation: {
+    type: manualPaymentConfirmationSchema,
     default: () => ({})
   },
   paymentFlow: {

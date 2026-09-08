@@ -47,10 +47,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.notwhat.shared.checkout.CheckoutPaymentMethod
+import com.notwhat.shared.checkout.StorePaymentGroupDto
 import com.notwhat.shared.checkout.PaymentBridgeResult
 import com.notwhat.shared.checkout.PlatformPaymentBridge
 import com.notwhat.shared.checkout.RazorpayCheckoutPayload
-import com.notwhat.shared.checkout.StorePaymentGroupDto
 import com.notwhat.shared.checkout.defaultMaskedText
 import com.notwhat.shared.checkout.defaultSubtitle
 import com.notwhat.shared.checkout.displayLabel
@@ -97,24 +97,6 @@ private fun CartQuantityStepper(
 }
 
 @Composable
-private fun StepperButton(
-    label: String,
-    enabled: Boolean,
-    tint: Color,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(34.dp)
-                .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(label, color = tint, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-    }
-}
-
-@Composable
 private fun StorePaymentQrCard(
     group: StorePaymentGroupDto,
     text: Color,
@@ -141,7 +123,6 @@ private fun StorePaymentQrCard(
                 }
                 Text("₹${group.amount.toInt()}", color = accent, fontWeight = FontWeight.Bold)
             }
-            // White backing keeps the QR scannable on the dark theme.
             Surface(color = Color.White, shape = RoundedCornerShape(10.dp)) {
                 Image(
                     painter = rememberQrCodePainter(qrData),
@@ -149,8 +130,26 @@ private fun StorePaymentQrCard(
                     modifier = Modifier.size(170.dp).padding(10.dp),
                 )
             }
-            Text(group.qrCodeLabel, color = muted, style = MaterialTheme.typography.labelSmall)
+            Text("Pay this seller before placing the order", color = muted, style = MaterialTheme.typography.labelSmall)
         }
+    }
+}
+
+@Composable
+private fun StepperButton(
+    label: String,
+    enabled: Boolean,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(34.dp)
+                .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = tint, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -171,7 +170,17 @@ internal fun CheckoutConfirmationScreen(
     val scope = rememberCoroutineScope()
 
     val requiresOnlineVerification = draft.selectedPayment.method != CheckoutPaymentMethod.COD
+        && draft.selectedPayment.method != CheckoutPaymentMethod.UPI_QR
+    var storePaymentGroups by remember { mutableStateOf<List<StorePaymentGroupDto>>(emptyList()) }
     var submitError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(draft.selectedPayment.method) {
+        storePaymentGroups = if (draft.selectedPayment.method == CheckoutPaymentMethod.UPI_QR) {
+            state.fetchCheckoutSession()?.scannableStorePaymentGroups().orEmpty()
+        } else {
+            emptyList()
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize().background(bg)) {
         LazyColumn(
@@ -229,6 +238,21 @@ internal fun CheckoutConfirmationScreen(
                                 color = muted,
                                 style = MaterialTheme.typography.bodySmall,
                             )
+                        }
+                        if (draft.selectedPayment.method == CheckoutPaymentMethod.UPI_QR) {
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.12f))
+                            Text("Seller payment", color = text, fontWeight = FontWeight.Bold)
+                            Text(
+                                "Scan each seller QR, then place the order. Sellers confirm payment before accepting it.",
+                                color = muted,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            storePaymentGroups.forEach { group ->
+                                StorePaymentQrCard(group, text, muted, accent, surface)
+                            }
+                            if (storePaymentGroups.isEmpty()) {
+                                Text("Seller QR codes are unavailable for this cart.", color = muted, style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }
@@ -288,7 +312,19 @@ internal fun CheckoutConfirmationScreen(
                     onClick = {
                         submitError = null
                         scope.launch {
-                            if (requiresOnlineVerification) {
+                            if (draft.selectedPayment.method == CheckoutPaymentMethod.UPI_QR) {
+                                when (
+                                    val result = state.submitCheckoutOrder(
+                                        draft = draft,
+                                        razorpayOrderId = "",
+                                        razorpayPaymentId = "",
+                                        razorpaySignature = "",
+                                    )
+                                ) {
+                                    is NetworkResult.Success -> onPlaceOrder(result.data)
+                                    is NetworkResult.Failure -> submitError = result.error.userMessage()
+                                }
+                            } else if (requiresOnlineVerification) {
                                 val sessionResult = state.startOnlineCheckoutSession()
                                 when (sessionResult) {
                                     is NetworkResult.Success -> {
@@ -625,7 +661,6 @@ internal fun CartSavedPaymentsScreen(
     var selectedPaymentIndex by remember { mutableStateOf(-1) }
     var paymentMethodsLoading by remember { mutableStateOf(false) }
     var paymentMethodsError by remember { mutableStateOf<String?>(null) }
-    var storePaymentGroups by remember { mutableStateOf<List<StorePaymentGroupDto>>(emptyList()) }
     var mutatingCartItemId by remember { mutableStateOf<String?>(null) }
     val addressesErrorMessage = state.transaction.addressesErrorMessage
     val analytics = state.returnsAnalyticsTracker
@@ -684,7 +719,6 @@ internal fun CartSavedPaymentsScreen(
         paymentMethodsLoading = true
         paymentMethodsError = null
         val session = state.fetchCheckoutSession()
-        storePaymentGroups = session?.scannableStorePaymentGroups().orEmpty()
         val liveMethods = session?.normalizedPaymentMethods().orEmpty()
         paymentMethodsLoading = false
         applyPaymentMethods(liveMethods)
@@ -703,7 +737,6 @@ internal fun CartSavedPaymentsScreen(
         paymentMethodsLoading = true
         paymentMethodsError = null
         val session = state.fetchCheckoutSession()
-        storePaymentGroups = session?.scannableStorePaymentGroups().orEmpty()
         val liveMethods = session?.normalizedPaymentMethods().orEmpty()
         paymentMethodsLoading = false
 
@@ -918,36 +951,6 @@ internal fun CartSavedPaymentsScreen(
                                 strokeWidth = 2.dp,
                                 modifier = Modifier.size(18.dp),
                             )
-                        }
-                    }
-                }
-            }
-
-            if (storePaymentGroups.isNotEmpty()) {
-                item {
-                    Surface(color = cartSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text(
-                                "Pay Each Store",
-                                color = cartText,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                "Your cart has ${storePaymentGroups.size} store" +
-                                    "${if (storePaymentGroups.size > 1) "s" else ""}. Scan a store's QR to pay that seller directly.",
-                                color = cartMuted,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            storePaymentGroups.forEach { group ->
-                                StorePaymentQrCard(
-                                    group = group,
-                                    text = cartText,
-                                    muted = cartMuted,
-                                    accent = cartAccent,
-                                    surface = cartSurfaceHigh,
-                                )
-                            }
                         }
                     }
                 }

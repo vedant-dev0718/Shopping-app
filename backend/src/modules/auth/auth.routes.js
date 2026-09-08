@@ -54,9 +54,9 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: true,
   keyGenerator: (req) => {
-    const email = String(req.body?.email || '').trim().toLowerCase();
+    const raw = String(req.body?.identifier || req.body?.email || req.body?.phone || '').trim().toLowerCase();
 
-    return `${email || 'unknown'}:${ipKeyGenerator(req.ip)}`;
+    return `${raw || 'unknown'}:${ipKeyGenerator(req.ip)}`;
   },
   message: {
     success: false,

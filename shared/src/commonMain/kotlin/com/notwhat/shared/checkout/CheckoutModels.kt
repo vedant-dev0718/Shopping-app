@@ -11,6 +11,7 @@ enum class CheckoutPaymentMethod {
     NETBANKING,
     WALLET,
     COD,
+    UPI_QR,
     UNKNOWN,
     ;
 
@@ -22,6 +23,7 @@ enum class CheckoutPaymentMethod {
                 "netbanking" -> NETBANKING
                 "wallet" -> WALLET
                 "cod" -> COD
+                "upi_qr" -> UPI_QR
                 else -> UNKNOWN
             }
     }
@@ -96,6 +98,13 @@ data class CheckoutPlaceCodRequestDto(
     val shippingInfo: CheckoutShippingInfoDto? = null,
 )
 
+@Serializable
+data class CheckoutPlaceQrPaymentRequestDto(
+    val paymentMethod: String = "UPI_QR",
+    val deliveryAddressId: String? = null,
+    val shippingInfo: CheckoutShippingInfoDto? = null,
+)
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class CheckoutVerifyResponseDto(
@@ -125,6 +134,7 @@ fun CheckoutPaymentMethod.toRawValue(): String =
         CheckoutPaymentMethod.NETBANKING -> "netbanking"
         CheckoutPaymentMethod.WALLET -> "wallet"
         CheckoutPaymentMethod.COD -> "COD"
+        CheckoutPaymentMethod.UPI_QR -> "UPI_QR"
         CheckoutPaymentMethod.UNKNOWN -> "unknown"
     }
 
@@ -135,6 +145,7 @@ fun CheckoutPaymentMethod.displayLabel(): String =
         CheckoutPaymentMethod.NETBANKING -> "Netbanking"
         CheckoutPaymentMethod.WALLET -> "Wallet"
         CheckoutPaymentMethod.COD -> "Cash on Delivery"
+        CheckoutPaymentMethod.UPI_QR -> "UPI QR"
         CheckoutPaymentMethod.UNKNOWN -> "Unknown"
     }
 
@@ -145,12 +156,14 @@ fun CheckoutPaymentMethod.defaultSubtitle(): String =
         CheckoutPaymentMethod.NETBANKING -> "Bank transfer"
         CheckoutPaymentMethod.WALLET -> "Wallet balance"
         CheckoutPaymentMethod.COD -> "Pay when delivered"
+        CheckoutPaymentMethod.UPI_QR -> "Scan seller QR before ordering"
         CheckoutPaymentMethod.UNKNOWN -> "Unsupported method"
     }
 
 fun CheckoutPaymentMethod.defaultMaskedText(): String =
     when (this) {
         CheckoutPaymentMethod.COD -> "No prepayment"
+        CheckoutPaymentMethod.UPI_QR -> "Seller confirmed"
         CheckoutPaymentMethod.UPI -> "Secure"
         CheckoutPaymentMethod.CARD -> "Saved"
         CheckoutPaymentMethod.NETBANKING -> "Secure"

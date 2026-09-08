@@ -35,6 +35,7 @@ const uploadRoutes = require('../modules/uploads/upload.routes');
 const uploadHLSRoutes = require('../modules/uploads/uploadHLS.routes');
 const webhookRoutes = require('../modules/webhooks/webhook.routes');
 const addressRoutes = require('../modules/addresses/address.routes');
+const notificationRoutes = require('../modules/notifications/notification.routes');
 const shippingRoutes = require('../modules/shipping/shipping.routes');
 const { successResponse } = require('../utils/apiResponse');
 
@@ -51,6 +52,7 @@ router.get('/health', (_req, res) => {
 
 router.use('/admin', adminRoutes);
 router.use('/', addressRoutes);
+router.use('/', notificationRoutes);
 router.use('/auth', authRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/bargain', bargainRoutes);

@@ -12,6 +12,7 @@ const Bid = require('../bargain/bid.model');
 const cartService = require('../cart/cart.service');
 const Order = require('../orders/order.model');
 const addressService = require('../addresses/address.service');
+const notificationService = require('../notifications/notification.service');
 const {
   razorpay,
   createManualCaptureOrder,
@@ -65,7 +66,7 @@ const buildStorePaymentGroups = async (cart) => {
         storeId: storeId.toString(),
         sellerId: sellerId.toString ? sellerId.toString() : '',
         storeName,
-        paymentMethods: [COD_PAYMENT_METHOD],
+        paymentMethods: ['UPI_QR', COD_PAYMENT_METHOD],
         amount: 0,
         currency: 'INR',
         items: []
@@ -94,8 +95,14 @@ const buildStorePaymentGroups = async (cart) => {
     sellerProfiles.map((profile) => [profile.userId.toString(), profile.upiId || ''])
   );
 
-  return Array.from(groups.values()).map((group) => {
-    const amount = roundMoney(group.amount);
+  const groupedPayments = Array.from(groups.values());
+  const shippingShares = splitShippingAcrossGroups(
+    groupedPayments.map((group) => roundMoney(group.amount)),
+    cart.shipping
+  );
+
+  return groupedPayments.map((group, index) => {
+    const amount = roundMoney(group.amount + shippingShares[index]);
     const upiId = upiIdBySellerId.get(group.sellerId) || '';
     const qrCode = buildUpiQrPayload({ upiId, storeName: group.storeName, amount });
 
@@ -307,11 +314,21 @@ const validatePaymentAmountMatchesCart = (payment, cart) => {
 };
 
 const getSupportedPaymentMethods = () => {
-  if (env.enableCodCheckout) {
-    return [COD_PAYMENT_METHOD];
+  const methods = [];
+
+  if (env.enableQrPaymentCheckout) {
+    methods.push('UPI_QR');
   }
 
-  return [];
+  if (env.enableCodCheckout) {
+    methods.push(COD_PAYMENT_METHOD);
+  }
+
+  if (env.razorpayCheckoutEnabled) {
+    methods.push(...ONLINE_PAYMENT_METHODS);
+  }
+
+  return methods;
 };
 
 const startCheckout = async (buyerId) => {
@@ -321,7 +338,7 @@ const startCheckout = async (buyerId) => {
   let razorpayOrderAmount = Math.round(cart.finalTotal * 100);
   let razorpayOrderId;
 
-  if (env.razorpayKeyId && env.razorpayKeySecret) {
+  if (env.razorpayCheckoutEnabled && env.razorpayKeyId && env.razorpayKeySecret) {
     const orderPayload = {
       amount: razorpayOrderAmount,
       currency: 'INR',
@@ -336,8 +353,6 @@ const startCheckout = async (buyerId) => {
       });
     razorpayOrderId = razorpayOrder.id;
     razorpayOrderAmount = razorpayOrder.amount;
-  } else {
-    razorpayOrderId = `mock_order_${Date.now()}`;
   }
 
   await Promise.all(cart.items.map((item) => {
@@ -418,6 +433,26 @@ const buildOrderConfirmation = (order) => ({
   emailSent: order.emailSent
 });
 
+const sendOrderPlacedNotifications = async (order, sellerIds) => {
+  await Promise.all([
+    notificationService.sendToUser(order.buyerId, {
+      title: 'Order placed',
+      subtitle: `Order #${order.orderNumber} confirmed \u2022 \u20b9${order.finalTotal}`,
+      data: { type: 'order_placed', orderId: order._id.toString() }
+    }),
+    ...sellerIds.map((sellerId) => {
+      const sellerItems = order.items.filter((item) => item.sellerId.toString() === sellerId);
+      const sellerSubtotal = sellerItems.reduce((total, item) => total + (item.itemTotal || 0), 0);
+
+      return notificationService.sendToUser(sellerId, {
+        title: 'New order received',
+        subtitle: `Order #${order.orderNumber} \u2022 \u20b9${sellerSubtotal}`,
+        data: { type: 'order_created', orderId: order._id.toString() }
+      });
+    })
+  ]);
+};
+
 const sendOrderEmails = async (order) => {
   const sellerIds = [...new Set(order.items.map((item) => item.sellerId.toString()))];
   const sellers = await User.find({ _id: { $in: sellerIds } }).select('email').lean();
@@ -442,7 +477,10 @@ const sendOrderEmails = async (order) => {
     ));
   });
 
-  const results = await Promise.all(emails.map((email) => sendEmail(email)));
+  const [results] = await Promise.all([
+    Promise.all(emails.map((email) => sendEmail(email))),
+    sendOrderPlacedNotifications(order, sellerIds)
+  ]);
   const allSent = results.every(Boolean);
 
   if (allSent) {
@@ -461,6 +499,10 @@ const verifyAndPlaceOrder = async (
   addressInput,
   paymentMethod
 ) => {
+  if (!env.razorpayCheckoutEnabled) {
+    throw new AppError('Online Razorpay checkout is disabled for this demo', 400);
+  }
+
   if (!ONLINE_PAYMENT_METHODS.includes(paymentMethod)) {
     throw new AppError('COD is not allowed on /checkout/verify. Use /checkout/place-cod', 400);
   }
@@ -646,6 +688,139 @@ const verifyAndPlaceOrder = async (
   return buildOrderConfirmation(order);
 };
 
+const placeQrPaymentOrder = async (buyerId, addressInput, paymentMethod) => {
+  if (!env.enableQrPaymentCheckout) {
+    throw new AppError('UPI QR checkout is currently unavailable', 400);
+  }
+
+  if (paymentMethod !== 'UPI_QR') {
+    throw new AppError('paymentMethod must be UPI_QR for this endpoint', 400);
+  }
+
+  let orders = [];
+  const buyer = await User.findById(buyerId).select('email').lean();
+  const delivery = await addressService.resolveDeliveryAddressForOrder(buyerId, addressInput);
+
+  if (!delivery.shippingInfo.email) {
+    delivery.shippingInfo.email = buyer?.email || 'buyer@notwhat.in';
+    delivery.snapshot.email = delivery.shippingInfo.email;
+  }
+
+  await runMaybeTransaction(async (session) => {
+    const cart = await getCheckoutCart(buyerId, { session });
+    const checkoutItems = await validateCartForCheckout(cart, { session });
+    const groupedByStore = new Map();
+
+    checkoutItems.forEach((item) => {
+      const storeKey = storeKeyOf(item.product);
+      if (!groupedByStore.has(storeKey)) {
+        groupedByStore.set(storeKey, []);
+      }
+      groupedByStore.get(storeKey).push(item);
+    });
+
+    const storeGroups = [...groupedByStore.values()];
+    const groupSubtotals = storeGroups.map((group) => roundMoney(
+      group.reduce((total, item) => total + (item.itemTotal || 0), 0)
+    ));
+    const groupShipping = splitShippingAcrossGroups(groupSubtotals, cart.shipping);
+    const sellerAcceptanceExpiresAt = getSellerAcceptanceExpiresAt();
+    const paymentGroups = await buildStorePaymentGroups(cart);
+
+    for (let index = 0; index < storeGroups.length; index += 1) {
+      const groupItems = storeGroups[index];
+      const orderItems = applyPendingAcceptanceDefaults(
+        await financeService.applyFinancialsToOrderItems(groupItems.map((item) => ({
+          productId: item.product._id,
+          sellerId: item.product.sellerId,
+          storeId: item.product.storeId,
+          titleSnapshot: item.product.title,
+          imageSnapshot: Array.isArray(item.product.imageUrls) && item.product.imageUrls.length > 0
+            ? item.product.imageUrls[0]
+            : '',
+          quantity: item.quantity,
+          priceSnapshot: item.priceSnapshot,
+          itemTotal: item.itemTotal
+        })))
+      );
+      const sellerIds = [...new Set(orderItems.map((item) => item.sellerId.toString()))];
+      const orderSubtotal = groupSubtotals[index];
+      const orderShipping = groupShipping[index];
+      const orderFinalTotal = roundMoney(orderSubtotal + orderShipping);
+      const financialTotals = financeService.summarizeOrderFinancials(orderItems, orderShipping);
+      const commission = calculateCommission(orderSubtotal);
+      const qrGroup = paymentGroups.find((group) => group.storeId === storeKeyOf(groupItems[0].product));
+      const now = new Date();
+
+      const [createdOrder] = await Order.create([{
+        buyerId,
+        orderNumber: generateOrderNumber(),
+        sellerIds,
+        items: orderItems,
+        shippingInfo: delivery.shippingInfo,
+        shippingAddressSnapshot: delivery.snapshot,
+        paymentMethod: 'UPI_QR',
+        paymentCaptureMode: 'automatic',
+        paymentStatus: 'pending_seller_confirmation',
+        orderStatus: 'payment_pending_confirmation',
+        trackingStatus: 'Waiting for seller to confirm payment',
+        sellerAcceptance: {
+          status: 'pending',
+          expiresAt: sellerAcceptanceExpiresAt
+        },
+        manualPaymentConfirmation: {
+          status: 'buyer_submitted',
+          buyerMarkedPaidAt: now,
+          storeName: qrGroup?.storeName || '',
+          upiId: qrGroup?.upiId || '',
+          qrCode: qrGroup?.qrCode || '',
+          amount: orderFinalTotal
+        },
+        paymentFlow: { captureAfterSellerAcceptance: false, signatureVerified: false },
+        razorpay: { signatureVerified: false },
+        inventoryConfirmation: { confirmedAvailable: false },
+        inventoryReservation: {
+          reservationIds: [],
+          expiresAt: sellerAcceptanceExpiresAt,
+          status: 'active'
+        },
+        subtotal: orderSubtotal,
+        shipping: orderShipping,
+        finalTotal: orderFinalTotal,
+        commissionRate: PLATFORM_COMMISSION_RATE,
+        commissionAmount: financialTotals.totalPlatformCommission || commission.commissionAmount,
+        sellerPayoutAmount: financialTotals.totalSellerEarnings || commission.sellerPayoutAmount,
+        ...financialTotals,
+        payoutStatus: 'pending',
+        gstAmount: extractGSTFromInclusivePrice(orderFinalTotal),
+        gstRate: GST_RATE,
+        emailSent: false
+      }], { session });
+
+      await syncBargainBidsForOrder({
+        cart,
+        buyerId,
+        order: createdOrder,
+        session,
+        productIds: new Set(groupItems.map((item) => item.product._id.toString()))
+      });
+
+      orders.push(createdOrder);
+    }
+
+    await cartService.clearCart(buyerId, { session });
+  });
+
+  for (const order of orders) {
+    await sendOrderEmails(order);
+  }
+
+  return {
+    ...buildOrderConfirmation(orders[0]),
+    orders: orders.map(buildOrderConfirmation)
+  };
+};
+
 const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
   if (!env.enableCodCheckout) {
     throw new AppError('Cash on Delivery is currently unavailable', 400);
@@ -811,5 +986,6 @@ const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
 module.exports = {
   startCheckout,
   verifyAndPlaceOrder,
-  placeCodOrder
+  placeCodOrder,
+  placeQrPaymentOrder
 };

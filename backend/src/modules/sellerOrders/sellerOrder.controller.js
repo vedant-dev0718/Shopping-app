@@ -65,6 +65,15 @@ const acceptSellerOrder = asyncHandler(async (req, res) => {
   });
 });
 
+const confirmOrderPayment = asyncHandler(async (req, res) => {
+  const order = await sellerOrderService.confirmSellerOrderPayment(req.user.id, req.params.orderId);
+
+  return successResponse(res, {
+    message: 'Buyer payment confirmed successfully',
+    data: order
+  });
+});
+
 const rejectSellerOrder = asyncHandler(async (req, res) => {
   const order = await sellerOrderService.rejectSellerOrder(
     req.user.id,
@@ -221,6 +230,7 @@ module.exports = {
   getSellerOrder,
   updateSellerOrderStatus,
   acceptSellerOrder,
+  confirmOrderPayment,
   rejectSellerOrder,
   shipSellerOrder,
   cancelSellerOrder,

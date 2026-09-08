@@ -28,6 +28,12 @@ class SellerOrderRepository(
     ): NetworkResult<OrderDto> =
         runCatchingNetwork { client.post("seller/orders/$orderId/accept", emptyMap<String, String>(), bearerToken) }
 
+    suspend fun confirmPayment(
+        orderId: String,
+        bearerToken: String,
+    ): NetworkResult<OrderDto> =
+        runCatchingNetwork { client.post("seller/orders/$orderId/confirm-payment", emptyMap<String, String>(), bearerToken) }
+
     suspend fun rejectOrder(
         orderId: String,
         reason: String,

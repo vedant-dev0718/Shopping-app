@@ -10,6 +10,7 @@
 		100000000000000000000101 /* NotWhatApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000001 /* NotWhatApp.swift */; };
 		10000000000000000000D001 /* SharedRootHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000C001 /* SharedRootHostView.swift */; };
 		100000000000000000000151 /* GoogleSignInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000053 /* GoogleSignInManager.swift */; };
+		AA0000000000000000000013 /* PushNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000023 /* PushNotificationDelegate.swift */; };
 		AA0000000000000000000011 /* VideoPickerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000021 /* VideoPickerCoordinator.swift */; };
 		AA0000000000000000000012 /* ThumbnailPickerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000022 /* ThumbnailPickerCoordinator.swift */; };
 		100000000000000000000155 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 100000000000000000000902 /* GoogleSignIn */; };
@@ -22,6 +23,7 @@
 		100000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		100000000000000000000015 /* NotWhat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NotWhat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		100000000000000000000053 /* GoogleSignInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSignInManager.swift; sourceTree = "<group>"; };
+		AA0000000000000000000023 /* PushNotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationDelegate.swift; sourceTree = "<group>"; };
 		AA0000000000000000000021 /* VideoPickerCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPickerCoordinator.swift; sourceTree = "<group>"; };
 		AA0000000000000000000022 /* ThumbnailPickerCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailPickerCoordinator.swift; sourceTree = "<group>"; };
 		98C8EBF22FD9FAF400107236 /* GoogleService-Info (1).plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info (1).plist"; sourceTree = "<group>"; };
@@ -95,6 +97,7 @@
 				100000000000000000000053 /* GoogleSignInManager.swift */,
 				AA0000000000000000000021 /* VideoPickerCoordinator.swift */,
 				AA0000000000000000000022 /* ThumbnailPickerCoordinator.swift */,
+				AA0000000000000000000023 /* PushNotificationDelegate.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -187,6 +190,7 @@
 				100000000000000000000151 /* GoogleSignInManager.swift in Sources */,
 				AA0000000000000000000011 /* VideoPickerCoordinator.swift in Sources */,
 				AA0000000000000000000012 /* ThumbnailPickerCoordinator.swift in Sources */,
+				AA0000000000000000000013 /* PushNotificationDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

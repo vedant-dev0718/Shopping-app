@@ -1,5 +1,7 @@
 package com.notwhat.app
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -8,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -17,10 +20,14 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.firebase.FirebaseApp
+import com.google.firebase.messaging.FirebaseMessaging
 import com.notwhat.shared.auth.AndroidAppContextHolder
 import com.notwhat.shared.auth.AndroidSocialAuthBridgeRegistry
 import com.notwhat.shared.auth.SharedAuthException
 import com.notwhat.shared.auth.SocialAuthPayload
+import com.notwhat.shared.notifications.AndroidPushTokenBridgeRegistry
+import com.notwhat.shared.notifications.captureDeepLinkFromIntent
 import com.notwhat.shared.ui.AndroidMediaPickerBridgeRegistry
 import com.notwhat.shared.ui.NotWhatApp
 import com.notwhat.shared.ui.initCoilForAndroid
@@ -84,8 +91,41 @@ class MainActivity : ComponentActivity() {
 
         val forcedRole = appRoleFromBuildConfig(BuildConfig.APP_ROLE)
 
+        requestNotificationPermissionIfNeeded()
+        fetchPushTokenIfAvailable()
+        captureDeepLinkFromIntent(intent)
+
         setContent {
             NotWhatApp(forcedRole = forcedRole)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureDeepLinkFromIntent(intent)
+    }
+
+    private val notificationPermissionLauncher = registerForActivityResult(RequestPermission()) { }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    /** No-ops until an Android app is registered for this Firebase project (google-services.json). */
+    private fun fetchPushTokenIfAvailable() {
+        if (FirebaseApp.getApps(applicationContext).isEmpty()) return
+
+        try {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    AndroidPushTokenBridgeRegistry.setToken(task.result)
+                }
+            }
+        } catch (error: IllegalStateException) {
+            // Firebase not configured for this build variant yet.
         }
     }
 

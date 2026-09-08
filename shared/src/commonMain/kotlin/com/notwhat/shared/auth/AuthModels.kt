@@ -17,9 +17,14 @@ data class ApiEnvelope<T>(
 
 @Serializable
 enum class AuthRoleDto {
-    @SerialName("buyer") BUYER,
-    @SerialName("seller") SELLER,
-    @SerialName("admin") ADMIN,
+    @SerialName("buyer")
+    BUYER,
+
+    @SerialName("seller")
+    SELLER,
+
+    @SerialName("admin")
+    ADMIN,
 }
 
 @Serializable
@@ -79,7 +84,9 @@ data class ResetPasswordResponseDto(
 
 @Serializable
 data class LoginRequestDto(
-    val email: String,
+    val email: String? = null,
+    val identifier: String? = null,
+    val phone: String? = null,
     val password: String,
 )
 
@@ -107,6 +114,9 @@ data class SellerSignupRequestDto(
     val country: String,
     val specialtyRegion: String,
     val storeDescription: String,
+    val gstin: String? = null,
+    val upiId: String? = null,
+    val profileImageUrl: String? = null,
 )
 
 @Serializable
@@ -121,6 +131,9 @@ data class CompleteSellerProfileRequestDto(
     val specialtyRegion: String,
     val storeDescription: String,
     val phone: String? = null,
+    val gstin: String? = null,
+    val upiId: String? = null,
+    val profileImageUrl: String? = null,
 )
 
 @Serializable
@@ -168,11 +181,12 @@ data class PendingSignupVerification(
     val role: UserRole,
 )
 
-internal fun AuthRoleDto.toUserRole(): UserRole = when (this) {
-    AuthRoleDto.BUYER -> UserRole.Buyer
-    AuthRoleDto.SELLER -> UserRole.Seller
-    AuthRoleDto.ADMIN -> UserRole.Admin
-}
+internal fun AuthRoleDto.toUserRole(): UserRole =
+    when (this) {
+        AuthRoleDto.BUYER -> UserRole.Buyer
+        AuthRoleDto.SELLER -> UserRole.Seller
+        AuthRoleDto.ADMIN -> UserRole.Admin
+    }
 
 internal fun AuthResponseDto.toSession(isSeeded: Boolean): UserSession {
     val resolvedUser = requireNotNull(user) { "Missing user in auth response." }
@@ -180,11 +194,12 @@ internal fun AuthResponseDto.toSession(isSeeded: Boolean): UserSession {
     return UserSession(
         role = resolvedRole,
         name = resolvedUser.name.ifBlank { resolvedRole.title },
-        headline = when (resolvedRole) {
-            UserRole.Buyer -> "Signed in and ready to browse regional fashion."
-            UserRole.Seller -> "Signed in and ready to manage your storefront."
-            UserRole.Admin -> "Signed in and ready to review marketplace operations."
-        },
+        headline =
+            when (resolvedRole) {
+                UserRole.Buyer -> "Signed in and ready to browse regional fashion."
+                UserRole.Seller -> "Signed in and ready to manage your storefront."
+                UserRole.Admin -> "Signed in and ready to review marketplace operations."
+            },
         email = resolvedUser.email,
         authToken = token,
         requiresSellerProfileSetup = requiresSellerProfileSetup == true,

@@ -246,9 +246,16 @@ const createSellerAccount = async ({
   pincode = '',
   country = 'India',
   specialtyRegion,
-  storeDescription
+  storeDescription,
+  gstin = '',
+  gstNumber = '',
+  upiId = '',
+  profileImageUrl = ''
 }, session) => {
   const normalizedEmail = normalizeEmail(email);
+  const normalizedGst = (gstin || gstNumber || '').trim().toUpperCase();
+  const normalizedUpi = (upiId || '').trim() || buildDemoUpiId(storeName);
+  const normalizedProfileImage = (profileImageUrl || '').trim();
 
   const [user] = await User.create([{
     name,
@@ -259,6 +266,7 @@ const createSellerAccount = async ({
     isEmailVerified: true,
     emailVerifiedAt: new Date(),
     signupProvider: 'password',
+    avatarUrl: normalizedProfileImage,
     authProviders: [nowProviderLink({
       provider: 'password',
       providerUserId: normalizedEmail,
@@ -278,7 +286,7 @@ const createSellerAccount = async ({
     region: specialtyRegion,
     description: storeDescription,
     story: '',
-    profileImageUrl: '',
+    profileImageUrl: normalizedProfileImage,
     bannerImageUrl: '',
     verified: false,
     featuredCategories: [],
@@ -298,7 +306,8 @@ const createSellerAccount = async ({
     country,
     specialtyRegion,
     storeDescription,
-    upiId: buildDemoUpiId(storeName),
+    gstNumber: normalizedGst,
+    upiId: normalizedUpi,
     pickupAddress: getDefaultPickupAddress(user._id)
   }], { session });
 
@@ -452,14 +461,38 @@ const verifySignupEmail = async ({ verificationId, otp }) => {
   });
 };
 
-const login = async ({ email, password, totpCode }) => {
-  const normalizedEmail = normalizeEmail(email);
+const login = async ({ identifier, email, phone, password, totpCode }) => {
+  const rawIdentifier = (identifier || email || phone || '').trim();
   const rawPassword = typeof password === 'string' ? password : '';
   const trimmedPassword = rawPassword.trim();
-  const user = await User.findOne({
-    email: normalizedEmail,
-    accountStatus: { $nin: ['deleted', 'suspended', 'banned'] }
-  }).select('+passwordHash +failedLoginAttempts +loginLockedUntil +adminTotpSecret');
+
+  if (!rawIdentifier) {
+    throw new AppError('Invalid email or password', 401);
+  }
+
+  let userQuery;
+  if (rawIdentifier.includes('@')) {
+    userQuery = {
+      email: normalizeEmail(rawIdentifier),
+      accountStatus: { $nin: ['deleted', 'suspended', 'banned'] }
+    };
+  } else {
+    const digits = rawIdentifier.replace(/\D/g, '');
+    const tenDigit = digits.length >= 10 ? digits.slice(-10) : digits;
+    userQuery = {
+      $or: [
+        { phone: rawIdentifier },
+        { phone: digits },
+        { phone: tenDigit },
+        { phone: `+91${tenDigit}` },
+        { phone: `+91 ${tenDigit}` },
+        { email: normalizeEmail(rawIdentifier) }
+      ],
+      accountStatus: { $nin: ['deleted', 'suspended', 'banned'] }
+    };
+  }
+
+  const user = await User.findOne(userQuery).select('+passwordHash +failedLoginAttempts +loginLockedUntil +adminTotpSecret');
 
   if (!user) {
     throw new AppError('Invalid email or password', 401);

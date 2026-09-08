@@ -82,10 +82,8 @@ internal fun HomeScreen(
         } else if (state.content.loadErrorMessage != null && state.content.categories.isEmpty()) {
             item {
                 StatusMessage(
-                    title = "Home unavailable",
-                    message = state.content.loadErrorMessage ?: "We couldn't load the buyer feed.",
-                    actionLabel = "Retry",
-                    onAction = { scope.launch { state.content.load(state.currentSession?.authToken) } },
+                    title = "Your storefront is getting ready",
+                    message = "New categories and products will appear here soon.",
                     accent = homeAccent,
                     text = homeText,
                     muted = NotWhatColors.onSurfaceVariant,
@@ -104,27 +102,6 @@ internal fun HomeScreen(
                     muted = NotWhatColors.onSurfaceVariant,
                     surface = homeCard,
                 )
-            }
-        }
-        if (!state.content.isLoading && state.content.loadErrorMessage != null && state.content.categories.isNotEmpty()) {
-            item {
-                Surface(color = homeCard, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            "Some home content is unavailable.",
-                            color = homeText,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f),
-                        )
-                        TextButton(onClick = { scope.launch { state.content.load(state.currentSession?.authToken) } }) {
-                            Text("Retry", color = homeAccent)
-                        }
-                    }
-                }
             }
         }
         if (state.content.categories.isNotEmpty()) {

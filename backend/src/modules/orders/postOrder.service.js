@@ -2,6 +2,7 @@ const AppError = require('../../utils/AppError');
 const analyticsService = require('../analytics/analytics.service');
 const CancellationRequest = require('../cancellations/cancellationRequest.model');
 const financeService = require('../finance/finance.service');
+const notificationService = require('../notifications/notification.service');
 const Product = require('../products/product.model');
 const Refund = require('../refunds/refund.model');
 const ReturnRequest = require('../returns/return.model');
@@ -114,6 +115,8 @@ const getPrimarySellerId = (order) => {
   return firstItem?.sellerId || (order.sellerIds || [])[0] || null;
 };
 
+const notifyOrderSellers = async (order, payload) => notificationService.sendToUsers(order.sellerIds || [], payload);
+
 const createCancellationRecord = async (order, actorRole, actorId, reason, status) => {
   const existing = await CancellationRequest.findOne({
     orderId: order._id,
@@ -186,6 +189,20 @@ const applyCancellationToOrder = async (order, actorRole, reason) => {
   await order.save();
   await trackOrderItems(order, 'order_cancelled', { cancelledBy: actorRole, reason });
 
+  if (actorRole === 'buyer') {
+    await notifyOrderSellers(order, {
+      title: 'Order cancelled',
+      subtitle: `Buyer cancelled order #${order.orderNumber}`,
+      data: { type: 'order_cancelled', orderId: order._id.toString() }
+    });
+  } else {
+    await notificationService.sendToUser(order.buyerId, {
+      title: 'Order cancelled',
+      subtitle: `Order #${order.orderNumber} has been cancelled`,
+      data: { type: 'order_cancelled', orderId: order._id.toString() }
+    });
+  }
+
   if (order.paymentStatus === 'paid') {
     try {
       await processRefundForOrder(order._id, {
@@ -220,6 +237,11 @@ const requestOrderCancellation = async (buyerId, orderId, reason) => {
     order.cancelInfo.cancellationStatus = 'requested';
     order.cancelInfo.cancelReason = reason;
     await order.save();
+    await notifyOrderSellers(order, {
+      title: 'Cancellation requested',
+      subtitle: `Buyer requested cancellation for order #${order.orderNumber}`,
+      data: { type: 'cancellation_requested', orderId: order._id.toString() }
+    });
     return order.toObject();
   }
 
@@ -297,6 +319,12 @@ const rejectCancellation = async (actorId, orderId, rejectionReason, actorRole =
     await cancellation.save();
   }
 
+  await notificationService.sendToUser(order.buyerId, {
+    title: 'Cancellation rejected',
+    subtitle: `Order #${order.orderNumber} will continue processing`,
+    data: { type: 'cancellation_rejected', orderId: order._id.toString() }
+  });
+
   await trackOrderItems(order, 'order_cancel_rejected', { rejectedBy: actorRole, rejectionReason });
   return order.toObject();
 };
@@ -370,6 +398,12 @@ const requestOrderReturn = async (buyerId, orderId, { reason, description = '', 
   await order.save();
   await trackOrderItems(order, 'return_requested', { reason, returnId: returnRequest._id });
 
+  await notifyOrderSellers(order, {
+    title: 'Return requested',
+    subtitle: `Buyer requested a return for order #${order.orderNumber}`,
+    data: { type: 'return_requested', orderId: order._id.toString() }
+  });
+
   return returnRequest.populate('orderId', 'orderNumber orderStatus returnInfo refundStatus refundInfo');
 };
 
@@ -431,6 +465,14 @@ const reviewReturn = async (actorId, returnId, { approved, rejectionReason = '' 
     returnId,
     reviewedBy: actorRole,
     rejectionReason: approved ? undefined : rejectionReason
+  });
+
+  await notificationService.sendToUser(order.buyerId, {
+    title: approved ? 'Return approved' : 'Return rejected',
+    subtitle: approved
+      ? `Your return for order #${order.orderNumber} was approved`
+      : `Your return for order #${order.orderNumber} was rejected`,
+    data: { type: approved ? 'return_approved' : 'return_rejected', orderId: order._id.toString() }
   });
 
   return returnRequest;

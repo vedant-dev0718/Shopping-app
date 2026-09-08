@@ -33,6 +33,27 @@ class AuthStateTest {
     }
 
     @Test
+    fun loginFromBuyerAppRejectsSellerAccount() {
+        AuthPersistenceStore.clearAll()
+        val locator = ServiceLocator(AppConfig(BackendFlowMode.MOCK))
+        locator.authPersistence.saveBackendMode(BackendFlowMode.MOCK)
+        val state = AuthState(
+            useCase = locator.authUseCase,
+            persistence = locator.authPersistence,
+            config = locator.config,
+            appRole = UserRole.Buyer,
+        )
+        state.loginEmail = "seller@example.com"
+        state.loginPassword = "Password123!"
+        state.selectedMockRole = UserRole.Seller
+
+        kotlinx.coroutines.runBlocking { state.submitLogin() }
+
+        assertFalse(state.isAuthenticated)
+        assertTrue(state.errorMessage?.contains("Seller app") == true)
+    }
+
+    @Test
     fun buyerSignup_inMockModeMovesToVerification() {
         val state = freshState()
         state.buyerName = "Aanya"

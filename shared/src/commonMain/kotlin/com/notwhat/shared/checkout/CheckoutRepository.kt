@@ -20,4 +20,9 @@ class CheckoutRepository(
         request: CheckoutPlaceCodRequestDto,
         bearerToken: String,
     ): NetworkResult<CheckoutVerifyResponseDto> = runCatchingNetwork { client.post("checkout/place-cod", request, bearerToken) }
+
+    suspend fun placeQrPaymentOrder(
+        request: CheckoutPlaceQrPaymentRequestDto,
+        bearerToken: String,
+    ): NetworkResult<CheckoutVerifyResponseDto> = runCatchingNetwork { client.post("checkout/place-qr-payment", request, bearerToken) }
 }

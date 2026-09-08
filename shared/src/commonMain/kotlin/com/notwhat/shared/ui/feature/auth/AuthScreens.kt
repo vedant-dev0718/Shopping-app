@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import com.notwhat.shared.auth.AuthDestination
 import com.notwhat.shared.auth.AuthState
 import com.notwhat.shared.auth.PlatformSocialAuthBridge
+import com.notwhat.shared.session.UserRole
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -239,7 +240,13 @@ private fun LoginAuthCard(authState: AuthState) {
                         )
                     }
                 }
-                AuthTextField("Email", authState.loginEmail, { authState.loginEmail = it }, false, placeholder = "you@example.com")
+                AuthTextField(
+                    "Email or Mobile Number",
+                    authState.loginEmail,
+                    { authState.loginEmail = it },
+                    false,
+                    placeholder = "you@example.com or 10-digit mobile",
+                )
 
                 OutlinedTextField(
                     value = authState.loginPassword,
@@ -287,17 +294,6 @@ private fun LoginAuthCard(authState: AuthState) {
                     Text(if (authState.isLoading) "Signing in..." else "Log In")
                 }
 
-                if (PlatformSocialAuthBridge.supportsGoogle || PlatformSocialAuthBridge.supportsApple) {
-                    HorizontalDivider(color = NotWhatAuthTokens.border)
-                    Text(
-                        "OR CONTINUE WITH",
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        color = NotWhatAuthTokens.textFaint,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    SocialButtons(authState, scope, signUpContext = false)
-                }
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -305,15 +301,19 @@ private fun LoginAuthCard(authState: AuthState) {
                 ) {
                     Text("New here?", color = NotWhatAuthTokens.textMuted)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Create Account",
-                        color = NotWhatAuthTokens.accent,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable(onClick = authState::openBuyerSignup),
-                    )
+                    if (authState.appRole != UserRole.Seller) {
+                        Text(
+                            "Create Account",
+                            color = NotWhatAuthTokens.accent,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable(onClick = authState::openBuyerSignup),
+                        )
+                    }
                 }
-                TextButton(onClick = authState::openSellerSignup, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    Text("Seller signup", color = NotWhatAuthTokens.accent)
+                if (authState.appRole != UserRole.Buyer) {
+                    TextButton(onClick = authState::openSellerSignup, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                        Text("Seller signup", color = NotWhatAuthTokens.accent)
+                    }
                 }
             }
         }
@@ -414,16 +414,6 @@ private fun BuyerSignupCard(authState: AuthState) {
                 Text(if (authState.isLoading) "Creating account..." else "Create Buyer Account")
             }
             localSignupError?.let { Text(it, color = Color(0xFFB42318), style = MaterialTheme.typography.bodySmall) }
-            if (PlatformSocialAuthBridge.supportsGoogle || PlatformSocialAuthBridge.supportsApple) {
-                HorizontalDivider(color = NotWhatAuthTokens.border)
-                Text(
-                    "OR CONTINUE WITH",
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = NotWhatAuthTokens.textFaint,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                SocialButtons(authState, scope, signUpContext = true)
-            }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Text("Already have an account?", color = NotWhatAuthTokens.textMuted)
                 TextButton(onClick = authState::backToLogin) { Text("Log In", color = NotWhatAuthTokens.accent) }
@@ -470,7 +460,12 @@ private fun SellerSignupCard(authState: AuthState) {
             when (sellerStep) {
                 SellerOnboardingStep.StoreInfo -> {
                     StoreLogoPlaceholder(sellerLogoUri) {
-                        if (PlatformMediaPicker.isAvailable()) PlatformMediaPicker.launch { uri -> sellerLogoUri = uri }
+                        if (PlatformImagePicker.isAvailable()) {
+                            PlatformImagePicker.launch { uri ->
+                                sellerLogoUri = uri
+                                authState.sellerProfileImageUrl = uri ?: ""
+                            }
+                        }
                     }
                     AuthTextField(
                         "Store Name",
@@ -501,6 +496,16 @@ private fun SellerSignupCard(authState: AuthState) {
                     AuthTextField("Email", authState.sellerEmail, { authState.sellerEmail = it }, false, placeholder = "seller@notwhat.com")
                     AuthTextField("Phone", authState.sellerPhone, { authState.sellerPhone = it }, false, placeholder = "+91 98765 43210")
                     AuthTextField("Password", authState.sellerPassword, { authState.sellerPassword = it }, true, placeholder = "••••••••")
+                    AuthTextField("GSTIN (GST Number)", authState.sellerGstin, {
+                        authState.sellerGstin = it.uppercase()
+                    }, false, placeholder = "27AAPFU0939F1ZV")
+                    AuthTextField(
+                        "UPI ID (for payouts)",
+                        authState.sellerUpiId,
+                        { authState.sellerUpiId = it },
+                        false,
+                        placeholder = "storename@okhdfcbank",
+                    )
                     AuthTextField("Locality", authState.sellerLocality, { authState.sellerLocality = it }, false)
                     AuthTextField("City", authState.sellerCity, { authState.sellerCity = it }, false)
                     AuthTextField("State", authState.sellerState, { authState.sellerState = it }, false)
@@ -521,6 +526,12 @@ private fun SellerSignupCard(authState: AuthState) {
                             Text("Category: ${authState.sellerStoreCategory.ifBlank { "-" }}", color = NotWhatAuthTokens.textMuted)
                             Text("Seller: ${authState.sellerName.ifBlank { "-" }}", color = NotWhatAuthTokens.textMuted)
                             Text("Email: ${authState.sellerEmail.ifBlank { "-" }}", color = NotWhatAuthTokens.textMuted)
+                            if (authState.sellerGstin.isNotBlank()) {
+                                Text("GSTIN: ${authState.sellerGstin}", color = NotWhatAuthTokens.textMuted)
+                            }
+                            if (authState.sellerUpiId.isNotBlank()) {
+                                Text("UPI ID: ${authState.sellerUpiId}", color = NotWhatAuthTokens.textMuted)
+                            }
                             Text(
                                 "Location: ${listOf(
                                     authState.sellerCity,
@@ -593,17 +604,6 @@ private fun SellerSignupCard(authState: AuthState) {
                         colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
                     ) { Text("Continue") }
                 }
-            }
-
-            if (PlatformSocialAuthBridge.supportsGoogle || PlatformSocialAuthBridge.supportsApple) {
-                HorizontalDivider(color = NotWhatAuthTokens.border)
-                Text(
-                    "OR CONTINUE WITH",
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = NotWhatAuthTokens.textFaint,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                SocialButtons(authState, scope, signUpContext = true)
             }
 
             Surface(shape = RoundedCornerShape(16.dp), color = NotWhatColors.surfaceContainer, modifier = Modifier.fillMaxWidth()) {

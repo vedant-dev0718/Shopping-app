@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,14 +50,11 @@ internal fun BuyerOrdersContentScreen(
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
-    val surfaceHigh = NotWhatColors.surfaceContainerHigh
     val outline = NotWhatColors.outline
     val text = NotWhatColors.onSurface
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
-    val scope = rememberCoroutineScope()
 
-    val ordersErrorMessage = state.transaction.ordersErrorMessage
     val orders = state.transaction.orders
     val isLoading = state.transaction.isOrdersLoading
 
@@ -84,37 +81,7 @@ internal fun BuyerOrdersContentScreen(
             ) {
                 TextButton(onClick = onBack) { Text("Back", color = accent) }
                 Text("My Orders", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                Surface(
-                    color = surface,
-                    shape = RoundedCornerShape(999.dp),
-                    border = BorderStroke(1.dp, outline.copy(alpha = 0.5f)),
-                ) {
-                    Text(
-                        "${orders.size}",
-                        color = muted,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    )
-                }
-            }
-        }
-
-        if (!ordersErrorMessage.isNullOrBlank()) {
-            item {
-                Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Orders unavailable", color = text, fontWeight = FontWeight.Bold)
-                        Text(ordersErrorMessage, color = muted, style = MaterialTheme.typography.bodySmall)
-                        TextButton(
-                            onClick = {
-                                val token = state.currentSession?.authToken ?: return@TextButton
-                                scope.launch { state.transaction.loadOrders(token) }
-                            },
-                        ) {
-                            Text("Retry", color = accent)
-                        }
-                    }
-                }
+                Box(modifier = Modifier.size(48.dp))
             }
         }
 

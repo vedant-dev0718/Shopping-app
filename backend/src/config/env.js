@@ -37,10 +37,12 @@ module.exports = {
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET,
   razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET,
   razorpayEnableLiveRefunds: process.env.RAZORPAY_ENABLE_LIVE_REFUNDS === 'true',
+  razorpayCheckoutEnabled: process.env.RAZORPAY_CHECKOUT_ENABLED === 'true',
   razorpayCaptureAfterSellerAcceptance: process.env.RAZORPAY_CAPTURE_AFTER_SELLER_ACCEPTANCE === 'true',
   razorpayManualCaptureEnabled: process.env.RAZORPAY_MANUAL_CAPTURE_ENABLED === 'true'
     || process.env.RAZORPAY_CAPTURE_AFTER_SELLER_ACCEPTANCE === 'true',
   enableCodCheckout: process.env.ENABLE_COD_CHECKOUT === 'true',
+  enableQrPaymentCheckout: process.env.ENABLE_QR_PAYMENT_CHECKOUT !== 'false',
   razorpayAuthorizationTimeoutMinutes: parseInt(process.env.RAZORPAY_AUTHORIZATION_TIMEOUT_MINUTES || '240', 10),
   googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
   googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID || '',
@@ -68,5 +70,7 @@ module.exports = {
   signupOtpMaxAttempts: parseInt(process.env.SIGNUP_OTP_MAX_ATTEMPTS || '5', 10),
   signupOtpMaxSends: parseInt(process.env.SIGNUP_OTP_MAX_SENDS || '5', 10),
   signupOtpTestCode: ['test', 'development'].includes(process.env.NODE_ENV) ? process.env.SIGNUP_OTP_TEST_CODE || '' : '',
-  passwordResetOtpTestCode: ['test', 'development'].includes(process.env.NODE_ENV) ? process.env.PASSWORD_RESET_OTP_TEST_CODE || '' : ''
+  passwordResetOtpTestCode: ['test', 'development'].includes(process.env.NODE_ENV) ? process.env.PASSWORD_RESET_OTP_TEST_CODE || '' : '',
+  enablePushNotifications: process.env.ENABLE_PUSH_NOTIFICATIONS === 'true',
+  firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON || ''
 };

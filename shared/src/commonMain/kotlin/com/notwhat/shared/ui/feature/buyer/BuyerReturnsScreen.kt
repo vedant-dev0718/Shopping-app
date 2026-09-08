@@ -24,8 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.notwhat.shared.core.NetworkResult
@@ -75,13 +73,11 @@ fun BuyerReturnsContentScreen(
 
     val analytics = state.returnsAnalyticsTracker
     val analyticsContext = state.returnsAnalyticsContext(screenName = "BuyerReturns", sourceSurface = "returns_list")
-    val ordersErrorMessage = state.transaction.ordersErrorMessage
-
     val eligibleOrders = state.transaction.orders.filter { it.status.lowercase() in setOf("delivered", "completed") }
     val selectedReturn = state.buyerReturns.firstOrNull { it.id == selectedReturnId } ?: state.buyerReturns.firstOrNull()
-    val pullState = rememberPullToRefreshState()
-    if (pullState.isRefreshing) {
-        LaunchedEffect(Unit) {
+    var isRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
             val result = state.loadBuyerReturns()
             if (result is NetworkResult.Success) {
                 emitStatusDiffs(
@@ -92,7 +88,7 @@ fun BuyerReturnsContentScreen(
                     analyticsContext = analyticsContext,
                 )
             }
-            pullState.endRefresh()
+            isRefreshing = false
         }
     }
 
@@ -120,8 +116,10 @@ fun BuyerReturnsContentScreen(
         }
     }
 
-    Box(
-        modifier = modifier.fillMaxSize().background(bg).nestedScroll(pullState.nestedScrollConnection),
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { isRefreshing = true },
+        modifier = modifier.fillMaxSize().background(bg),
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().background(bg),
@@ -164,25 +162,6 @@ fun BuyerReturnsContentScreen(
                                         scope.launch { state.loadBuyerReturns() }
                                     },
                             )
-                        }
-                    }
-                }
-            }
-
-            if (!ordersErrorMessage.isNullOrBlank()) {
-                item {
-                    Surface(color = surfaceHigh, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Orders unavailable", color = text, fontWeight = FontWeight.Bold)
-                            Text(ordersErrorMessage, color = muted, style = MaterialTheme.typography.bodySmall)
-                            TextButton(
-                                onClick = {
-                                    val token = state.currentSession?.authToken ?: return@TextButton
-                                    scope.launch { state.transaction.loadOrders(token) }
-                                },
-                            ) {
-                                Text("Retry orders fetch", color = accent)
-                            }
                         }
                     }
                 }
@@ -406,10 +385,6 @@ fun BuyerReturnsContentScreen(
                 }
             }
         }
-        PullToRefreshContainer(
-            state = pullState,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
     }
 }
 

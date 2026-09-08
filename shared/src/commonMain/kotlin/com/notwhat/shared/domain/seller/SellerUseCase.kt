@@ -71,6 +71,11 @@ class SellerUseCase(
         bearerToken: String,
     ): NetworkResult<OrderDto> = sellerOrderRepository.acceptOrder(orderId, bearerToken)
 
+    suspend fun confirmPayment(
+        orderId: String,
+        bearerToken: String,
+    ): NetworkResult<OrderDto> = sellerOrderRepository.confirmPayment(orderId, bearerToken)
+
     suspend fun rejectOrder(
         orderId: String,
         reason: String,

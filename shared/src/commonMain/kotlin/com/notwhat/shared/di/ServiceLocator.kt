@@ -26,6 +26,7 @@ import com.notwhat.shared.finance.FinanceRepository
 import com.notwhat.shared.likes.LikeRepository
 import com.notwhat.shared.network.ApiClient
 import com.notwhat.shared.network.defaultApiBaseUrl
+import com.notwhat.shared.notifications.NotificationRepository
 import com.notwhat.shared.order.OrderRepository
 import com.notwhat.shared.recommendations.RecommendationRepository
 import com.notwhat.shared.returns.ReturnRepository
@@ -106,4 +107,7 @@ class ServiceLocator(
     val commentRepository: CommentRepository by lazy { CommentRepository(apiClient) }
     val financeRepository: FinanceRepository by lazy { FinanceRepository(apiClient) }
     val uploadRepository: UploadRepository by lazy { UploadRepository(apiClient) }
+
+    // Push notifications
+    val notificationRepository: NotificationRepository by lazy { NotificationRepository(apiClient) }
 }

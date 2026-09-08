@@ -19,14 +19,14 @@ const app = express();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 60,
+  limit: env.nodeEnv === 'test' ? 1000 : 60,
   standardHeaders: 'draft-7',
   legacyHeaders: false
 });
 
 const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 300,
+  limit: env.nodeEnv === 'test' ? 2000 : 300,
   standardHeaders: 'draft-7',
   legacyHeaders: false
 });

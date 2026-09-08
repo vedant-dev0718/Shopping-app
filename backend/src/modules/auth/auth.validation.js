@@ -31,11 +31,24 @@ const sellerSignupValidation = [
   body('pincode').optional({ checkFalsy: true }).trim().matches(/^\d{6}$/).withMessage('Pincode must be a 6-digit number'),
   body('country').optional({ checkFalsy: true }).trim().isLength({ max: 80 }).withMessage('Country must be 80 characters or fewer'),
   body('specialtyRegion').trim().notEmpty().withMessage('Specialty region is required'),
-  body('storeDescription').trim().notEmpty().withMessage('Store description is required')
+  body('storeDescription').trim().notEmpty().withMessage('Store description is required'),
+  body('gstin').optional({ checkFalsy: true }).trim(),
+  body('gstNumber').optional({ checkFalsy: true }).trim(),
+  body('upiId').optional({ checkFalsy: true }).trim(),
+  body('profileImageUrl').optional({ checkFalsy: true }).trim()
 ];
 
 const loginValidation = [
-  body('email').trim().isEmail().withMessage('A valid email is required').normalizeEmail(),
+  body('identifier').optional({ checkFalsy: true }).trim(),
+  body('email').optional({ checkFalsy: true }).trim(),
+  body('phone').optional({ checkFalsy: true }).trim(),
+  body().custom((value) => {
+    const rawIdentifier = (value.identifier || value.email || value.phone || '').trim();
+    if (!rawIdentifier) {
+      throw new Error('Email or mobile number is required');
+    }
+    return true;
+  }),
   body('password').isString().withMessage('Password must be a string').notEmpty().withMessage('Password is required')
 ];
 

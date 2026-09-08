@@ -1,8 +1,9 @@
 plugins {
     id("com.android.application") version "8.2.2"
-    kotlin("multiplatform") version "1.9.24"
-    kotlin("plugin.serialization") version "1.9.24"
-    id("org.jetbrains.compose") version "1.6.11"
+    kotlin("multiplatform") version "2.1.10"
+    kotlin("plugin.serialization") version "2.1.10"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.10"
+    id("org.jetbrains.compose") version "1.7.3"
 }
 
 kotlin {
@@ -71,6 +72,8 @@ kotlin {
                 implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
                 implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
                 implementation("androidx.media3:media3-ui:1.3.1")
+                implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+                implementation("com.google.firebase:firebase-messaging-ktx")
             }
         }
 
@@ -79,8 +82,8 @@ kotlin {
                 implementation("junit:junit:4.13.2")
                 implementation("androidx.test:core:1.6.1")
                 implementation("org.robolectric:robolectric:4.15.1")
-                implementation("androidx.compose.ui:ui-test-junit4:1.6.8")
-                implementation("androidx.compose.ui:ui-test-manifest:1.6.8")
+                implementation("androidx.compose.ui:ui-test-junit4:1.7.6")
+                implementation("androidx.compose.ui:ui-test-manifest:1.7.6")
             }
         }
     }

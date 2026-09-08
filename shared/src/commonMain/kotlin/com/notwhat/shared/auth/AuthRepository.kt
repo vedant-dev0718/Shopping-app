@@ -46,10 +46,22 @@ class AuthRepository(
     // Login
     // ------------------------------------------------------------------
 
-    suspend fun login(email: String, password: String, isAdmin: Boolean): NetworkResult<UserSession> =
+    suspend fun login(
+        email: String,
+        password: String,
+        isAdmin: Boolean,
+    ): NetworkResult<UserSession> =
         runCatchingNetwork {
             val path = if (isAdmin) "admin/login" else "auth/login"
-            val response: AuthResponseDto = post(path, LoginRequestDto(email = email, password = password))
+            val response: AuthResponseDto =
+                post(
+                    path,
+                    LoginRequestDto(
+                        identifier = email,
+                        email = email,
+                        password = password,
+                    ),
+                )
             response.toSession(isSeeded = false)
         }
 
@@ -57,39 +69,50 @@ class AuthRepository(
     // Social auth
     // ------------------------------------------------------------------
 
-    suspend fun continueWithGoogle(idToken: String, role: UserRole): NetworkResult<UserSession> =
+    suspend fun continueWithGoogle(
+        idToken: String,
+        role: UserRole,
+    ): NetworkResult<UserSession> =
         runCatchingNetwork {
-            val response: AuthResponseDto = post(
-                "auth/google",
-                mapOf("idToken" to idToken, "role" to role.name.lowercase()),
-            )
+            val response: AuthResponseDto =
+                post(
+                    "auth/google",
+                    mapOf("idToken" to idToken, "role" to role.name.lowercase()),
+                )
             response.toSession(isSeeded = false)
         }
 
-    suspend fun continueWithApple(identityToken: String, fullName: String?, role: UserRole): NetworkResult<UserSession> =
+    suspend fun continueWithApple(
+        identityToken: String,
+        fullName: String?,
+        role: UserRole,
+    ): NetworkResult<UserSession> =
         runCatchingNetwork {
-            val response: AuthResponseDto = post(
-                "auth/apple",
-                mapOf(
-                    "identityToken" to identityToken,
-                    "fullName" to fullName,
-                    "role" to role.name.lowercase(),
-                ),
-            )
+            val response: AuthResponseDto =
+                post(
+                    "auth/apple",
+                    mapOf(
+                        "identityToken" to identityToken,
+                        "fullName" to fullName,
+                        "role" to role.name.lowercase(),
+                    ),
+                )
             response.toSession(isSeeded = false)
         }
 
     suspend fun completeSellerProfile(
         authToken: String,
         request: CompleteSellerProfileRequestDto,
-    ): NetworkResult<UserSession> = runCatchingNetwork {
-        val response: AuthResponseDto = post(
-            path = "auth/google/complete-profile",
-            body = request,
-            bearerToken = authToken,
-        )
-        response.toSession(isSeeded = false)
-    }
+    ): NetworkResult<UserSession> =
+        runCatchingNetwork {
+            val response: AuthResponseDto =
+                post(
+                    path = "auth/google/complete-profile",
+                    body = request,
+                    bearerToken = authToken,
+                )
+            response.toSession(isSeeded = false)
+        }
 
     // ------------------------------------------------------------------
     // Signup
@@ -118,27 +141,29 @@ class AuthRepository(
     suspend fun verifySignupEmail(
         verificationId: String,
         otp: String,
-    ): NetworkResult<UserSession> = runCatchingNetwork {
-        val response: AuthResponseDto = post(
-            "auth/signup/verify-email",
-            VerifySignupEmailRequestDto(verificationId = verificationId, otp = otp),
-        )
-        response.toSession(isSeeded = false)
-    }
+    ): NetworkResult<UserSession> =
+        runCatchingNetwork {
+            val response: AuthResponseDto =
+                post(
+                    "auth/signup/verify-email",
+                    VerifySignupEmailRequestDto(verificationId = verificationId, otp = otp),
+                )
+            response.toSession(isSeeded = false)
+        }
 
-    suspend fun resendSignupCode(
-        verificationId: String,
-    ): NetworkResult<PendingSignupVerification> = runCatchingNetwork {
-        val response: SignupVerificationDto = post(
-            "auth/signup/resend-code",
-            ResendSignupCodeRequestDto(verificationId = verificationId),
-        )
-        PendingSignupVerification(
-            verificationId = response.verificationId,
-            email = response.email,
-            role = response.role.toUserRole(),
-        )
-    }
+    suspend fun resendSignupCode(verificationId: String): NetworkResult<PendingSignupVerification> =
+        runCatchingNetwork {
+            val response: SignupVerificationDto =
+                post(
+                    "auth/signup/resend-code",
+                    ResendSignupCodeRequestDto(verificationId = verificationId),
+                )
+            PendingSignupVerification(
+                verificationId = response.verificationId,
+                email = response.email,
+                role = response.role.toUserRole(),
+            )
+        }
 
     // ------------------------------------------------------------------
     // Password reset
@@ -147,12 +172,17 @@ class AuthRepository(
     suspend fun sendResetCode(email: String): NetworkResult<ForgotPasswordResponseDto> =
         runCatchingNetwork { post("auth/forgot-password", ForgotPasswordRequestDto(email = email)) }
 
-    suspend fun resetPassword(email: String, otp: String, newPassword: String): NetworkResult<ResetPasswordResponseDto> =
+    suspend fun resetPassword(
+        email: String,
+        otp: String,
+        newPassword: String,
+    ): NetworkResult<ResetPasswordResponseDto> =
         runCatchingNetwork {
-            val verified: VerifyResetOtpResponseDto = post(
-                "auth/verify-reset-otp",
-                VerifyResetOtpRequestDto(email = email, otp = otp),
-            )
+            val verified: VerifyResetOtpResponseDto =
+                post(
+                    "auth/verify-reset-otp",
+                    VerifyResetOtpRequestDto(email = email, otp = otp),
+                )
             post("auth/reset-password", ResetPasswordRequestDto(resetToken = verified.resetToken, newPassword = newPassword))
         }
 
@@ -179,13 +209,14 @@ class AuthRepository(
         bearerToken: String? = null,
     ): Response {
         try {
-            val httpResponse = httpClient.post("$normalizedBaseUrl/$path") {
-                contentType(ContentType.Application.Json)
-                if (!bearerToken.isNullOrBlank()) {
-                    header(HttpHeaders.Authorization, "Bearer $bearerToken")
+            val httpResponse =
+                httpClient.post("$normalizedBaseUrl/$path") {
+                    contentType(ContentType.Application.Json)
+                    if (!bearerToken.isNullOrBlank()) {
+                        header(HttpHeaders.Authorization, "Bearer $bearerToken")
+                    }
+                    setBody(body)
                 }
-                setBody(body)
-            }
             val envelope = httpResponse.body<ApiEnvelope<Response>>()
             return envelope.data
                 ?: throw AppError.Api(statusCode = 200, serverMessage = envelope.message ?: "Server returned no data.")
@@ -201,13 +232,16 @@ class AuthRepository(
         }
     }
 
-    private fun parseFailureMessage(payload: JsonObject?): String =
-        payload?.get("message")?.jsonPrimitive?.content ?: "Request failed."
+    private fun parseFailureMessage(payload: JsonObject?): String = payload?.get("message")?.jsonPrimitive?.content ?: "Request failed."
 
     companion object {
         @OptIn(ExperimentalSerializationApi::class)
         private fun buildDefaultClient(): HttpClient {
-            val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+            val json =
+                Json {
+                    ignoreUnknownKeys = true
+                    explicitNulls = false
+                }
             return createPlatformHttpClient {
                 install(ContentNegotiation) { json(json) }
             }

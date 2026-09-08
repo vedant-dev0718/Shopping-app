@@ -23,8 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -37,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,13 +56,10 @@ internal fun BargainsScreen(
     val accent = NotWhatAuthTokens.accent
     val activeReels = state.content.reels
     var isRefreshing by remember { mutableStateOf(false) }
-    val pullState = rememberPullToRefreshState()
-    if (pullState.isRefreshing) {
-        LaunchedEffect(Unit) {
-            isRefreshing = true
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
             state.content.load(state.currentSession?.authToken)
             isRefreshing = false
-            pullState.endRefresh()
         }
     }
 
@@ -72,8 +67,10 @@ internal fun BargainsScreen(
         state.content.stores.firstOrNull { it.id == reel.storeId?.id }
             ?: state.content.stores.firstOrNull { it.storeName == reel.displayCreator }
 
-    Box(
-        modifier = modifier.fillMaxSize().background(bg).nestedScroll(pullState.nestedScrollConnection),
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { isRefreshing = true },
+        modifier = modifier.fillMaxSize().background(bg),
     ) {
         val listState = rememberLazyListState()
         val activeReelIndex by remember {
@@ -103,13 +100,13 @@ internal fun BargainsScreen(
                         ) {
                             Text(
                                 "No reels yet",
-                                color = Color.White,
+                                color = NotWhatColors.onSurface,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                             )
                             Text(
                                 "Sellers haven't uploaded any reels yet.\nCheck back soon!",
-                                color = Color.White.copy(alpha = 0.6f),
+                                color = NotWhatColors.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center,
                             )
@@ -217,10 +214,6 @@ internal fun BargainsScreen(
                 }
             }
         }
-        PullToRefreshContainer(
-            state = pullState,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
     }
 }
 

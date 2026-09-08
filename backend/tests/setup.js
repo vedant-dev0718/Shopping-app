@@ -18,6 +18,8 @@ process.env.SIGNUP_OTP_TEST_CODE = '123456';
 process.env.SIGNUP_OTP_RESEND_SECONDS = '0';
 process.env.PASSWORD_RESET_OTP_TEST_CODE = '654321';
 process.env.UPLOADS_MEDIA_READ_RATE_LIMIT_PER_MINUTE = '3';
+process.env.ENABLE_PUSH_NOTIFICATIONS = 'true';
+process.env.FIREBASE_SERVICE_ACCOUNT_JSON = JSON.stringify({ project_id: 'notwhat-test' });
 
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
@@ -93,6 +95,17 @@ jest.mock('nodemailer', () => ({
       messageId: 'email_mock_123',
       accepted: ['qa@example.com'],
       rejected: []
+    }))
+  }))
+}));
+
+jest.mock('firebase-admin', () => ({
+  initializeApp: jest.fn(() => ({})),
+  credential: { cert: jest.fn() },
+  messaging: jest.fn(() => ({
+    sendEachForMulticast: jest.fn(async ({ tokens }) => ({
+      successCount: tokens.length,
+      responses: tokens.map(() => ({ success: true }))
     }))
   }))
 }));

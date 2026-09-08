@@ -521,6 +521,32 @@ internal fun OrderOperationsScreen(
                         HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
 
                         when (order.status) {
+                            "payment_pending_confirmation" -> {
+                                Text(
+                                    "Confirm the buyer's UPI payment before accepting this order.",
+                                    color = muted,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                                Button(
+                                    onClick = {
+                                        isActing = true
+                                        scope.launch {
+                                            val result = state.sellerContent.confirmPayment(order.id, token ?: "")
+                                            actionNote = if (result is com.notwhat.shared.core.NetworkResult.Success) {
+                                                "Payment confirmed. Review and accept the order next."
+                                            } else {
+                                                (result as? com.notwhat.shared.core.NetworkResult.Failure)
+                                                    ?.error?.userMessage() ?: "Could not confirm payment."
+                                            }
+                                            isActing = false
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                                    shape = SellerUiTokens.radiusButton,
+                                    enabled = !isActing,
+                                ) { Text("Confirm Payment", color = Color.White, fontWeight = FontWeight.Bold) }
+                            }
                             "awaiting_seller_acceptance" -> {
                                 Text("Review each item above and confirm availability before accepting.",
                                     color = muted, style = MaterialTheme.typography.labelSmall)

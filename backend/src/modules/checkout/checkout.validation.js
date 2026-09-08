@@ -49,8 +49,16 @@ const placeCodValidation = [
   })
 ];
 
+const placeQrPaymentValidation = [
+  ...shippingInfoValidation,
+  body('paymentMethod')
+    .equals('UPI_QR')
+    .withMessage('paymentMethod must be UPI_QR for this endpoint')
+];
+
 module.exports = {
   placeOrderValidation,
   verifyCheckoutValidation,
-  placeCodValidation
+  placeCodValidation,
+  placeQrPaymentValidation
 };

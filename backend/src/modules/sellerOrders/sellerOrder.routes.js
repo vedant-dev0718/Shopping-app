@@ -13,7 +13,8 @@ const {
   createShipmentValidation,
   rejectionValidation,
   acceptOrderValidation,
-  rejectOrderValidation
+  rejectOrderValidation,
+  confirmPaymentValidation
 } = require('./sellerOrder.validation');
 
 router.use(authenticate, requireSeller);
@@ -22,6 +23,7 @@ router.get('/', listSellerOrdersValidation, validate, sellerOrderController.getS
 router.get('/new', sellerOrderController.getNewSellerOrders);
 router.get('/pending-acceptance', sellerOrderController.getPendingAcceptanceOrders);
 router.get('/:orderId', orderIdValidation, validate, sellerOrderController.getSellerOrder);
+router.post('/:orderId/confirm-payment', confirmPaymentValidation, validate, sellerOrderController.confirmOrderPayment);
 router.post('/:orderId/accept', acceptOrderValidation, validate, sellerOrderController.acceptSellerOrder);
 router.post('/:orderId/reject', rejectOrderValidation, validate, sellerOrderController.rejectSellerOrder);
 router.patch('/:orderId/status', updateStatusValidation, validate, sellerOrderController.updateSellerOrderStatus);

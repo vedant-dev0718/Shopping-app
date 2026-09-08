@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const postOrderService = require('../orders/postOrder.service');
 const analyticsService = require('../analytics/analytics.service');
 const financeService = require('../finance/finance.service');
+const notificationService = require('../notifications/notification.service');
 const Product = require('../products/product.model');
 const SellerProfile = require('../sellers/sellerProfile.model');
 const Store = require('../stores/store.model');
@@ -140,6 +141,7 @@ const toSellerOrderView = (order, sellerId) => {
     refundInfo: order.refundInfo || {},
     deliveryInfo: order.deliveryInfo || {},
     sellerAcceptance: order.sellerAcceptance || {},
+    manualPaymentConfirmation: order.manualPaymentConfirmation || {},
     inventoryConfirmation: order.inventoryConfirmation || {},
     sellerSubtotal,
     subtotal: sellerSubtotal,
@@ -460,7 +462,7 @@ const getSellerOrders = async (sellerId, filters = {}) => {
 const getNewSellerOrders = async (sellerId) => {
   const orders = await Order.find({
     ...sellerOrderBaseQuery(sellerId),
-    orderStatus: { $in: ['placed', 'confirmed'] }
+    orderStatus: { $in: ['placed', 'payment_pending_confirmation', 'confirmed'] }
   })
     .populate('items.productId', 'title imageUrls category region status')
     .populate('items.storeId', 'storeName city state region category')
@@ -575,6 +577,12 @@ const markSellerOrderShipped = async (sellerId, orderId, data) => {
 
   await order.save();
 
+  await notificationService.sendToUser(order.buyerId, {
+    title: 'Order shipped',
+    subtitle: `Order #${order.orderNumber} is on its way`,
+    data: { type: 'order_shipped', orderId: order._id.toString() }
+  });
+
   return getSellerOrderById(sellerId, order._id);
 };
 
@@ -635,6 +643,48 @@ const acceptSellerOrder = async (sellerId, orderId, message = '') => {
   await trackSellerItems(order, sellerId, 'order_seller_accepted', {
     message,
     sellerAcceptanceTimeMs: acceptedAt.getTime() - new Date(order.createdAt).getTime()
+  });
+
+  await notificationService.sendToUser(order.buyerId, {
+    title: 'Order accepted',
+    subtitle: `The seller accepted order #${order.orderNumber}`,
+    data: { type: 'order_accepted', orderId: order._id.toString() }
+  });
+
+  return getSellerOrderById(sellerId, order._id);
+};
+
+const confirmSellerOrderPayment = async (sellerId, orderId) => {
+  const order = await findSellerOrderForUpdate(sellerId, orderId);
+  const sellerItems = getSellerItems(order, sellerId);
+
+  if (sellerItems.length === 0) {
+    throw new AppError('No items found for this seller in the order', 404);
+  }
+
+  if (order.paymentMethod !== 'UPI_QR') {
+    throw new AppError('Only UPI QR payments require seller confirmation', 400);
+  }
+
+  if (order.manualPaymentConfirmation?.status === 'seller_confirmed') {
+    return getSellerOrderById(sellerId, order._id);
+  }
+
+  if (order.manualPaymentConfirmation?.status !== 'buyer_submitted') {
+    throw new AppError('This order is not awaiting payment confirmation', 400);
+  }
+
+  const confirmedAt = new Date();
+  order.paymentStatus = 'paid';
+  order.orderStatus = 'awaiting_seller_acceptance';
+  order.trackingStatus = 'Payment confirmed; waiting for seller acceptance';
+  order.manualPaymentConfirmation.status = 'seller_confirmed';
+  order.manualPaymentConfirmation.sellerConfirmedAt = confirmedAt;
+  order.manualPaymentConfirmation.sellerConfirmedBy = sellerId;
+  await order.save();
+
+  await trackSellerItems(order, sellerId, 'order_payment_confirmed', {
+    sellerPaymentConfirmationAt: confirmedAt
   });
 
   return getSellerOrderById(sellerId, order._id);
@@ -778,6 +828,12 @@ const rejectSellerOrder = async (sellerId, orderId, { reason, messageToBuyer }) 
       console.error(`Failed to create seller rejection refund for order ${order._id}:`, error.message);
     }
   }
+
+  await notificationService.sendToUser(order.buyerId, {
+    title: 'Order cancelled',
+    subtitle: `The seller cancelled order #${order.orderNumber}`,
+    data: { type: 'order_rejected', orderId: order._id.toString() }
+  });
 
   return getSellerOrderById(sellerId, order._id);
 };
@@ -1024,6 +1080,12 @@ const markOrderDelivered = async (sellerId, orderId, options = {}) => {
     { _id: storeId },
     { $inc: { completedOrderCount: 1 } }
   )));
+
+  await notificationService.sendToUser(order.buyerId, {
+    title: 'Order delivered',
+    subtitle: `Order #${order.orderNumber} has been delivered`,
+    data: { type: 'order_delivered', orderId: order._id.toString() }
+  });
 
   return getSellerOrderById(sellerId, order._id);
 };
@@ -1349,6 +1411,7 @@ module.exports = {
   markSellerOrderShipped,
   cancelSellerOrder,
   acceptSellerOrder,
+  confirmSellerOrderPayment,
   rejectSellerOrder,
   forceAcceptOrder,
   forceCancelOrder,

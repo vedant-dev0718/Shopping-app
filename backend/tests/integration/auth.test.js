@@ -79,7 +79,7 @@ describe('auth API', () => {
   });
 
   test('login, me, invalid token, and logout responses work', async () => {
-    const buyer = await createBuyer({ email: 'buyer-login@example.com', password });
+    const buyer = await createBuyer({ email: 'buyer-login@example.com', phone: '9876543210', password });
 
     const login = await api()
       .post('/api/auth/login')
@@ -87,6 +87,21 @@ describe('auth API', () => {
       .expect(200);
 
     expect(login.body.data.user.email).toBe(buyer.email);
+
+    // Test phone login directly
+    const phoneLogin = await api()
+      .post('/api/auth/login')
+      .send({ identifier: '9876543210', password })
+      .expect(200);
+    expect(phoneLogin.body.data.user.email).toBe(buyer.email);
+
+    // Test phone login with +91 format
+    const phoneLoginCountryCode = await api()
+      .post('/api/auth/login')
+      .send({ phone: '+919876543210', password })
+      .expect(200);
+    expect(phoneLoginCountryCode.body.data.user.email).toBe(buyer.email);
+
     await api().get('/api/auth/me').expect(401);
     await api().get('/api/auth/me').set('Authorization', `Bearer ${login.body.data.token}`).expect(200);
     await api().get('/api/auth/me').set('Authorization', 'Bearer invalid-token').expect(401);

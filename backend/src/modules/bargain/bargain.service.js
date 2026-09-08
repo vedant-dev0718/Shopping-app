@@ -14,6 +14,8 @@ const {
 } = require('../../utils/emailTemplates');
 const { PLATFORM_COMMISSION_RATE, GST_RATE, extractGSTFromInclusivePrice } = require('../../config/commissionConfig');
 const financeService = require('../finance/finance.service');
+const notificationService = require('../notifications/notification.service');
+const BuyerProfile = require('../buyers/buyerProfile.model');
 const Order = require('../orders/order.model');
 const Product = require('../products/product.model');
 const User = require('../users/user.model');
@@ -244,6 +246,16 @@ const scheduleBargain = async (seller, productId, { startDate, endDate, reserveP
     }),
     product.save()
   ]);
+
+  const interestedBuyerIds = await BuyerProfile.find({
+    $or: [{ savedProducts: product._id }, { savedStores: product.storeId }]
+  }).distinct('userId');
+
+  await notificationService.sendToUsers(interestedBuyerIds, {
+    title: 'New Bargain Day started',
+    subtitle: `Place your bid on ${product.title} before it ends`,
+    data: { type: 'bargain_started', productId: product._id.toString() }
+  });
 
   return schedule;
 };
@@ -960,6 +972,21 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
 
   await sendWinningBidOrderEmails(order);
   await sendBargainResultEmails(winningBid, losingBids, product);
+
+  const orderSellerIds = [...new Set(order.items.map((item) => item.sellerId.toString()))];
+
+  await Promise.all([
+    notificationService.sendToUser(winningBid.buyerId, {
+      title: 'You won the bargain!',
+      subtitle: `Order #${order.orderNumber} confirmed for ${product.title}`,
+      data: { type: 'bargain_won', orderId: order._id.toString() }
+    }),
+    notificationService.sendToUsers(orderSellerIds, {
+      title: 'New order from bargain',
+      subtitle: `Order #${order.orderNumber} \u2022 ${product.title}`,
+      data: { type: 'order_created', orderId: order._id.toString() }
+    })
+  ]);
 
   return {
     schedule,

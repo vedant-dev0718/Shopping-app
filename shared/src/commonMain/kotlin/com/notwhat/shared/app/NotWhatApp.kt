@@ -11,7 +11,7 @@ fun NotWhatApp(
     forcedRole: UserRole? = null,
 ) {
     NotWhatAppFramework(
-        state = state,
+        state = if (forcedRole == null) state else remember(forcedRole) { NotWhatAppState(appRole = forcedRole) },
         forcedRole = forcedRole,
     )
 }

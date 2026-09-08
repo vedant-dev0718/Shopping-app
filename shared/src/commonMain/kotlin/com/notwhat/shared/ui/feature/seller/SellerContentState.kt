@@ -81,6 +81,16 @@ internal class SellerContentState(
         }
     }
 
+    suspend fun confirmPayment(
+        orderId: String,
+        bearerToken: String,
+    ) = sellerUseCase.confirmPayment(orderId, bearerToken).also {
+        if (it is com.notwhat.shared.core.NetworkResult.Success) {
+            refreshOrders(bearerToken)
+            refreshProducts(bearerToken)
+        }
+    }
+
     suspend fun rejectOrder(
         orderId: String,
         reason: String,

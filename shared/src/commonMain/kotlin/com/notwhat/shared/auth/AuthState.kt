@@ -32,7 +32,12 @@ class AuthState(
     private val useCase: AuthUseCase = ServiceLocator().authUseCase,
     private val persistence: SharedAuthPersistence = SharedAuthPersistence(),
     private val config: AppConfig = ServiceLocator().config,
+    appRole: UserRole? = null,
 ) {
+    private var allowedAppRole by mutableStateOf(appRole)
+
+    val appRole: UserRole?
+        get() = allowedAppRole
     enum class SocialAuthOutcome {
         Started,
         CredentialReturned,
@@ -86,6 +91,9 @@ class AuthState(
     var sellerCountry by mutableStateOf("India")
     var sellerSpecialtyRegion by mutableStateOf("")
     var sellerStoreDescription by mutableStateOf("")
+    var sellerGstin by mutableStateOf("")
+    var sellerUpiId by mutableStateOf("")
+    var sellerProfileImageUrl by mutableStateOf("")
 
     var verificationCode by mutableStateOf("")
     var pendingVerification by mutableStateOf<PendingSignupVerification?>(null)
@@ -151,7 +159,13 @@ class AuthState(
         val restoredMode = persistence.loadBackendMode()
         config.setBackendMode(restoredMode)
         backendMode = restoredMode
-        currentSession = persistence.loadSession()
+        val restoredSession = persistence.loadSession()
+        if (restoredSession == null || isRoleAllowed(restoredSession.role)) {
+            currentSession = restoredSession
+        } else {
+            persistence.clearSession()
+            errorMessage = roleMismatchMessage(restoredSession.role)
+        }
     }
 
     fun updateBackendMode(mode: BackendFlowMode) {
@@ -190,6 +204,16 @@ class AuthState(
         pendingVerification = null
         verificationCode = ""
         destination = AuthDestination.Login
+    }
+
+    fun configureAppRole(role: UserRole) {
+        allowedAppRole = role
+        val session = currentSession
+        if (session != null && session.role != role) {
+            currentSession = null
+            persistence.clearSession()
+            errorMessage = roleMismatchMessage(session.role)
+        }
     }
 
     fun clearSocialAuthDebugStatus() {
@@ -300,6 +324,9 @@ class AuthState(
                         country = sellerCountry.trim().ifEmpty { "India" },
                         specialtyRegion = sellerSpecialtyRegion.trim(),
                         storeDescription = sellerStoreDescription.trim(),
+                        gstin = sellerGstin.trim().ifEmpty { null },
+                        upiId = sellerUpiId.trim().ifEmpty { null },
+                        profileImageUrl = sellerProfileImageUrl.trim().ifEmpty { null },
                     ),
                 )
             when (result) {
@@ -568,9 +595,20 @@ class AuthState(
     private fun isCancellationMessage(message: String) = message.contains("cancel", ignoreCase = true)
 
     private fun persistSession(session: UserSession) {
+        if (!isRoleAllowed(session.role)) {
+            currentSession = null
+            persistence.clearSession()
+            errorMessage = roleMismatchMessage(session.role)
+            return
+        }
         currentSession = session
         persistence.saveSession(session)
     }
+
+    private fun isRoleAllowed(role: UserRole): Boolean = appRole == null || appRole == role
+
+    private fun roleMismatchMessage(role: UserRole): String =
+        "This is a ${role.title.lowercase()} account. Please use the ${role.title} app to continue."
 
     private fun currentSocialRole(): UserRole =
         when (destination) {

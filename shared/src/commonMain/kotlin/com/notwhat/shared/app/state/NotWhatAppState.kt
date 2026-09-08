@@ -7,6 +7,7 @@ import com.notwhat.shared.address.AddressDto
 import com.notwhat.shared.auth.AuthState
 import com.notwhat.shared.checkout.CheckoutPaymentMethod
 import com.notwhat.shared.checkout.CheckoutPlaceCodRequestDto
+import com.notwhat.shared.checkout.CheckoutPlaceQrPaymentRequestDto
 import com.notwhat.shared.checkout.CheckoutShippingInfoDto
 import com.notwhat.shared.checkout.CheckoutStartResponseDto
 import com.notwhat.shared.checkout.CheckoutVerifyRequestDto
@@ -18,6 +19,10 @@ import com.notwhat.shared.checkout.trackingPaymentStatus
 import com.notwhat.shared.core.AppError
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.di.ServiceLocator
+import com.notwhat.shared.notifications.DeviceTokenRequestDto
+import com.notwhat.shared.notifications.PendingDeepLinkBridge
+import com.notwhat.shared.notifications.PushTokenBridge
+import com.notwhat.shared.order.OrderDto
 import com.notwhat.shared.order.ReturnRequestDto
 import com.notwhat.shared.returns.RejectReturnRequestDto
 import com.notwhat.shared.returns.ReturnReason
@@ -40,6 +45,7 @@ import kotlinx.coroutines.launch
 
 class NotWhatAppState(
     private val serviceLocator: ServiceLocator = ServiceLocator(),
+    appRole: UserRole? = null,
 ) {
     private var lockedRole: UserRole? = null
 
@@ -58,6 +64,7 @@ class NotWhatAppState(
             useCase = serviceLocator.authUseCase,
             persistence = serviceLocator.authPersistence,
             config = serviceLocator.config,
+            appRole = appRole,
         )
 
     internal val content =
@@ -161,6 +168,7 @@ class NotWhatAppState(
         lockedRole = role
         authState.selectedMockRole = role
         authState.loginAsAdmin = role == UserRole.Admin
+        authState.configureAppRole(role)
         if (!isAuthenticated) {
             entryStage = AppEntryStage.Auth
         }
@@ -275,6 +283,27 @@ class NotWhatAppState(
         sellerBargainRefreshVersion += 1
     }
 
+    /** Registers the device's push token with the backend once a session is active. No-op if the native side hasn't provided a token yet. */
+    fun registerPushTokenIfAvailable() {
+        val authToken = authState.currentSession?.authToken ?: return
+        val pushToken = PushTokenBridge.currentToken() ?: return
+
+        scope.launch {
+            serviceLocator.notificationRepository.registerDeviceToken(
+                DeviceTokenRequestDto(fcmToken = pushToken, platform = PushTokenBridge.platform),
+                authToken,
+            )
+        }
+    }
+
+    /** Reads (and clears) the route captured when a push notification was tapped. */
+    fun consumePendingDeepLinkRoute(): String? = PendingDeepLinkBridge.consumeRoute()
+
+    suspend fun fetchOrderForDeepLink(orderId: String): OrderDto? {
+        val token = authState.currentSession?.authToken ?: return null
+        return serviceLocator.orderRepository.getOrder(orderId, token).getOrNull()
+    }
+
     suspend fun fetchCheckoutSession(): CheckoutStartResponseDto? {
         val token = authState.currentSession?.authToken ?: return null
         return serviceLocator.checkoutRepository.startCheckout(token).getOrNull()
@@ -332,6 +361,17 @@ class NotWhatAppState(
                 CheckoutPaymentMethod.COD -> {
                     serviceLocator.checkoutRepository.placeCodOrder(
                         CheckoutPlaceCodRequestDto(
+                            paymentMethod = method.toRawValue(),
+                            deliveryAddressId = deliveryAddressId,
+                            shippingInfo = shippingInfo,
+                        ),
+                        bearerToken = token,
+                    )
+                }
+
+                CheckoutPaymentMethod.UPI_QR -> {
+                    serviceLocator.checkoutRepository.placeQrPaymentOrder(
+                        CheckoutPlaceQrPaymentRequestDto(
                             paymentMethod = method.toRawValue(),
                             deliveryAddressId = deliveryAddressId,
                             shippingInfo = shippingInfo,

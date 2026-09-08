@@ -53,6 +53,25 @@ const placeCodOrder = asyncHandler(async (req, res) => {
   });
 });
 
+const placeQrPaymentOrder = asyncHandler(async (req, res) => {
+  const deliveryAddressId = req.body.deliveryAddressId || req.body.addressId || null;
+
+  const confirmation = await checkoutService.placeQrPaymentOrder(
+    req.user.id,
+    {
+      deliveryAddressId,
+      shippingInfo: req.body.shippingInfo
+    },
+    req.body.paymentMethod
+  );
+
+  return successResponse(res, {
+    statusCode: 201,
+    message: 'UPI payment submitted and awaiting seller confirmation',
+    data: confirmation
+  });
+});
+
 // Serves an HTML page that opens the Razorpay payment sheet.
 // iOS loads this in a WKWebView — no pod installation needed.
 const razorpayWebCheckout = (req, res) => {
@@ -162,5 +181,6 @@ module.exports = {
   startCheckout,
   verifyAndPlaceOrder,
   placeCodOrder,
+  placeQrPaymentOrder,
   razorpayWebCheckout
 };

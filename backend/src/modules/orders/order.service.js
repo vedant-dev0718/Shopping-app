@@ -4,26 +4,33 @@ const SellerProfile = require('../sellers/sellerProfile.model');
 const Order = require('./order.model');
 const postOrderService = require('./postOrder.service');
 
+const deliveredSellerIdsOf = (order) => [...new Set(
+  (order?.items || [])
+    .filter((item) => item.itemStatus === 'delivered')
+    .map((item) => (item.sellerId || '').toString())
+    .filter(Boolean)
+)];
+
 /**
  * Exposes the seller's UPI QR once their items are delivered.
  * Item-level so a co-seller's undelivered items cannot suppress it.
  */
-const attachStorePaymentQr = async (order) => {
-  const deliveredItems = (order?.items || []).filter((item) => item.itemStatus === 'delivered');
-
-  if (deliveredItems.length === 0) {
+const withStorePayment = (order, profileBySellerId) => {
+  if (order.paymentStatus !== 'pending' || order.paymentMethod !== 'COD') {
     return order;
   }
 
-  const sellerId = (deliveredItems[0].sellerId || '').toString();
+  const sellerId = deliveredSellerIdsOf(order)[0];
+
   if (!sellerId) {
     return order;
   }
 
-  const profile = await SellerProfile.findOne({ userId: sellerId }).select('storeName upiId').lean();
+  const profile = profileBySellerId.get(sellerId);
   const upiId = profile?.upiId || '';
-
-  const sellerItems = deliveredItems.filter((item) => item.sellerId.toString() === sellerId);
+  const sellerItems = (order.items || []).filter(
+    (item) => item.itemStatus === 'delivered' && item.sellerId.toString() === sellerId
+  );
   const itemsTotal = sellerItems.reduce((total, item) => total + (item.itemTotal || 0), 0);
   // Shipping is only attributable when the whole order belongs to this seller.
   const ownsWholeOrder = (order.items || []).every((item) => item.sellerId.toString() === sellerId);
@@ -44,6 +51,24 @@ const attachStorePaymentQr = async (order) => {
         : `${storeName} has not set up UPI payments yet`
     }
   };
+};
+
+/** Batched so a long order list does not trigger a profile lookup per order. */
+const attachStorePaymentQr = async (orders) => {
+  const list = Array.isArray(orders) ? orders : [orders];
+  const sellerIds = [...new Set(list.flatMap(deliveredSellerIdsOf))];
+
+  if (sellerIds.length === 0) {
+    return orders;
+  }
+
+  const profiles = await SellerProfile.find({ userId: { $in: sellerIds } })
+    .select('userId storeName upiId')
+    .lean();
+  const profileBySellerId = new Map(profiles.map((profile) => [profile.userId.toString(), profile]));
+  const mapped = list.map((order) => withStorePayment(order, profileBySellerId));
+
+  return Array.isArray(orders) ? mapped : mapped[0];
 };
 
 const addPostOrderComputedFields = (order) => {
@@ -85,7 +110,8 @@ const getOrders = async (buyerId) => {
     .sort({ createdAt: -1 })
     .lean();
 
-  return orders.map(addPostOrderComputedFields);
+  // The buyer app opens order details from this list payload, so it needs storePayment too.
+  return attachStorePaymentQr(orders.map(addPostOrderComputedFields));
 };
 
 const getOrderById = async (buyerId, orderId) => {

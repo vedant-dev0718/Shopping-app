@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontWeight
 import com.notwhat.shared.session.UserRole
+import kotlinx.coroutines.delay
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +43,18 @@ internal fun NotWhatAppFramework(
             state.transaction.load(token)
             if (state.uiRole == UserRole.Seller) {
                 state.sellerContent.load(token)
+            }
+
+            state.consumePendingDeepLinkRoute()
+                ?.takeIf { it.startsWith("order/") }
+                ?.removePrefix("order/")
+                ?.let { orderId -> state.fetchOrderForDeepLink(orderId) }
+                ?.let { order -> flow.onEvent(AppNavEvent.OpenOrderDetail(order)) }
+
+            // The native push token can arrive shortly after launch; retry briefly rather than missing it.
+            repeat(5) {
+                state.registerPushTokenIfAvailable()
+                delay(2000)
             }
         }
     }
