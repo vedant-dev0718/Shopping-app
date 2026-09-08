@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
 
 enum class CheckoutPaymentMethod {
+    RAZORPAY,
     UPI,
     CARD,
     NETBANKING,
@@ -18,6 +19,7 @@ enum class CheckoutPaymentMethod {
     companion object {
         fun fromRaw(value: String?): CheckoutPaymentMethod =
             when (value?.trim()?.lowercase()) {
+                "razorpay" -> RAZORPAY
                 "upi" -> UPI
                 "card" -> CARD
                 "netbanking" -> NETBANKING
@@ -129,6 +131,7 @@ fun CheckoutStartResponseDto.scannableStorePaymentGroups(): List<StorePaymentGro
 
 fun CheckoutPaymentMethod.toRawValue(): String =
     when (this) {
+        CheckoutPaymentMethod.RAZORPAY -> "RAZORPAY"
         CheckoutPaymentMethod.UPI -> "UPI"
         CheckoutPaymentMethod.CARD -> "card"
         CheckoutPaymentMethod.NETBANKING -> "netbanking"
@@ -140,6 +143,7 @@ fun CheckoutPaymentMethod.toRawValue(): String =
 
 fun CheckoutPaymentMethod.displayLabel(): String =
     when (this) {
+        CheckoutPaymentMethod.RAZORPAY -> "Pay with Razorpay"
         CheckoutPaymentMethod.UPI -> "UPI"
         CheckoutPaymentMethod.CARD -> "Card"
         CheckoutPaymentMethod.NETBANKING -> "Netbanking"
@@ -151,6 +155,7 @@ fun CheckoutPaymentMethod.displayLabel(): String =
 
 fun CheckoutPaymentMethod.defaultSubtitle(): String =
     when (this) {
+        CheckoutPaymentMethod.RAZORPAY -> "UPI, cards, net banking & wallets"
         CheckoutPaymentMethod.UPI -> "Pay via UPI"
         CheckoutPaymentMethod.CARD -> "Saved card"
         CheckoutPaymentMethod.NETBANKING -> "Bank transfer"
@@ -162,6 +167,7 @@ fun CheckoutPaymentMethod.defaultSubtitle(): String =
 
 fun CheckoutPaymentMethod.defaultMaskedText(): String =
     when (this) {
+        CheckoutPaymentMethod.RAZORPAY -> "Secure checkout"
         CheckoutPaymentMethod.COD -> "No prepayment"
         CheckoutPaymentMethod.UPI_QR -> "Seller confirmed"
         CheckoutPaymentMethod.UPI -> "Secure"

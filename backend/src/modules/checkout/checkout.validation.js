@@ -1,6 +1,6 @@
 const { body } = require('express-validator');
 
-const ONLINE_PAYMENT_METHODS = ['UPI', 'card', 'netbanking', 'wallet'];
+const RAZORPAY_PAYMENT_METHOD = 'RAZORPAY';
 
 const shippingInfoValidation = [
   body().custom((value) => {
@@ -21,8 +21,8 @@ const shippingInfoValidation = [
 const placeOrderValidation = [
   ...shippingInfoValidation,
   body('paymentMethod')
-    .isIn(ONLINE_PAYMENT_METHODS)
-    .withMessage('Payment method must be UPI, card, netbanking, or wallet. For COD use /api/checkout/place-cod')
+    .equals(RAZORPAY_PAYMENT_METHOD)
+    .withMessage('paymentMethod must be RAZORPAY for this endpoint')
 ];
 
 const verifyCheckoutValidation = [

@@ -137,6 +137,9 @@ describe('Return lifecycle — COD and online parity', () => {
 
         const updatedOrder = await Order.findById(order._id).lean();
         expect(updatedOrder.orderStatus).toBe('return_approved');
+        expect(updatedOrder.totalRefundedAmount).toBe(returnReq.body.data.refundAmount);
+        expect(updatedOrder.items.find((item) => item._id.toString() === order.items[0]._id.toString()).refundAmount)
+            .toBe(returnReq.body.data.refundAmount);
     });
 
     test('R2 — seller rejects return with mandatory reason, order transitions to return_rejected', async () => {

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,6 +62,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+
+private const val SELLER_KPI_COLUMNS = 2
 
 internal enum class SellerShellRoute {
     Dashboard,
@@ -124,12 +125,16 @@ internal fun SellerShellScreen(
     val muted = NotWhatColors.onSurfaceVariant
     val accent = NotWhatAuthTokens.accent
 
-    var autoCounterEnabled by remember { mutableStateOf(true) }
-    var selectedTimeRange by remember { mutableStateOf("7d") }
-    var selectedDrillDownTitle by remember { mutableStateOf<String?>(null) }
     var previewRoute by remember { mutableStateOf<SellerReelPreviewRoute?>(null) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
+    // The dashboard owns this fetch so the chart survives navigation and session restore.
+    LaunchedEffect(state.currentSession?.authToken) {
+        state.currentSession?.authToken
+            ?.takeIf { it.isNotBlank() }
+            ?.let { state.sellerContent.loadEarningsTrend(it) }
+    }
     val sellerDrawerItems =
         listOf(
             SellerShellRoute.Dashboard to "Dashboard",
@@ -140,7 +145,6 @@ internal fun SellerShellScreen(
             SellerShellRoute.SellerReelList to "Reels",
             SellerShellRoute.SellerAcceptedBidsQueue to "Accepted Bids",
             SellerShellRoute.SellerBargainCreate to "Bargain Day",
-            SellerShellRoute.SellerProfile to "Profile",
         )
 
     // Phase 2: use the real buyer ReelDetailScreen so preview matches exactly what buyer sees
@@ -160,8 +164,9 @@ internal fun SellerShellScreen(
     val products = state.sellerContent.products
     val orders = state.sellerContent.orders
     val reels = state.sellerContent.reels
-    // Revenue: only completed orders with no active return
-    val completedRevenue = orders.filter { it.status == "delivered" }.sumOf { it.totalAmount }
+    // Revenue counts product subtotal only — shipping is not seller earnings, and this keeps
+    // the KPI consistent with the gross-sales chart, which is fed by SellerEarning.grossAmount.
+    val completedRevenue = orders.filter { it.status == "delivered" }.sumOf { it.subtotal }
     val completedOrderCount = orders.count { it.status == "delivered" }
     val kpis =
         listOf(
@@ -304,7 +309,6 @@ internal fun SellerShellScreen(
             modifier = modifier,
             state = state,
             onBack = { onRouteChange(SellerShellRoute.Dashboard) },
-            onSignOut = onBackToAccount,
         )
         return
     }
@@ -343,6 +347,23 @@ internal fun SellerShellScreen(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    HorizontalDivider(color = muted.copy(alpha = 0.25f))
+                    NavigationDrawerItem(
+                        label = { Text("Sign Out", color = accent, fontWeight = FontWeight.Bold) },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onBackToAccount()
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            unselectedTextColor = accent,
+                            unselectedContainerColor = Color.Transparent,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
         },
@@ -396,8 +417,51 @@ internal fun SellerShellScreen(
                 }
             }
 
-        // Performance time-range picker shown only on Dashboard
         if (route == SellerShellRoute.Dashboard) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    kpis.chunked(SELLER_KPI_COLUMNS).forEach { rowKpis ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            rowKpis.forEach { kpi ->
+                                Surface(
+                                    color = surface,
+                                    shape = SellerUiTokens.radiusChip,
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
+                                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                                    ) {
+                                        Text(kpi.label.uppercase(), color = muted, style = MaterialTheme.typography.labelSmall)
+                                        Text(
+                                            kpi.value,
+                                            color = text,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Black,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            kpi.trend,
+                                            color = accent,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                }
+                            }
+                            // Keeps a short final row aligned to the grid columns.
+                            repeat(SELLER_KPI_COLUMNS - rowKpis.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 Surface(color = surface, shape = SellerUiTokens.radiusInnerCard, modifier = Modifier.fillMaxWidth()) {
                     Column(
@@ -410,82 +474,22 @@ internal fun SellerShellScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                         )
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(SellerUiTokens.chipGap)) {
-                            items(listOf("7d", "30d", "90d")) { label ->
-                                SellerRouteChip(
-                                    label = label,
-                                    selected = selectedTimeRange == label,
-                                    onClick = {
-                                        selectedTimeRange = label
-                                        selectedDrillDownTitle = null
-                                    },
-                                    accent = accent,
-                                    surface = surfaceHigh,
-                                    text = text,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        } // end performance card if-Dashboard
-
-        if (route == SellerShellRoute.Dashboard) {
-            item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(kpis) { kpi ->
-                        Surface(
-                            color = surface,
-                            shape = SellerUiTokens.radiusChip,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                            modifier = Modifier.width(154.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                                verticalArrangement = Arrangement.spacedBy(5.dp),
-                            ) {
-                                Text(kpi.label.uppercase(), color = muted, style = MaterialTheme.typography.labelSmall)
-                                Text(kpi.value, color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                                Text(
-                                    kpi.trend,
-                                    color = accent,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
-                        }
+                        Text(
+                            "Gross sales, last 90 days",
+                            color = muted,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        SellerEarningsTrendChart(
+                            points = state.sellerContent.earningsTrend,
+                            isLoading = state.sellerContent.isEarningsTrendLoading,
+                            errorMessage = state.sellerContent.earningsTrendErrorMessage,
+                        )
                     }
                 }
             }
 
             item {
-                Surface(
-                    color = surface,
-                    shape = SellerUiTokens.radiusInnerCard,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(SellerUiTokens.cardPadding),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Auto-counter bids", color = text, fontWeight = FontWeight.Bold)
-                            Text(
-                                "Accept bids above reserve threshold automatically.",
-                                color = muted,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                        Button(
-                            onClick = { autoCounterEnabled = !autoCounterEnabled },
-                            shape = SellerUiTokens.radiusButton,
-                            colors = ButtonDefaults.buttonColors(containerColor = if (autoCounterEnabled) accent else surfaceHigh),
-                        ) {
-                            Text(if (autoCounterEnabled) "ON" else "OFF", color = if (autoCounterEnabled) NotWhatColors.onPrimary else text)
-                        }
-                    }
-                }
+                SellerOrderHistoryCard(orders = orders)
             }
         } else if (route == SellerShellRoute.Insights) {
             items(insights) { insight ->
@@ -554,32 +558,6 @@ internal fun SellerShellScreen(
             }
             }
         }
-    }
-}
-
-@Composable
-private fun SellerRouteChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    accent: Color,
-    surface: Color,
-    text: Color,
-) {
-    Surface(
-        modifier = Modifier.clickable { onClick() },
-        shape = SellerUiTokens.radiusChip,
-        color = if (selected) accent.copy(alpha = 0.2f) else surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) accent else Color.White.copy(alpha = 0.12f)),
-    ) {
-        Text(
-            label,
-            color = if (selected) accent else text,
-            modifier = Modifier.padding(horizontal = SellerUiTokens.chipHorizontalPadding, vertical = SellerUiTokens.chipVerticalPadding),
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.SemiBold,
-        )
     }
 }
 
@@ -743,7 +721,6 @@ private fun SellerProfileScreen(
     modifier: Modifier,
     state: NotWhatAppState,
     onBack: () -> Unit,
-    onSignOut: () -> Unit,
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -852,23 +829,6 @@ private fun SellerProfileScreen(
                     SellerProfileTile("Notifications", "Configure order and bargain alerts", accent, text, muted) {}
                     HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
                     SellerProfileTile("Help & Support", "Contact seller support team", accent, text, muted) {}
-                }
-            }
-        }
-
-        item {
-            Surface(
-                modifier = Modifier.fillMaxWidth().clickable { onSignOut() },
-                shape = SellerUiTokens.radiusCard,
-                color = surfaceHigh,
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Sign Out", fontWeight = FontWeight.Bold, color = accent)
-                    Text("→", color = accent, style = MaterialTheme.typography.titleMedium)
                 }
             }
         }

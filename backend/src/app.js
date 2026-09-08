@@ -33,7 +33,13 @@ const writeLimiter = rateLimit({
 
 app.use(helmet());
 app.use(cors({
-  origin: env.clientUrl === '*' ? true : env.clientUrl,
+  origin: (origin, callback) => {
+    if (env.clientUrls.includes('*') || !origin || env.clientUrls.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new AppError('Not allowed by CORS', 403));
+  },
   credentials: true
 }));
 app.post('/webhooks/razorpay', express.raw({ type: 'application/json' }), handleRazorpayWebhook);

@@ -19,7 +19,7 @@ class RequestContractEncodingTest {
     fun checkoutVerifyRequest_usesDeliveryAddressIdKey() {
         val payload =
             CheckoutVerifyRequestDto(
-                paymentMethod = "UPI",
+                paymentMethod = "RAZORPAY",
                 razorpayOrderId = "order_123",
                 razorpayPaymentId = "payment_123",
                 razorpaySignature = "sig_123",
@@ -28,6 +28,7 @@ class RequestContractEncodingTest {
 
         val encoded = json.encodeToString(payload)
 
+        assertTrue(encoded.contains("\"paymentMethod\":\"RAZORPAY\""))
         assertTrue(encoded.contains("\"deliveryAddressId\""))
         assertFalse(encoded.contains("\"addressId\""))
     }

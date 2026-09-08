@@ -27,15 +27,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,6 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -73,37 +80,24 @@ internal fun AuthRootScreen(
         state.routeAuthenticatedUser(session.role)
     }
 
-    if (authState.destination == AuthDestination.Login) {
-        Box(
-            modifier =
-                modifier
-                    .fillMaxSize()
-                    .background(NotWhatAuthTokens.background)
-                    .padding(16.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            LoginAuthCard(authState)
-        }
-    } else {
-        LazyColumn(
-            modifier =
-                modifier
-                    .fillMaxSize()
-                    .background(NotWhatAuthTokens.background),
-            contentPadding =
-                androidx.compose.foundation.layout
-                    .PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                when (authState.destination) {
-                    AuthDestination.Login -> LoginAuthCard(authState)
-                    AuthDestination.BuyerSignup -> BuyerSignupCard(authState)
-                    AuthDestination.SellerSignup -> SellerSignupCard(authState)
-                    AuthDestination.VerifySignup -> SignupVerificationCard(authState)
-                    AuthDestination.ForgotPassword -> ForgotPasswordCard(authState)
-                    AuthDestination.ResetPassword -> ResetPasswordCard(authState)
-                }
+    LazyColumn(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(NotWhatAuthTokens.background),
+        contentPadding =
+            androidx.compose.foundation.layout
+                .PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            when (authState.destination) {
+                AuthDestination.Login -> LoginAuthCard(authState)
+                AuthDestination.BuyerSignup -> BuyerSignupCard(authState)
+                AuthDestination.SellerSignup -> SellerSignupCard(authState)
+                AuthDestination.VerifySignup -> SignupVerificationCard(authState)
+                AuthDestination.ForgotPassword -> ForgotPasswordCard(authState)
+                AuthDestination.ResetPassword -> ResetPasswordCard(authState)
             }
         }
     }
@@ -221,25 +215,6 @@ private fun LoginAuthCard(authState: AuthState) {
                     color = NotWhatAuthTokens.textPrimary,
                 )
                 Text("Sign in to sync your bargains and feed.", color = NotWhatAuthTokens.textMuted)
-                // Demo credentials for testing
-                Surface(
-                    color = NotWhatAuthTokens.accent.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            "Buyer: buyer@notwhat.test / Test@1234",
-                            color = NotWhatAuthTokens.accent,
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                        Text(
-                            "Seller: seller@notwhat.test / Test@1234",
-                            color = NotWhatAuthTokens.accent,
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
-                }
                 AuthTextField(
                     "Email or Mobile Number",
                     authState.loginEmail,
@@ -291,6 +266,14 @@ private fun LoginAuthCard(authState: AuthState) {
                     shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
                 ) {
+                    if (authState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = NotWhatColors.onPrimary,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                    }
                     Text(if (authState.isLoading) "Signing in..." else "Log In")
                 }
 
@@ -301,16 +284,16 @@ private fun LoginAuthCard(authState: AuthState) {
                 ) {
                     Text("New here?", color = NotWhatAuthTokens.textMuted)
                     Spacer(modifier = Modifier.width(8.dp))
-                    if (authState.appRole != UserRole.Seller) {
+                    if (authState.appRole == UserRole.Buyer) {
                         Text(
                             "Create Account",
                             color = NotWhatAuthTokens.accent,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.clickable(onClick = authState::openBuyerSignup),
+                            modifier = Modifier.clickable(onClick = authState::openBuyerSignup).padding(vertical = 8.dp),
                         )
                     }
                 }
-                if (authState.appRole != UserRole.Buyer) {
+                if (authState.appRole == UserRole.Seller) {
                     TextButton(onClick = authState::openSellerSignup, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                         Text("Seller signup", color = NotWhatAuthTokens.accent)
                     }
@@ -348,11 +331,17 @@ private fun LoginAuthCard(authState: AuthState) {
 @Composable
 private fun BuyerSignupCard(authState: AuthState) {
     val scope = rememberCoroutineScope()
+    var signupStep by remember { mutableStateOf(BuyerSignupStep.Account) }
     var confirmPassword by remember { mutableStateOf("") }
     var acceptTerms by remember { mutableStateOf(false) }
     var localSignupError by remember { mutableStateOf<String?>(null) }
 
-    fun canProceedBuyerSignup(): Boolean =
+    fun canProceedAccount(): Boolean =
+        authState.buyerName.trim().isNotEmpty() &&
+            authState.buyerEmail.trim().isNotEmpty() &&
+            authState.buyerPhone.trim().isNotEmpty()
+
+    fun canSubmitBuyerSignup(): Boolean =
         authState.canSubmitBuyerSignup &&
             confirmPassword == authState.buyerPassword &&
             confirmPassword.isNotBlank() &&
@@ -360,7 +349,23 @@ private fun BuyerSignupCard(authState: AuthState) {
 
     ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = NotWhatAuthTokens.card)) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SignupProgressHeader()
+            IconButton(
+                onClick = {
+                    if (signupStep == BuyerSignupStep.Personal) {
+                        signupStep = BuyerSignupStep.Account
+                    } else {
+                        authState.backToLogin()
+                    }
+                },
+                modifier = Modifier.align(Alignment.Start),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = NotWhatAuthTokens.textPrimary,
+                )
+            }
+            SignupProgressHeader(signupStep)
             Text(
                 "Join the Culture",
                 style = MaterialTheme.typography.headlineSmall,
@@ -368,55 +373,78 @@ private fun BuyerSignupCard(authState: AuthState) {
                 color = NotWhatAuthTokens.textPrimary,
             )
             Text("Create your buyer account to start bargaining and shopping the latest drops.", color = NotWhatAuthTokens.textMuted)
-            AuthTextField("Full Name", authState.buyerName, { authState.buyerName = it }, false, placeholder = "e.g. Aryan Sharma")
-            AuthTextField("Email Address", authState.buyerEmail, { authState.buyerEmail = it }, false, placeholder = "aryan@notwhat.com")
-            AuthTextField("Phone Number", authState.buyerPhone, { authState.buyerPhone = it }, false, placeholder = "+91 00000 00000")
-            AuthTextField(
-                "Delivery Address",
-                authState.buyerAddress,
-                { authState.buyerAddress = it },
-                false,
-                singleLine = false,
-                placeholder = "Flat / House, Street, Area, City",
-            )
-            AuthTextField("Password", authState.buyerPassword, { authState.buyerPassword = it }, true, placeholder = "••••••••")
-            AuthTextField("Confirm Password", confirmPassword, { confirmPassword = it }, true, placeholder = "••••••••")
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = acceptTerms, onCheckedChange = { acceptTerms = it })
-                Text(
-                    "I agree to the Terms of Service and Privacy Policy.",
-                    color = NotWhatAuthTokens.textMuted,
-                    style = MaterialTheme.typography.bodySmall,
+            if (signupStep == BuyerSignupStep.Account) {
+                AuthTextField("Full Name", authState.buyerName, { authState.buyerName = it }, false, placeholder = "e.g. Aryan Sharma")
+                AuthTextField("Email Address", authState.buyerEmail, { authState.buyerEmail = it }, false, placeholder = "aryan@notwhat.com")
+                AuthTextField("Phone Number", authState.buyerPhone, { authState.buyerPhone = it }, false, placeholder = "+91 00000 00000")
+                Button(
+                    onClick = {
+                        localSignupError = null
+                        if (canProceedAccount()) {
+                            signupStep = BuyerSignupStep.Personal
+                        } else {
+                            localSignupError = "Enter your name, email, and phone number to continue."
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
+                ) {
+                    Text("Continue")
+                }
+            } else {
+                AuthTextField(
+                    "Delivery Address",
+                    authState.buyerAddress,
+                    { authState.buyerAddress = it },
+                    false,
+                    singleLine = false,
+                    placeholder = "Flat / House, Street, Area, City",
                 )
-            }
-            Button(
-                onClick = {
-                    localSignupError = null
-                    when {
-                        confirmPassword != authState.buyerPassword -> {
-                            localSignupError = "Passwords do not match."
-                        }
+                AuthTextField("Password", authState.buyerPassword, { authState.buyerPassword = it }, true, placeholder = "••••••••")
+                AuthTextField("Confirm Password", confirmPassword, { confirmPassword = it }, true, placeholder = "••••••••")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = acceptTerms, onCheckedChange = { acceptTerms = it })
+                    Text(
+                        "I agree to the Terms of Service and Privacy Policy.",
+                        color = NotWhatAuthTokens.textMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Button(
+                    onClick = {
+                        localSignupError = null
+                        when {
+                            confirmPassword != authState.buyerPassword -> {
+                                localSignupError = "Passwords do not match."
+                            }
 
-                        !acceptTerms -> {
-                            localSignupError = "Accept Terms of Service and Privacy Policy to continue."
-                        }
+                            !acceptTerms -> {
+                                localSignupError = "Accept Terms of Service and Privacy Policy to continue."
+                            }
 
-                        else -> {
-                            scope.launch { authState.submitBuyerSignup() }
+                            else -> scope.launch { authState.submitBuyerSignup() }
                         }
-                    }
-                },
-                enabled = canProceedBuyerSignup(),
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
-            ) {
-                Text(if (authState.isLoading) "Creating account..." else "Create Buyer Account")
+                    },
+                    enabled = canSubmitBuyerSignup(),
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NotWhatAuthTokens.accent),
+                ) {
+                    Text(if (authState.isLoading) "Creating account..." else "Create Buyer Account")
+                }
             }
             localSignupError?.let { Text(it, color = Color(0xFFB42318), style = MaterialTheme.typography.bodySmall) }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text("Already have an account?", color = NotWhatAuthTokens.textMuted)
-                TextButton(onClick = authState::backToLogin) { Text("Log In", color = NotWhatAuthTokens.accent) }
+                TextButton(
+                    onClick = authState::backToLogin,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                ) { Text("Log In", color = NotWhatAuthTokens.accent) }
             }
         }
     }
@@ -695,6 +723,7 @@ private fun SignupVerificationCard(authState: AuthState) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            SignupProgressHeader(BuyerSignupStep.Verify)
             Box(
                 modifier = Modifier.size(76.dp).clip(RoundedCornerShape(38.dp)).background(NotWhatAuthTokens.accent),
                 contentAlignment = Alignment.Center,
@@ -782,16 +811,18 @@ private fun ResetPasswordCard(authState: AuthState) {
 
 // ── Progress header widgets ───────────────────────────────────────────────────
 
+private enum class BuyerSignupStep { Account, Personal, Verify }
+
 @Composable
-private fun SignupProgressHeader() {
+private fun SignupProgressHeader(activeStep: BuyerSignupStep) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SignupStep("1", "Account", active = true)
-        SignupStep("2", "Personal", active = false)
-        SignupStep("3", "Verify", active = false)
+        SignupStep("1", "Account", active = activeStep == BuyerSignupStep.Account)
+        SignupStep("2", "Personal", active = activeStep == BuyerSignupStep.Personal)
+        SignupStep("3", "Verify", active = activeStep == BuyerSignupStep.Verify)
     }
 }
 
@@ -898,18 +929,26 @@ private fun OtpCodeRow(
     code: String,
     onCodeChange: (String) -> Unit,
 ) {
+    val focusRequesters = remember { List(6) { FocusRequester() } }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         val padded = code.take(6).padEnd(6, ' ')
         repeat(6) { index ->
             OutlinedTextField(
                 value = if (padded[index] == ' ') "" else padded[index].toString(),
                 onValueChange = { input ->
+                    val wasEmpty = padded[index] == ' '
                     val c = input.lastOrNull()?.takeIf { it.isDigit() }
                     val chars = padded.toCharArray()
                     chars[index] = c ?: ' '
                     onCodeChange(chars.concatToString().trimEnd())
+                    if (c != null && index < 5) {
+                        focusRequesters[index + 1].requestFocus()
+                    } else if (c == null && wasEmpty && index > 0) {
+                        // backspace on an already-empty box: move back and clear previous
+                        focusRequesters[index - 1].requestFocus()
+                    }
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).focusRequester(focusRequesters[index]),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(12.dp),

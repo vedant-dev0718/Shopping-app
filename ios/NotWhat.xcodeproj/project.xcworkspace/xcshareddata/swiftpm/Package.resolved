@@ -1,5 +1,5 @@
 {
-  "originHash" : "68aa00e3cba36db2e0a76f54dbc84d1f079d8aa9a19bfa9fce02d6286bd620b7",
+  "originHash" : "e55bee88dda7c677e0b386b584f30c69104f64d08e687be3b8f09128518c4e7f",
   "pins" : [
     {
       "identity" : "appauth-ios",
@@ -35,6 +35,15 @@
       "state" : {
         "revision" : "5d7d66f647400952b1758b230e019b07c0b4b22a",
         "version" : "4.1.1"
+      }
+    },
+    {
+      "identity" : "razorpay-pod",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/razorpay/razorpay-pod.git",
+      "state" : {
+        "revision" : "a7ee6d9db75d629376a2ea0d5c19cfedf8bed95d",
+        "version" : "1.5.8"
       }
     }
   ],

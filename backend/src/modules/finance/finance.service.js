@@ -25,15 +25,22 @@ const toObjectId = (id) => new mongoose.Types.ObjectId(id.toString());
 const safeDivide = (numerator, denominator) => denominator > 0 ? numerator / denominator : 0;
 const percentage = (numerator, denominator) => roundMoney(safeDivide(numerator, denominator) * 100);
 
+// The app is India-only, so bare "YYYY-MM-DD" filters (as sent by the seller
+// analytics chart, which computes days in the device's local calendar) are
+// interpreted as IST calendar days, not UTC — otherwise up to ~5.5 hours of
+// each day's orders land in the wrong day bucket / get excluded entirely.
+const IST_OFFSET = '+05:30';
+const isBareDate = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+
 const buildDateQuery = ({ fromDate, toDate } = {}) => {
   const range = {};
 
   if (fromDate) {
-    range.$gte = new Date(fromDate);
+    range.$gte = isBareDate(fromDate) ? new Date(`${fromDate}T00:00:00${IST_OFFSET}`) : new Date(fromDate);
   }
 
   if (toDate) {
-    range.$lte = new Date(toDate);
+    range.$lte = isBareDate(toDate) ? new Date(`${toDate}T23:59:59.999${IST_OFFSET}`) : new Date(toDate);
   }
 
   return Object.keys(range).length > 0 ? range : null;
@@ -554,7 +561,7 @@ const getSalesTrend = async (sellerId, filters = {}, interval = 'daily') => {
     },
     {
       $group: {
-        _id: { $dateToString: { format: dateFormat, date: '$createdAt' } },
+        _id: { $dateToString: { format: dateFormat, date: '$createdAt', timezone: IST_OFFSET } },
         grossSales: { $sum: '$grossAmount' },
         netEarnings: { $sum: '$netEarnings' },
         platformCommission: { $sum: '$commissionAmount' },

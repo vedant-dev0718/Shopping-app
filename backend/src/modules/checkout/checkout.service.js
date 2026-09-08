@@ -26,7 +26,7 @@ const {
   buildNewOrderAlertEmail
 } = require('../../utils/emailTemplates');
 
-const ONLINE_PAYMENT_METHODS = ['UPI', 'card', 'netbanking', 'wallet'];
+const RAZORPAY_PAYMENT_METHOD = 'RAZORPAY';
 const COD_PAYMENT_METHOD = 'COD';
 
 const roundMoney = (value) => Math.round(value * 100) / 100;
@@ -66,7 +66,7 @@ const buildStorePaymentGroups = async (cart) => {
         storeId: storeId.toString(),
         sellerId: sellerId.toString ? sellerId.toString() : '',
         storeName,
-        paymentMethods: ['UPI_QR', COD_PAYMENT_METHOD],
+        paymentMethods: getSupportedPaymentMethods(),
         amount: 0,
         currency: 'INR',
         items: []
@@ -325,7 +325,7 @@ const getSupportedPaymentMethods = () => {
   }
 
   if (env.razorpayCheckoutEnabled) {
-    methods.push(...ONLINE_PAYMENT_METHODS);
+    methods.push(RAZORPAY_PAYMENT_METHOD);
   }
 
   return methods;
@@ -503,8 +503,8 @@ const verifyAndPlaceOrder = async (
     throw new AppError('Online Razorpay checkout is disabled for this demo', 400);
   }
 
-  if (!ONLINE_PAYMENT_METHODS.includes(paymentMethod)) {
-    throw new AppError('COD is not allowed on /checkout/verify. Use /checkout/place-cod', 400);
+  if (paymentMethod !== RAZORPAY_PAYMENT_METHOD) {
+    throw new AppError('paymentMethod must be RAZORPAY for /checkout/verify', 400);
   }
 
   const signatureIsValid = verifyPaymentSignature({

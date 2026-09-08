@@ -16,6 +16,10 @@ const FINAL_REFUND_STATUSES = ['refunded', 'partially_refunded', 'refund_process
 
 const asString = (value) => (value ? value.toString() : '');
 
+const getReturnItemIds = (returnRequest) => (returnRequest.items || []).length > 0
+  ? returnRequest.items.map((item) => item.itemId)
+  : [returnRequest.itemId].filter(Boolean);
+
 const getDeliveredAt = (order) => order.deliveryInfo?.deliveredAt || order.deliveredAt || null;
 
 const getReturnWindowEndsAt = (order) => {
@@ -459,6 +463,14 @@ const reviewReturn = async (actorId, returnId, { approved, rejectionReason = '' 
     }
   });
 
+  if (approved) {
+    await financeService.updateEarningsForOrderAdjustment(order, {
+      status: 'held',
+      refundAmount: returnRequest.refundAmount,
+      itemIds: getReturnItemIds(returnRequest)
+    });
+  }
+
   await returnRequest.save();
   await order.save();
   await trackOrderItems(order, approved ? 'return_approved' : 'return_rejected', {
@@ -525,8 +537,8 @@ const markReturnReceived = async (sellerId, returnId) => {
   });
   await financeService.updateEarningsForOrderAdjustment(order, {
     status: 'refunded',
-    refundAmount: returnRequest.refundAmount,
-    itemIds: (returnRequest.items || []).map((item) => item.itemId)
+    refundAmount: 0,
+    itemIds: getReturnItemIds(returnRequest)
   });
   await returnRequest.save();
   await order.save();

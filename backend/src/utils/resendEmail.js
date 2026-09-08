@@ -3,9 +3,13 @@ const axios = require('axios');
 const env = require('../config/env');
 
 const RESEND_API_URL = 'https://api.resend.com/emails';
+const RESEND_REQUEST_TIMEOUT_MS = 10_000;
 
 const sendResendEmail = async ({ to, subject, html }) => {
   if (!env.resendApiKey) {
+    if (env.nodeEnv !== 'production') {
+      return { skipped: true, reason: 'Resend API key is not configured' };
+    }
     throw new Error('Resend API key is not configured');
   }
 
@@ -21,7 +25,8 @@ const sendResendEmail = async ({ to, subject, html }) => {
       headers: {
         Authorization: `Bearer ${env.resendApiKey}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: RESEND_REQUEST_TIMEOUT_MS
     }
   );
 

@@ -37,6 +37,8 @@
 	<string>public.app-category.shopping</string>
 	<key>APP_ROLE</key>
 	<string>$(APP_ROLE)</string>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>NOTWHAT_API_BASE_URL</key>
 	<string>$(API_BASE_URL)</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -81,6 +83,16 @@
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>NotWhat lets sellers choose videos from their library to upload shoppable reels.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.notwhat.app.orderRefresh</string>
+		<string>com.notwhat.app.orderProcessing</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

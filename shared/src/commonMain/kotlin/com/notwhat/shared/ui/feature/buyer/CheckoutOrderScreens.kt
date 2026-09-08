@@ -47,10 +47,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.notwhat.shared.checkout.CheckoutPaymentMethod
-import com.notwhat.shared.checkout.StorePaymentGroupDto
 import com.notwhat.shared.checkout.PaymentBridgeResult
 import com.notwhat.shared.checkout.PlatformPaymentBridge
 import com.notwhat.shared.checkout.RazorpayCheckoutPayload
+import com.notwhat.shared.checkout.StorePaymentGroupDto
 import com.notwhat.shared.checkout.defaultMaskedText
 import com.notwhat.shared.checkout.defaultSubtitle
 import com.notwhat.shared.checkout.displayLabel
@@ -169,17 +169,19 @@ internal fun CheckoutConfirmationScreen(
     val accent = NotWhatAuthTokens.accent
     val scope = rememberCoroutineScope()
 
-    val requiresOnlineVerification = draft.selectedPayment.method != CheckoutPaymentMethod.COD
-        && draft.selectedPayment.method != CheckoutPaymentMethod.UPI_QR
+    val requiresOnlineVerification =
+        draft.selectedPayment.method != CheckoutPaymentMethod.COD &&
+            draft.selectedPayment.method != CheckoutPaymentMethod.UPI_QR
     var storePaymentGroups by remember { mutableStateOf<List<StorePaymentGroupDto>>(emptyList()) }
     var submitError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(draft.selectedPayment.method) {
-        storePaymentGroups = if (draft.selectedPayment.method == CheckoutPaymentMethod.UPI_QR) {
-            state.fetchCheckoutSession()?.scannableStorePaymentGroups().orEmpty()
-        } else {
-            emptyList()
-        }
+        storePaymentGroups =
+            if (draft.selectedPayment.method == CheckoutPaymentMethod.UPI_QR) {
+                state.fetchCheckoutSession()?.scannableStorePaymentGroups().orEmpty()
+            } else {
+                emptyList()
+            }
     }
 
     Box(modifier = modifier.fillMaxSize().background(bg)) {
@@ -251,7 +253,11 @@ internal fun CheckoutConfirmationScreen(
                                 StorePaymentQrCard(group, text, muted, accent, surface)
                             }
                             if (storePaymentGroups.isEmpty()) {
-                                Text("Seller QR codes are unavailable for this cart.", color = muted, style = MaterialTheme.typography.bodySmall)
+                                Text(
+                                    "Seller QR codes are unavailable for this cart.",
+                                    color = muted,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
                             }
                         }
                     }
@@ -314,12 +320,13 @@ internal fun CheckoutConfirmationScreen(
                         scope.launch {
                             if (draft.selectedPayment.method == CheckoutPaymentMethod.UPI_QR) {
                                 when (
-                                    val result = state.submitCheckoutOrder(
-                                        draft = draft,
-                                        razorpayOrderId = "",
-                                        razorpayPaymentId = "",
-                                        razorpaySignature = "",
-                                    )
+                                    val result =
+                                        state.submitCheckoutOrder(
+                                            draft = draft,
+                                            razorpayOrderId = "",
+                                            razorpayPaymentId = "",
+                                            razorpaySignature = "",
+                                        )
                                 ) {
                                     is NetworkResult.Success -> onPlaceOrder(result.data)
                                     is NetworkResult.Failure -> submitError = result.error.userMessage()
@@ -1022,11 +1029,6 @@ internal fun CartSavedPaymentsScreen(
                                     }
                                 }
                             }
-                            Text(
-                                "More payment options are coming soon.",
-                                color = cartMuted,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
                         }
                     }
                 }

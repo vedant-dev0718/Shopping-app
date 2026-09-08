@@ -18,6 +18,10 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET || 'notwhat-development-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+  clientUrls: (process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:3000')
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean),
   awsRegion: process.env.AWS_REGION || '',
   awsS3Bucket: process.env.AWS_S3_BUCKET || '',
   awsS3Endpoint: process.env.AWS_S3_ENDPOINT || '',
@@ -69,7 +73,9 @@ module.exports = {
   signupOtpResendSeconds: parseInt(process.env.SIGNUP_OTP_RESEND_SECONDS || '60', 10),
   signupOtpMaxAttempts: parseInt(process.env.SIGNUP_OTP_MAX_ATTEMPTS || '5', 10),
   signupOtpMaxSends: parseInt(process.env.SIGNUP_OTP_MAX_SENDS || '5', 10),
-  signupOtpTestCode: ['test', 'development'].includes(process.env.NODE_ENV) ? process.env.SIGNUP_OTP_TEST_CODE || '' : '',
+  signupOtpTestCode: ['test', 'development'].includes(process.env.NODE_ENV)
+    ? process.env.SIGNUP_OTP_TEST_CODE || (process.env.RESEND_API_KEY ? '' : '123456')
+    : '',
   passwordResetOtpTestCode: ['test', 'development'].includes(process.env.NODE_ENV) ? process.env.PASSWORD_RESET_OTP_TEST_CODE || '' : '',
   enablePushNotifications: process.env.ENABLE_PUSH_NOTIFICATIONS === 'true',
   firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON || ''

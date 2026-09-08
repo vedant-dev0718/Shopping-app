@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +26,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,63 +71,50 @@ internal fun BargainsScreen(
         onRefresh = { isRefreshing = true },
         modifier = modifier.fillMaxSize().background(bg),
     ) {
-        val listState = rememberLazyListState()
-        val activeReelIndex by remember {
-            derivedStateOf {
-                if (listState.firstVisibleItemScrollOffset > listState.layoutInfo.viewportSize.height / 2) {
-                    listState.firstVisibleItemIndex + 1
-                } else {
-                    listState.firstVisibleItemIndex
+        if (activeReels.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        "No reels yet",
+                        color = NotWhatColors.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "Sellers haven't uploaded any reels yet.\nCheck back soon!",
+                        color = NotWhatColors.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
-        }
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().background(bg),
-            contentPadding = PaddingValues(0.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-        ) {
-            if (activeReels.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier.fillParentMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Text(
-                                "No reels yet",
-                                color = NotWhatColors.onSurface,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                "Sellers haven't uploaded any reels yet.\nCheck back soon!",
-                                color = NotWhatColors.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                }
-            }
-
-            itemsIndexed(activeReels, key = { _, reel -> reel.id }) { index, reel ->
+        } else {
+            val pagerState = rememberPagerState(pageCount = { activeReels.size })
+            VerticalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize().background(bg),
+                key = { index -> activeReels[index].id },
+            ) { index ->
+                val reel = activeReels.getOrNull(index) ?: return@VerticalPager
                 val store = findStore(reel)
                 val storeName = store?.storeName ?: reel.displayCreator
                 val isPlayable =
                     reel.videoUrl.isNotBlank() &&
                         !reel.videoUrl.contains("example.com") &&
                         reel.videoUrl.startsWith("http")
-                val isActive = index == activeReelIndex
+                val isActive = index == pagerState.currentPage
 
                 Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .fillParentMaxHeight()
+                            .fillMaxSize()
                             .clickable { onOpenReel(reel) },
                 ) {
                     if (reel.thumbnailUrl.isNotBlank()) {

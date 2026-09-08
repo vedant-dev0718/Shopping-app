@@ -30,11 +30,15 @@ data class SellerAnalyticsSummaryResponseDto(
 
 // ── Sales trend ──────────────────────────────────────────────────────────────
 
+/** Mirrors `financeService.getSalesTrend` — one bucket per `interval` (daily by default). */
 @Serializable
 data class SalesTrendPointDto(
-    val date: String = "",
-    val revenue: Double = 0.0,
-    val orders: Int = 0,
+    val period: String = "",
+    val grossSales: Double = 0.0,
+    val netEarnings: Double = 0.0,
+    val platformCommission: Double = 0.0,
+    val refundedAmount: Double = 0.0,
+    val orderCount: Int = 0,
 )
 
 // ── Commission / payouts ─────────────────────────────────────────────────────

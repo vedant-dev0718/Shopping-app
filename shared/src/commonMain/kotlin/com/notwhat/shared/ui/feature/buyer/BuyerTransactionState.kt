@@ -10,7 +10,10 @@ import com.notwhat.shared.cart.CartDto
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.domain.cart.CartUseCase
 import com.notwhat.shared.domain.order.OrderUseCase
+import com.notwhat.shared.notifications.OrderSnapshotStore
+import com.notwhat.shared.notifications.OrderStatusNotifier
 import com.notwhat.shared.order.OrderDto
+import com.notwhat.shared.session.UserRole
 
 internal class BuyerTransactionState(
     private val cartUseCase: CartUseCase,
@@ -55,9 +58,12 @@ internal class BuyerTransactionState(
     suspend fun loadOrders(bearerToken: String) {
         isOrdersLoading = true
         ordersErrorMessage = null
+        val previousStatusById = OrderSnapshotStore.load()
         when (val result = orderUseCase.listOrders(bearerToken)) {
             is NetworkResult.Success -> {
                 orders = result.data
+                OrderStatusNotifier.notifyChanges(previousStatusById, result.data, UserRole.Buyer)
+                OrderSnapshotStore.save(result.data.associate { it.id to it.status })
             }
 
             is NetworkResult.Failure -> {

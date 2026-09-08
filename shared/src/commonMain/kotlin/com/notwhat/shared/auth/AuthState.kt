@@ -38,6 +38,7 @@ class AuthState(
 
     val appRole: UserRole?
         get() = allowedAppRole
+
     enum class SocialAuthOutcome {
         Started,
         CredentialReturned,

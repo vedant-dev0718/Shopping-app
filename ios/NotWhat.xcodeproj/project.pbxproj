@@ -14,6 +14,7 @@
 		AA0000000000000000000011 /* VideoPickerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000021 /* VideoPickerCoordinator.swift */; };
 		AA0000000000000000000012 /* ThumbnailPickerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000022 /* ThumbnailPickerCoordinator.swift */; };
 		100000000000000000000155 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 100000000000000000000902 /* GoogleSignIn */; };
+		E10000000000000000000001 /* RazorpayCheckout in Frameworks */ = {isa = PBXBuildFile; productRef = E10000000000000000000002 /* RazorpayCheckout */; };
 		98C8EBF32FD9FAF400107236 /* GoogleService-Info (1).plist in Resources */ = {isa = PBXBuildFile; fileRef = 98C8EBF22FD9FAF400107236 /* GoogleService-Info (1).plist */; };
 /* End PBXBuildFile section */
 
@@ -38,6 +39,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				100000000000000000000155 /* GoogleSignIn in Frameworks */,
+				E10000000000000000000001 /* RazorpayCheckout in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,6 +130,7 @@
 			name = NotWhat;
 			packageProductDependencies = (
 				100000000000000000000902 /* GoogleSignIn */,
+				E10000000000000000000002 /* RazorpayCheckout */,
 			);
 			productName = NotWhat;
 			productReference = 100000000000000000000015 /* NotWhat.app */;
@@ -159,6 +162,7 @@
 			mainGroup = 100000000000000000000301;
 			packageReferences = (
 				100000000000000000000901 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				E10000000000000000000003 /* XCRemoteSwiftPackageReference "razorpay-pod" */,
 			);
 			productRefGroup = 100000000000000000000303 /* Products */;
 			projectDirPath = "";
@@ -676,6 +680,14 @@
 				minimumVersion = 7.1.0;
 			};
 		};
+		E10000000000000000000003 /* XCRemoteSwiftPackageReference "razorpay-pod" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/razorpay/razorpay-pod.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.5.8;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -683,6 +695,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 100000000000000000000901 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignIn;
+		};
+		E10000000000000000000002 /* RazorpayCheckout */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E10000000000000000000003 /* XCRemoteSwiftPackageReference "razorpay-pod" */;
+			productName = RazorpayCheckout;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

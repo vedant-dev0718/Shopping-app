@@ -16,8 +16,8 @@ const listReelsValidation = [
 
 const taggedProductsValidation = body('taggedProductIds')
   .optional()
-  .isArray({ max: 3 })
-  .withMessage('Reels can tag at most 3 products');
+  .isArray()
+  .withMessage('Tagged products must be an array');
 
 const createReelValidation = [
   body('videoUrl')
@@ -62,8 +62,8 @@ const updateReelValidation = [
   body('subcategory').optional({ checkFalsy: true }).trim(),
   body('taggedProductIds')
     .optional()
-    .isArray({ min: 1, max: 3 })
-    .withMessage('Reels must tag between 1 and 3 products'),
+    .isArray({ min: 1 })
+    .withMessage('Reels must tag at least 1 product'),
   body('taggedProductIds.*').optional().isMongoId().withMessage('Each tagged product id must be valid'),
   body('mutedByDefault').optional().isBoolean().withMessage('mutedByDefault must be true or false').toBoolean(),
   body('status').optional().isIn(['active', 'hidden', 'sold_out']).withMessage('Invalid reel status'),

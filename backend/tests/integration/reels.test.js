@@ -68,4 +68,26 @@ describe('reels API', () => {
       })
       .expect(400);
   });
+
+  test('seller can tag more than three products in a reel', async () => {
+    const seller = await createSeller({ email: 'many-reel-products@example.com' });
+    const products = await Promise.all(
+      Array.from({ length: 4 }, (_, index) => createProduct(seller, { title: `Reel Product ${index + 1}` }))
+    );
+
+    const created = await api()
+      .post('/api/seller/reels')
+      .set('Authorization', authHeader(seller))
+      .send({
+        videoUrl: 'https://example.com/reel.mp4',
+        thumbnailUrl: 'https://example.com/reel.jpg',
+        caption: 'Many products reel',
+        region: 'Rajasthan',
+        category: 'Bags',
+        taggedProductIds: products.map((product) => product._id)
+      })
+      .expect(201);
+
+    expect(created.body.data.taggedProductIds).toHaveLength(4);
+  });
 });

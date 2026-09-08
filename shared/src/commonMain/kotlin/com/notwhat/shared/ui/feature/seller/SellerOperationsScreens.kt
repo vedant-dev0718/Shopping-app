@@ -312,7 +312,7 @@ internal fun OrderOperationsScreen(
             else -> true
         }
     }
-    val orders = state.sellerContent.orders.filter { laneFilter(it.status) }
+    val orders = state.sellerContent.orders.filter { laneFilter(it.sellerScopedStatus) }
 
     // Reject dialog
     if (rejectOrderId != null) {
@@ -340,9 +340,14 @@ internal fun OrderOperationsScreen(
                                 rejectOrderId = null
                                 isActing = true
                                 scope.launch {
-                                    state.sellerContent.rejectOrder(id, rejectReason, rejectReason, token ?: "")
+                                    val result = state.sellerContent.rejectOrder(id, rejectReason, rejectReason, token ?: "")
                                     rejectReason = ""
-                                    actionNote = "Order rejected."
+                                    actionNote = if (result is com.notwhat.shared.core.NetworkResult.Success) {
+                                        "Order rejected."
+                                    } else {
+                                        (result as? com.notwhat.shared.core.NetworkResult.Failure)
+                                            ?.error?.userMessage() ?: "Could not reject the order."
+                                    }
                                     isActing = false
                                 }
                             },
@@ -378,9 +383,14 @@ internal fun OrderOperationsScreen(
                                 trackingOrderId = null
                                 isActing = true
                                 scope.launch {
-                                    state.sellerContent.shipOrder(id, trackingInput.ifBlank { "MANUAL" }, token ?: "")
+                                    val result = state.sellerContent.shipOrder(id, trackingInput.ifBlank { "MANUAL" }, token ?: "")
                                     trackingInput = ""
-                                    actionNote = "Order marked as Shipped."
+                                    actionNote = if (result is com.notwhat.shared.core.NetworkResult.Success) {
+                                        "Order marked as Shipped."
+                                    } else {
+                                        (result as? com.notwhat.shared.core.NetworkResult.Failure)
+                                            ?.error?.userMessage() ?: "Could not mark order as shipped."
+                                    }
                                     isActing = false
                                 }
                             },
@@ -442,8 +452,8 @@ internal fun OrderOperationsScreen(
 
         items(orders) { order ->
             val isExpanded = expandedOrderId == order.id
-            val sColor = statusColor(order.status)
-            val sLabel = statusLabel(order.status)
+            val sColor = statusColor(order.sellerScopedStatus)
+            val sLabel = statusLabel(order.sellerScopedStatus)
             val shortId = order.id.takeLast(8)
 
             Surface(
@@ -520,7 +530,7 @@ internal fun OrderOperationsScreen(
                     if (isExpanded) {
                         HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
 
-                        when (order.status) {
+                        when (order.sellerScopedStatus) {
                             "payment_pending_confirmation" -> {
                                 Text(
                                     "Confirm the buyer's UPI payment before accepting this order.",
@@ -562,8 +572,13 @@ internal fun OrderOperationsScreen(
                                         onClick = {
                                             isActing = true
                                             scope.launch {
-                                                state.sellerContent.acceptOrder(order.id, token ?: "")
-                                                actionNote = "Order accepted — now processing."
+                                                val result = state.sellerContent.acceptOrder(order.id, token ?: "")
+                                                actionNote = if (result is com.notwhat.shared.core.NetworkResult.Success) {
+                                                    "Order accepted — now processing."
+                                                } else {
+                                                    (result as? com.notwhat.shared.core.NetworkResult.Failure)
+                                                        ?.error?.userMessage() ?: "Could not accept the order."
+                                                }
                                                 isActing = false
                                             }
                                         },

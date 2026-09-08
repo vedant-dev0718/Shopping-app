@@ -211,7 +211,9 @@ private enum SharedPaymentInstaller {
                 prefillEmail: request.prefillEmail,
                 prefillPhone: request.prefillPhone,
                 presentingController: root.topmostPresented,
-                completion: callback
+                completion: { payload, errorMessage in
+                    _ = callback(payload, errorMessage)
+                }
             )
             #else
             callback(nil, "Razorpay SDK is not linked in this iOS target.")

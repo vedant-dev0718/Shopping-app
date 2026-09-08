@@ -3,6 +3,8 @@ package com.notwhat.shared.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.notwhat.shared.analytics.SalesTrendPointDto
+import com.notwhat.shared.analytics.SellerAnalyticsRepository
 import com.notwhat.shared.bargain.BargainRepository
 import com.notwhat.shared.bargain.BidDto
 import com.notwhat.shared.bargain.ScheduleBargainRequestDto
@@ -17,16 +19,31 @@ import com.notwhat.shared.catalog.seedProducts
 import com.notwhat.shared.catalog.seedReels
 import com.notwhat.shared.core.NetworkResult
 import com.notwhat.shared.domain.seller.SellerUseCase
+import com.notwhat.shared.notifications.OrderSnapshotStore
+import com.notwhat.shared.notifications.OrderStatusNotifier
 import com.notwhat.shared.order.OrderDto
 import com.notwhat.shared.seller.seedSellerOrders
+import com.notwhat.shared.session.UserRole
 import com.notwhat.shared.uploads.ImageUploadResponseDto
 import com.notwhat.shared.uploads.UploadRepository
 import com.notwhat.shared.uploads.VideoUploadResponseDto
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
+
+internal const val SELLER_EARNINGS_TREND_DAYS = 90
+
+/** Both endpoints are inclusive, so day 0 is the oldest bucket and day 90 is today. */
+internal const val SELLER_EARNINGS_TREND_POINTS = SELLER_EARNINGS_TREND_DAYS + 1
 
 internal class SellerContentState(
     private val sellerUseCase: SellerUseCase,
     private val uploadRepository: UploadRepository,
     private val bargainRepository: BargainRepository? = null,
+    // Not nullable: a default would let a dropped argument silently disable the earnings chart.
+    private val analyticsRepository: SellerAnalyticsRepository,
 ) {
     var products by mutableStateOf<List<ProductDto>>(emptyList())
         private set
@@ -38,6 +55,48 @@ internal class SellerContentState(
         private set
     var loadErrorMessage by mutableStateOf<String?>(null)
         private set
+
+    /** Daily gross-sales buckets for the trailing [SELLER_EARNINGS_TREND_DAYS], zero-filled and oldest-first. */    var earningsTrend by mutableStateOf<List<SalesTrendPointDto>>(emptyList())
+        private set
+    var isEarningsTrendLoading by mutableStateOf(false)
+        private set
+    var earningsTrendErrorMessage by mutableStateOf<String?>(null)
+        private set
+
+    suspend fun loadEarningsTrend(bearerToken: String) {
+        isEarningsTrendLoading = true
+        earningsTrendErrorMessage = null
+        try {
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            val firstDay = today.plus(-SELLER_EARNINGS_TREND_DAYS, DateTimeUnit.DAY)
+            val result =
+                analyticsRepository.getSalesTrend(
+                    bearerToken = bearerToken,
+                    params =
+                        mapOf(
+                            "interval" to "daily",
+                            "fromDate" to firstDay.toString(),
+                            "toDate" to today.toString(),
+                        ),
+                )
+            when (result) {
+                is NetworkResult.Success -> {
+                    val byPeriod = result.data.associateBy { it.period }
+                    earningsTrend =
+                        (0 until SELLER_EARNINGS_TREND_POINTS).map { offset ->
+                            val day = firstDay.plus(offset, DateTimeUnit.DAY).toString()
+                            byPeriod[day] ?: SalesTrendPointDto(period = day)
+                        }
+                }
+                is NetworkResult.Failure -> earningsTrendErrorMessage = result.error.userMessage()
+            }
+        } catch (error: Throwable) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            earningsTrendErrorMessage = error.message ?: "Could not load earnings."
+        } finally {
+            isEarningsTrendLoading = false
+        }
+    }
 
     suspend fun load(bearerToken: String) {
         isLoading = true
@@ -53,7 +112,11 @@ internal class SellerContentState(
                 is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
             }
             when (val result = sellerUseCase.listOrders(bearerToken)) {
-                is NetworkResult.Success -> orders = result.data
+                is NetworkResult.Success -> {
+                    OrderStatusNotifier.notifyChanges(OrderSnapshotStore.load(), result.data, UserRole.Seller)
+                    OrderSnapshotStore.save(result.data.associate { it.id to it.status })
+                    orders = result.data
+                }
                 is NetworkResult.Failure -> if (firstError == null) firstError = result.error.userMessage()
             }
             loadErrorMessage = firstError
@@ -64,7 +127,10 @@ internal class SellerContentState(
 
     /** Re-fetches orders after a status change. */
     suspend fun refreshOrders(bearerToken: String) {
-        orders = sellerUseCase.listOrders(bearerToken).getOrNull() ?: orders
+        val fetched = sellerUseCase.listOrders(bearerToken).getOrNull() ?: return
+        OrderStatusNotifier.notifyChanges(OrderSnapshotStore.load(), fetched, UserRole.Seller)
+        OrderSnapshotStore.save(fetched.associate { it.id to it.status })
+        orders = fetched
     }
 
     private suspend fun refreshProducts(bearerToken: String) {
@@ -78,6 +144,8 @@ internal class SellerContentState(
         if (it is com.notwhat.shared.core.NetworkResult.Success) {
             refreshOrders(bearerToken)
             refreshProducts(bearerToken)
+            // Acceptance is when the backend creates the SellerEarning record.
+            loadEarningsTrend(bearerToken)
         }
     }
 
@@ -88,6 +156,7 @@ internal class SellerContentState(
         if (it is com.notwhat.shared.core.NetworkResult.Success) {
             refreshOrders(bearerToken)
             refreshProducts(bearerToken)
+            loadEarningsTrend(bearerToken)
         }
     }
 
@@ -118,6 +187,7 @@ internal class SellerContentState(
         if (it is com.notwhat.shared.core.NetworkResult.Success) {
             refreshOrders(bearerToken)
             refreshProducts(bearerToken)
+            loadEarningsTrend(bearerToken)
         }
     }
 

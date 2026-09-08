@@ -58,6 +58,7 @@ data class OrderItemDto(
     val priceSnapshot: Double = 0.0,
     val itemTotal: Double = 0.0,
     @JsonNames("status", "itemStatus") val status: String = "placed",
+    val itemAcceptanceStatus: String? = null,
     val trackingNumber: String? = null,
     val trackingUrl: String? = null,
     val itemDeliveredAt: String? = null,
@@ -123,7 +124,24 @@ data class OrderDto(
     val storePayment: StorePaymentSnapshotDto? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
-)
+) {
+    /**
+     * Seller-facing status for this order.
+     *
+     * `status` is the order-wide rollup, which advances on events this seller did not perform
+     * (e.g. buyer payment confirmation flips it to `processing` while the seller has still not
+     * accepted). The backend gates every seller action on that seller's own items, so the UI
+     * must read the same source or it offers actions the API will reject.
+     */
+    val sellerScopedStatus: String
+        get() {
+            // Payment confirmation is an order-level gate that runs before seller acceptance.
+            if (status == "payment_pending_confirmation") return status
+            if (items.any { it.itemAcceptanceStatus == "pending" }) return "awaiting_seller_acceptance"
+
+            return items.firstOrNull()?.status?.takeIf { it.isNotBlank() } ?: status
+        }
+}
 
 @Serializable
 data class CancelOrderRequestDto(

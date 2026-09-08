@@ -18,13 +18,13 @@ class StorePaymentGroupDecodingTest {
           "razorpayOrderAmount": 219800,
           "currency": "INR",
           "shippingOptions": [{ "label": "Free shipping", "amount": 0 }],
-          "paymentMethods": ["COD"],
+          "paymentMethods": ["RAZORPAY", "COD"],
           "storePaymentGroups": [
             {
               "storeId": "s1",
               "sellerId": "u1",
               "storeName": "Craft Bazaar Collective",
-              "paymentMethods": ["COD"],
+              "paymentMethods": ["RAZORPAY", "COD"],
               "amount": 699,
               "currency": "INR",
               "items": [
@@ -38,7 +38,7 @@ class StorePaymentGroupDecodingTest {
               "storeId": "s2",
               "sellerId": "u2",
               "storeName": "NotWhat Demo Store",
-              "paymentMethods": ["COD"],
+              "paymentMethods": ["RAZORPAY", "COD"],
               "amount": 1499,
               "currency": "INR",
               "items": [
@@ -56,7 +56,8 @@ class StorePaymentGroupDecodingTest {
     fun checkoutStart_decodesTwoDistinctStoreQrCodes() {
         val dto = json.decodeFromString<CheckoutStartResponseDto>(twoStoreCheckoutPayload)
 
-        assertEquals(listOf("COD"), dto.paymentMethods)
+        assertEquals(listOf("RAZORPAY", "COD"), dto.paymentMethods)
+        assertEquals(listOf(CheckoutPaymentMethod.RAZORPAY, CheckoutPaymentMethod.COD), dto.normalizedPaymentMethods())
         assertEquals(2, dto.storePaymentGroups.size)
 
         val scannable = dto.scannableStorePaymentGroups()

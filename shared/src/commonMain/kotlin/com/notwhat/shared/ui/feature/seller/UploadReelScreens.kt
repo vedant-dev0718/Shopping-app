@@ -118,11 +118,6 @@ internal fun UploadReelScreen(
             return@share
         }
 
-        if (selectedProductIds.size > 3) {
-            shareStatus = "Tag at most 3 products before uploading."
-            return@share
-        }
-
         scope.launch {
             isSharing = true
             shareStatus = null
@@ -389,7 +384,7 @@ internal fun UploadReelScreen(
                 border = border,
                 onTagQueryChange = { tagQuery = it },
                 onAddProduct = { product ->
-                    if (selectedProductIds.size < 3) {
+                    if (!selectedProductIds.contains(product.id)) {
                         selectedProductIds = selectedProductIds + product.id
                     }
                     tagQuery = ""

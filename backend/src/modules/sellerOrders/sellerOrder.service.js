@@ -61,8 +61,14 @@ const deriveSellerOrderStatus = (order = {}, sellerItems = []) => {
     return order.orderStatus || 'processing';
   }
 
+  // Pre-fulfilment order-level gates must survive: falling through to 'processing' makes the
+  // seller app offer ship/accept actions that acceptSellerOrder and markSellerOrderShipped reject.
+  if (order.orderStatus === 'payment_pending_confirmation') {
+    return 'payment_pending_confirmation';
+  }
+
   if (
-    order.orderStatus === 'awaiting_seller_acceptance'
+    ['awaiting_seller_acceptance', 'placed', 'confirmed'].includes(order.orderStatus)
     && sellerItems.some((item) => item.itemAcceptanceStatus === 'pending')
   ) {
     return 'awaiting_seller_acceptance';
@@ -104,6 +110,7 @@ const toSellerOrderView = (order, sellerId) => {
   const items = filterSellerItems(order.items, sellerId);
   const sellerOrderStatus = deriveSellerOrderStatus(order, items);
   const sellerSubtotal = items.reduce((total, item) => total + (item.itemTotal || 0), 0);
+  const sellerRefundAmount = items.reduce((total, item) => total + (item.refundAmount || 0), 0);
   const orderSubtotalFromItems = (order.items || [])
     .map(normalizeOrderItem)
     .reduce((total, item) => total + (item.itemTotal || 0), 0);
@@ -145,6 +152,7 @@ const toSellerOrderView = (order, sellerId) => {
     inventoryConfirmation: order.inventoryConfirmation || {},
     sellerSubtotal,
     subtotal: sellerSubtotal,
+    refundAmount: sellerRefundAmount,
     shipping: sellerShipping,
     finalTotal: sellerSubtotal + sellerShipping,
     createdAt: order.createdAt,

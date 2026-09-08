@@ -3,7 +3,7 @@ plugins {
     kotlin("multiplatform") version "2.1.10"
     kotlin("plugin.serialization") version "2.1.10"
     id("org.jetbrains.kotlin.plugin.compose") version "2.1.10"
-    id("org.jetbrains.compose") version "1.7.3"
+    id("org.jetbrains.compose") version "1.8.1"
 }
 
 kotlin {
@@ -32,9 +32,11 @@ kotlin {
                 implementation("io.coil-kt.coil3:coil-compose:3.0.4")
                 implementation("io.coil-kt.coil3:coil-network-ktor2:3.0.4")
                 implementation("io.github.alexzhirkevich:qrose:1.0.1")
+                implementation("com.patrykandpatrick.vico:multiplatform:2.1.4")
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
+                implementation(compose.materialIconsExtended)
                 implementation(compose.ui)
             }
         }
@@ -74,6 +76,7 @@ kotlin {
                 implementation("androidx.media3:media3-ui:1.3.1")
                 implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
                 implementation("com.google.firebase:firebase-messaging-ktx")
+                implementation("androidx.work:work-runtime-ktx:2.9.1")
             }
         }
 

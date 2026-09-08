@@ -1,5 +1,6 @@
 import UIKit
 import UserNotifications
+import BackgroundTasks
 
 #if canImport(SharedKit)
 import SharedKit
@@ -10,6 +11,10 @@ import FirebaseCore
 #if canImport(FirebaseMessaging)
 import FirebaseMessaging
 #endif
+
+private let orderRefreshTaskIdentifier = "com.notwhat.app.orderRefresh"
+private let orderProcessingTaskIdentifier = "com.notwhat.app.orderProcessing"
+private let orderRefreshMinimumInterval: TimeInterval = 15 * 60
 
 /// Registers for remote notifications and forwards the resulting push token into the
 /// shared Kotlin layer (`IosPushTokenBridgeRegistry`), which `NotWhatAppState` reads once
@@ -37,6 +42,17 @@ final class PushNotificationDelegate: NSObject, UIApplicationDelegate, UNUserNot
 
         UNUserNotificationCenter.current().delegate = self
 
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: orderRefreshTaskIdentifier, using: nil) { task in
+            // swiftlint:disable:next force_cast
+            self.handleOrderRefresh(task: task as! BGAppRefreshTask)
+        }
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: orderProcessingTaskIdentifier, using: nil) { task in
+            // swiftlint:disable:next force_cast
+            self.handleOrderRefresh(task: task as! BGProcessingTask)
+        }
+        scheduleOrderRefresh()
+        logBackgroundRefreshStatusIfRestricted()
+
         // Request permission, then register for APNs only once the user grants it.
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             guard granted else {
@@ -51,6 +67,46 @@ final class PushNotificationDelegate: NSObject, UIApplicationDelegate, UNUserNot
         }
 
         return true
+    }
+
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        scheduleOrderRefresh()
+    }
+
+    private func scheduleOrderRefresh() {
+        let refreshRequest = BGAppRefreshTaskRequest(identifier: orderRefreshTaskIdentifier)
+        refreshRequest.earliestBeginDate = Date(timeIntervalSinceNow: orderRefreshMinimumInterval)
+        try? BGTaskScheduler.shared.submit(refreshRequest)
+
+        // A processing task gives the system a second, independent chance to run us
+        // (e.g. while charging/on Wi-Fi), on top of the opportunistic app-refresh task.
+        let processingRequest = BGProcessingTaskRequest(identifier: orderProcessingTaskIdentifier)
+        processingRequest.earliestBeginDate = Date(timeIntervalSinceNow: orderRefreshMinimumInterval)
+        processingRequest.requiresNetworkConnectivity = true
+        try? BGTaskScheduler.shared.submit(processingRequest)
+    }
+
+    /// Background tasks never fire at all if the user (or Low Power Mode) turned this off in Settings.
+    private func logBackgroundRefreshStatusIfRestricted() {
+        if UIApplication.shared.backgroundRefreshStatus != .available {
+            print("[push] Background App Refresh is off — enable it in Settings > General > Background App Refresh for background notifications to work.")
+        }
+    }
+
+    private func handleOrderRefresh(task: BGTask) {
+        scheduleOrderRefresh() // keep the chain going regardless of this run's outcome
+
+        task.expirationHandler = {
+            task.setTaskCompleted(success: false)
+        }
+
+        #if canImport(SharedKit)
+        BackgroundOrderSync.shared.checkForUpdates { error in
+            task.setTaskCompleted(success: error == nil)
+        }
+        #else
+        task.setTaskCompleted(success: true)
+        #endif
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {

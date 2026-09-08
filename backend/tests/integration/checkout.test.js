@@ -40,9 +40,8 @@ describe('checkout API with mocked Razorpay', () => {
 
       env.enableCodCheckout = true;
       const withCod = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
-      expect(withCod.body.data.paymentMethods).toEqual(['COD']);
-      expect(withCod.body.data.paymentMethods).not.toContain('UPI');
-      expect(withCod.body.data.paymentMethods).not.toContain('card');
+      expect(withCod.body.data.paymentMethods).toContain('COD');
+      expect(withCod.body.data.paymentMethods).not.toContain('RAZORPAY');
     } finally {
       env.enableCodCheckout = originalCodFlag;
     }
@@ -64,10 +63,10 @@ describe('checkout API with mocked Razorpay', () => {
 
       const response = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
 
-      expect(response.body.data.paymentMethods).toEqual(['COD']);
+      expect(response.body.data.paymentMethods).toContain('COD');
       expect(response.body.data.storePaymentGroups).toHaveLength(2);
       expect(response.body.data.storePaymentGroups.every((group) => group.paymentMethods.includes('COD'))).toBe(true);
-      expect(response.body.data.storePaymentGroups.every((group) => !group.paymentMethods.includes('UPI'))).toBe(true);
+      expect(response.body.data.storePaymentGroups.every((group) => !group.paymentMethods.includes('RAZORPAY'))).toBe(true);
 
       const qrCodes = response.body.data.storePaymentGroups.map((group) => group.qrCode);
       expect(qrCodes.every((qrCode) => typeof qrCode === 'string' && qrCode.startsWith('upi://pay?'))).toBe(true);
@@ -213,12 +212,14 @@ describe('checkout API with mocked Razorpay', () => {
       .expect(400);
 
     expect(response.body.message).toBe('Validation failed');
-    expect(response.body.errors?.[0]?.msg).toContain('/api/checkout/place-cod');
+    expect(response.body.errors?.[0]?.msg).toContain('RAZORPAY');
   });
 
   test('buyer checkout starts payment, creates awaiting-acceptance order, and clears cart', async () => {
     const originalManualCaptureEnabled = env.razorpayManualCaptureEnabled;
+    const originalCheckoutEnabled = env.razorpayCheckoutEnabled;
     env.razorpayManualCaptureEnabled = true;
+    env.razorpayCheckoutEnabled = true;
 
     try {
       const buyer = await createBuyer();
@@ -249,7 +250,7 @@ describe('checkout API with mocked Razorpay', () => {
           razorpayPaymentId,
           razorpaySignature: signPayment(razorpayOrderId, razorpayPaymentId),
           shippingInfo,
-          paymentMethod: 'UPI'
+          paymentMethod: 'RAZORPAY'
         })
         .expect(201);
 
@@ -262,10 +263,12 @@ describe('checkout API with mocked Razorpay', () => {
 
       const order = await Order.findById(placed.body.data.orderId).lean();
       expect(order.items[0].sellerId.toString()).toBe(seller._id.toString());
+      expect(order.paymentMethod).toBe('RAZORPAY');
       expect(order.orderStatus).toBe('awaiting_seller_acceptance');
       expect(order.items[0].itemAcceptanceStatus).toBe('pending');
     } finally {
       env.razorpayManualCaptureEnabled = originalManualCaptureEnabled;
+      env.razorpayCheckoutEnabled = originalCheckoutEnabled;
     }
   });
 
@@ -275,14 +278,16 @@ describe('checkout API with mocked Razorpay', () => {
     const product = await createProduct(seller);
     await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: product._id, quantity: 1 }).expect(201);
 
-    await api().post('/api/checkout/verify').set('Authorization', authHeader(buyer)).send({ paymentMethod: 'UPI' }).expect(400);
-    await api().post('/api/checkout/place-order').set('Authorization', authHeader(buyer)).send({ paymentMethod: 'UPI' }).expect(404);
+    await api().post('/api/checkout/verify').set('Authorization', authHeader(buyer)).send({ paymentMethod: 'RAZORPAY' }).expect(400);
+    await api().post('/api/checkout/place-order').set('Authorization', authHeader(buyer)).send({ paymentMethod: 'RAZORPAY' }).expect(404);
     await api().post('/api/checkout/start').set('Authorization', authHeader(seller)).expect(403);
   });
 
   test('checkout verify rejects payment amount mismatch before creating an order', async () => {
     const originalManualCaptureEnabled = env.razorpayManualCaptureEnabled;
+    const originalCheckoutEnabled = env.razorpayCheckoutEnabled;
     env.razorpayManualCaptureEnabled = true;
+    env.razorpayCheckoutEnabled = true;
 
     try {
       const buyer = await createBuyer();
@@ -320,7 +325,7 @@ describe('checkout API with mocked Razorpay', () => {
           razorpayPaymentId,
           razorpaySignature: signPayment(razorpayOrderId, razorpayPaymentId),
           shippingInfo,
-          paymentMethod: 'card'
+          paymentMethod: 'RAZORPAY'
         })
         .expect(400);
 
@@ -331,24 +336,31 @@ describe('checkout API with mocked Razorpay', () => {
       expect(cart.body.data.items).toHaveLength(1);
     } finally {
       env.razorpayManualCaptureEnabled = originalManualCaptureEnabled;
+      env.razorpayCheckoutEnabled = originalCheckoutEnabled;
     }
   });
 
   test('checkout verify accepts legacy addressId alias as deliveryAddressId', async () => {
-    const buyer = await createBuyer({ email: 'checkout-alias-buyer@example.com' });
+    const originalCheckoutEnabled = env.razorpayCheckoutEnabled;
+    env.razorpayCheckoutEnabled = true;
 
-    const response = await api()
-      .post('/api/checkout/verify')
-      .set('Authorization', authHeader(buyer))
-      .send({
-        razorpayOrderId: 'order_alias_contract_check',
-        razorpayPaymentId: 'pay_alias_contract_check',
-        razorpaySignature: 'invalid-signature',
-        addressId: '66b0e2b1a3f31ecbe0a12345',
-        paymentMethod: 'card'
-      })
-      .expect(400);
+    try {
+      const buyer = await createBuyer({ email: 'checkout-alias-buyer@example.com' });
+      const response = await api()
+        .post('/api/checkout/verify')
+        .set('Authorization', authHeader(buyer))
+        .send({
+          razorpayOrderId: 'order_alias_contract_check',
+          razorpayPaymentId: 'pay_alias_contract_check',
+          razorpaySignature: 'invalid-signature',
+          addressId: '66b0e2b1a3f31ecbe0a12345',
+          paymentMethod: 'RAZORPAY'
+        })
+        .expect(400);
 
-    expect(response.body.message).toBe('Payment verification failed');
+      expect(response.body.message).toBe('Payment verification failed');
+    } finally {
+      env.razorpayCheckoutEnabled = originalCheckoutEnabled;
+    }
   });
 });

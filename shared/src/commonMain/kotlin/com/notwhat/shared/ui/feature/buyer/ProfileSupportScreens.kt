@@ -25,7 +25,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -50,7 +49,6 @@ import kotlinx.coroutines.launch
 internal enum class ProfileShellRoute {
     ProfileAddress,
     AddressOnly,
-    SettingsHelp,
     ContactSupport,
     PrivacyPolicy,
     AboutNotWhat,
@@ -71,7 +69,10 @@ internal fun ProfileShellScreen(
                 modifier = modifier,
                 state = state,
                 onBack = onBackToAccount,
-                onOpenSettings = { onRouteChange(ProfileShellRoute.SettingsHelp) },
+                onOpenSupport = { onRouteChange(ProfileShellRoute.ContactSupport) },
+                onOpenPrivacy = { onRouteChange(ProfileShellRoute.PrivacyPolicy) },
+                onOpenAbout = { onRouteChange(ProfileShellRoute.AboutNotWhat) },
+                onSignOut = onSignOut,
             )
         }
 
@@ -83,36 +84,24 @@ internal fun ProfileShellScreen(
             )
         }
 
-        ProfileShellRoute.SettingsHelp -> {
-            SettingsHelpCenterScreen(
-                modifier = modifier,
-                state = state,
-                onBack = { onRouteChange(ProfileShellRoute.ProfileAddress) },
-                onOpenSupport = { onRouteChange(ProfileShellRoute.ContactSupport) },
-                onOpenPrivacy = { onRouteChange(ProfileShellRoute.PrivacyPolicy) },
-                onOpenAbout = { onRouteChange(ProfileShellRoute.AboutNotWhat) },
-                onSignOut = onSignOut,
-            )
-        }
-
         ProfileShellRoute.ContactSupport -> {
             ContactSupportScreen(
                 modifier = modifier,
-                onBack = { onRouteChange(ProfileShellRoute.SettingsHelp) },
+                onBack = { onRouteChange(ProfileShellRoute.ProfileAddress) },
             )
         }
 
         ProfileShellRoute.PrivacyPolicy -> {
             PrivacyPolicyScreen(
                 modifier = modifier,
-                onBack = { onRouteChange(ProfileShellRoute.SettingsHelp) },
+                onBack = { onRouteChange(ProfileShellRoute.ProfileAddress) },
             )
         }
 
         ProfileShellRoute.AboutNotWhat -> {
             AboutNotWhatScreen(
                 modifier = modifier,
-                onBack = { onRouteChange(ProfileShellRoute.SettingsHelp) },
+                onBack = { onRouteChange(ProfileShellRoute.ProfileAddress) },
             )
         }
     }
@@ -123,7 +112,10 @@ private fun ProfileAddressManagementScreen(
     modifier: Modifier,
     state: NotWhatAppState,
     onBack: () -> Unit,
-    onOpenSettings: () -> Unit,
+    onOpenSupport: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenAbout: () -> Unit,
+    onSignOut: () -> Unit,
 ) {
     val bg = NotWhatColors.background
     val surface = NotWhatColors.surface
@@ -168,13 +160,45 @@ private fun ProfileAddressManagementScreen(
 
         item {
             Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                Column {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Help Center", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     ProfileActionTile(
-                        title = "Settings",
-                        subtitle = "Preferences, help center, and more",
-                        onClick = onOpenSettings,
+                        title = "Contact Support",
+                        subtitle = "Report payment, shipping, or app issues",
+                        onClick = onOpenSupport,
                         accent = accent,
                     )
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                    ProfileActionTile(
+                        title = "Privacy Policy",
+                        subtitle = "Understand data usage and retention",
+                        onClick = onOpenPrivacy,
+                        accent = accent,
+                    )
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                    ProfileActionTile(
+                        title = "About NotWhat",
+                        subtitle = "Brand story, version, and legal disclosures",
+                        onClick = onOpenAbout,
+                        accent = accent,
+                    )
+                }
+            }
+        }
+
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth().clickable { onSignOut() },
+                shape = RoundedCornerShape(14.dp),
+                color = NotWhatColors.surfaceContainerHigh,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Sign Out", fontWeight = FontWeight.Bold, color = NotWhatColors.primary)
+                    Text("Leave", color = NotWhatColors.primary, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -635,145 +659,6 @@ private fun AddressesOnlyScreen(
 }
 
 @Composable
-private fun SettingsHelpCenterScreen(
-    modifier: Modifier,
-    state: NotWhatAppState,
-    onBack: () -> Unit,
-    onOpenSupport: () -> Unit,
-    onOpenPrivacy: () -> Unit,
-    onOpenAbout: () -> Unit,
-    onSignOut: () -> Unit = {},
-) {
-    val bg = NotWhatColors.background
-    val surface = NotWhatColors.surface
-    val surfaceHigh = NotWhatColors.surfaceContainerHigh
-    val text = NotWhatColors.onSurface
-    val muted = NotWhatColors.onSurfaceVariant
-    val accent = NotWhatAuthTokens.accent
-
-    var pushEnabled by remember { mutableStateOf(true) }
-    var bargainAlertsEnabled by remember { mutableStateOf(true) }
-    var darkPreviewEnabled by remember { mutableStateOf(false) }
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize().background(bg),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(onClick = onBack) { Text("Back", color = accent) }
-                Text("Settings", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                Text(state.currentSession?.role?.title ?: "Buyer", color = muted, style = MaterialTheme.typography.labelSmall)
-            }
-        }
-
-        item {
-            Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Preferences", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    SettingsToggleRow(label = "Push Notifications", subtitle = "Order and offer updates", checked = pushEnabled, onChecked = {
-                        pushEnabled =
-                            it
-                    }, textColor = text, mutedColor = muted)
-                    SettingsToggleRow(label = "Bargain Alerts", subtitle = "Live updates on tracked items", checked = bargainAlertsEnabled, onChecked = {
-                        bargainAlertsEnabled =
-                            it
-                    }, textColor = text, mutedColor = muted)
-                    SettingsToggleRow(label = "Dark Feed Preview", subtitle = "Use high contrast feed cards", checked = darkPreviewEnabled, onChecked = {
-                        darkPreviewEnabled =
-                            it
-                    }, textColor = text, mutedColor = muted)
-                }
-            }
-        }
-
-        item {
-            Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Language & Region", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Surface(color = surfaceHigh, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column {
-                                Text("Preferred language", color = text)
-                                Text("English (India)", color = muted, style = MaterialTheme.typography.bodySmall)
-                            }
-                            Text("Change", color = accent, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    Surface(color = surfaceHigh, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column {
-                                Text("Region", color = text)
-                                Text("Bengaluru", color = muted, style = MaterialTheme.typography.bodySmall)
-                            }
-                            Text("Edit", color = accent, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Surface(color = surface, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Help Center", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    ProfileActionTile(
-                        title = "Contact Support",
-                        subtitle = "Report payment, shipping, or app issues",
-                        onClick = onOpenSupport,
-                        accent = accent,
-                    )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                    ProfileActionTile(
-                        title = "Privacy Policy",
-                        subtitle = "Understand data usage and retention",
-                        onClick = onOpenPrivacy,
-                        accent = accent,
-                    )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                    ProfileActionTile(
-                        title = "About NotWhat",
-                        subtitle = "Brand story, version, and legal disclosures",
-                        onClick = onOpenAbout,
-                        accent = accent,
-                    )
-                }
-            }
-        }
-
-        item {
-            Surface(
-                modifier = Modifier.fillMaxWidth().clickable { onSignOut() },
-                shape = RoundedCornerShape(14.dp),
-                color = NotWhatColors.surfaceContainerHigh,
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Sign Out", fontWeight = FontWeight.Bold, color = NotWhatColors.primary)
-                    Text("Leave", color = NotWhatColors.primary, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ContactSupportScreen(
     modifier: Modifier,
     onBack: () -> Unit,
@@ -1004,34 +889,6 @@ private fun ProfileActionTile(
     }
 }
 
-@Composable
-private fun SettingsToggleRow(
-    label: String,
-    subtitle: String,
-    checked: Boolean,
-    onChecked: (Boolean) -> Unit,
-    textColor: Color,
-    mutedColor: Color,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        color = Color.Transparent,
-        border = androidx.compose.foundation.BorderStroke(1.dp, NotWhatColors.outline.copy(alpha = 0.5f)),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(label, color = textColor, fontWeight = FontWeight.SemiBold)
-                Text(subtitle, color = mutedColor, style = MaterialTheme.typography.bodySmall)
-            }
-            Switch(checked = checked, onCheckedChange = onChecked)
-        }
-    }
-}
 
 @Composable
 private fun ProfileImage(

@@ -615,10 +615,10 @@ internal fun ReelProductTagSheet(
                         },
                         shape = SellerUiTokens.radiusButton,
                         colors = ButtonDefaults.buttonColors(containerColor = accent),
-                        enabled = selectedIds.size in 1..3,
+                        enabled = selectedIds.isNotEmpty(),
                     ) {
                         Text(
-                            "Save ${selectedIds.size}/3",
+                            "Save ${selectedIds.size}",
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.labelMedium,
@@ -658,7 +658,7 @@ internal fun ReelProductTagSheet(
                 ) {
                     Text("⬡", color = accent, style = MaterialTheme.typography.labelSmall)
                     Text(
-                        "Select 1–3 products. They appear in the buyer feed when this reel is shared.",
+                        "Select one or more products. They appear in the buyer feed when this reel is shared.",
                         color = text,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.weight(1f),

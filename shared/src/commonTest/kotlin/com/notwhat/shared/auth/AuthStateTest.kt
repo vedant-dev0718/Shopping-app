@@ -37,12 +37,13 @@ class AuthStateTest {
         AuthPersistenceStore.clearAll()
         val locator = ServiceLocator(AppConfig(BackendFlowMode.MOCK))
         locator.authPersistence.saveBackendMode(BackendFlowMode.MOCK)
-        val state = AuthState(
-            useCase = locator.authUseCase,
-            persistence = locator.authPersistence,
-            config = locator.config,
-            appRole = UserRole.Buyer,
-        )
+        val state =
+            AuthState(
+                useCase = locator.authUseCase,
+                persistence = locator.authPersistence,
+                config = locator.config,
+                appRole = UserRole.Buyer,
+            )
         state.loginEmail = "seller@example.com"
         state.loginPassword = "Password123!"
         state.selectedMockRole = UserRole.Seller

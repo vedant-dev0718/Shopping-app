@@ -78,9 +78,9 @@ class AppFlowStateTest {
         assertEquals(AppRoute.ProfileShellRouteEntry(ProfileShellRoute.ProfileAddress), flow.route)
         assertEquals(ProfileShellRoute.ProfileAddress, flow.profileRoute)
 
-        flow.onEvent(AppNavEvent.ChangeProfileRoute(ProfileShellRoute.SettingsHelp))
-        assertEquals(ProfileShellRoute.SettingsHelp, flow.profileRoute)
-        assertEquals(AppRoute.ProfileShellRouteEntry(ProfileShellRoute.SettingsHelp), flow.route)
+        flow.onEvent(AppNavEvent.ChangeProfileRoute(ProfileShellRoute.ContactSupport))
+        assertEquals(ProfileShellRoute.ContactSupport, flow.profileRoute)
+        assertEquals(AppRoute.ProfileShellRouteEntry(ProfileShellRoute.ContactSupport), flow.route)
 
         flow.onEvent(AppNavEvent.OpenSellerDashboard)
         assertEquals(AppRoute.SellerShellRouteEntry(SellerShellRoute.Dashboard), flow.route)

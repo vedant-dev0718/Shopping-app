@@ -28,6 +28,8 @@ import com.notwhat.shared.auth.SharedAuthException
 import com.notwhat.shared.auth.SocialAuthPayload
 import com.notwhat.shared.notifications.AndroidPushTokenBridgeRegistry
 import com.notwhat.shared.notifications.captureDeepLinkFromIntent
+import com.notwhat.shared.notifications.requestIgnoreBatteryOptimizationsIfNeeded
+import com.notwhat.shared.notifications.scheduleBackgroundOrderSync
 import com.notwhat.shared.ui.AndroidMediaPickerBridgeRegistry
 import com.notwhat.shared.ui.NotWhatApp
 import com.notwhat.shared.ui.initCoilForAndroid
@@ -94,6 +96,8 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermissionIfNeeded()
         fetchPushTokenIfAvailable()
         captureDeepLinkFromIntent(intent)
+        scheduleBackgroundOrderSync(applicationContext)
+        requestBatteryOptimizationExemptionOnce()
 
         setContent {
             NotWhatApp(forcedRole = forcedRole)
@@ -112,6 +116,14 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
+    }
+
+    /** Only asks once per install — Doze/App Standby otherwise throttles the background order-sync worker. */
+    private fun requestBatteryOptimizationExemptionOnce() {
+        val prefs = getSharedPreferences("notwhat_prefs", MODE_PRIVATE)
+        if (prefs.getBoolean("batteryOptimizationRequested", false)) return
+        prefs.edit().putBoolean("batteryOptimizationRequested", true).apply()
+        requestIgnoreBatteryOptimizationsIfNeeded(applicationContext)
     }
 
     /** No-ops until an Android app is registered for this Firebase project (google-services.json). */
