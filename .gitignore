@@ -26,3 +26,4 @@ backend/.mongo-data/
 .tmp/*
 /scripts/
 ios/SourcePackages/
+/web/*
