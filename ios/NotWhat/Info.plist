@@ -51,6 +51,13 @@
 		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
+			<!-- TEMPORARY: plain-HTTP staging backend on its Elastic IP.
+			     Remove once the API is behind HTTPS on a real hostname. -->
+			<key>3.131.20.118</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
 			<key>localhost</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
