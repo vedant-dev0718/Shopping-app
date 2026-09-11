@@ -5,7 +5,7 @@
       "Sid": "S3ExpressDirectoryBucket",
       "Effect": "Allow",
       "Action": "s3express:CreateSession",
-      "Resource": "arn:aws:s3express:us-east-2:ACCOUNT_ID:bucket/notwhat-bucket--use2-az2--x-s3"
+      "Resource": "arn:aws:s3express:us-east-2:357199110509:bucket/notwhat-bucket--use2-az2--x-s3"
     },
     {
       "Sid": "S3Objects",
@@ -36,7 +36,7 @@
       "Sid": "PassMediaConvertRole",
       "Effect": "Allow",
       "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::ACCOUNT_ID:role/MEDIACONVERT_ROLE_NAME"
+      "Resource": "arn:aws:iam::357199110509:role/MediaConvertDefaultRole"
     },
     {
       "Sid": "ReadConfigFromParameterStore",
@@ -46,7 +46,7 @@
         "ssm:GetParameters",
         "ssm:GetParametersByPath"
       ],
-      "Resource": "arn:aws:ssm:us-east-2:ACCOUNT_ID:parameter/notwhat/prod/*"
+      "Resource": "arn:aws:ssm:us-east-2:357199110509:parameter/notwhat/prod/*"
     },
     {
       "Sid": "DecryptSecureStrings",

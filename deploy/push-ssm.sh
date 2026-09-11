@@ -36,6 +36,12 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     continue
   fi
 
+  # SSM rejects empty values; env.js already defaults these.
+  if [[ -z "$val" ]]; then
+    echo "empty $key"
+    continue
+  fi
+
   aws ssm put-parameter --region "$REGION" --overwrite \
     --name "$PREFIX/$key" --value "$val" --type SecureString >/dev/null
   echo "put   $key"
