@@ -17,6 +17,11 @@ const { runEarningsEligibility } = require('./jobs/earningsEligibility.job');
 
 const app = express();
 
+// Behind the nginx reverse proxy every request arrives from 127.0.0.1, which
+// would collapse the rate limiters below into a single shared bucket. Trust
+// exactly one hop so a client cannot spoof its own X-Forwarded-For.
+app.set('trust proxy', 1);
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: env.nodeEnv === 'test' ? 1000 : 60,
