@@ -651,7 +651,8 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
   if (!winningBid) {
     schedule.status = 'closed';
     schedule.winningBidId = null;
-    await schedule.save();
+    product.bargainEnabled = false;
+    await Promise.all([schedule.save(), product.save()]);
 
     return {
       schedule,
@@ -669,7 +670,8 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
 
     schedule.status = 'closed';
     schedule.winningBidId = null;
-    await schedule.save();
+    product.bargainEnabled = false;
+    await Promise.all([schedule.save(), product.save()]);
 
     return {
       schedule,
@@ -731,6 +733,7 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
 
   schedule.status = 'closed';
   schedule.winningBidId = winningBid._id;
+  product.bargainEnabled = false;
 
   await Promise.all([
     winningBid.save(),

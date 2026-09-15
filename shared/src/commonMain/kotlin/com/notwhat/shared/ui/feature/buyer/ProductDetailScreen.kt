@@ -200,7 +200,8 @@ internal fun ProductDetailScreen(
         }
     }
 
-    val hasBargainContext = resolvedProduct.bargainEnabled || hasActiveBargainSchedule == true
+    val hasBargainContext =
+        hasActiveBargainSchedule == true || (hasActiveBargainSchedule == null && resolvedProduct.bargainEnabled)
 
     val acceptedBidForProduct =
         buyerBids.firstOrNull {
@@ -252,7 +253,7 @@ internal fun ProductDetailScreen(
     Box(modifier = modifier.fillMaxSize().background(detailBg)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (isSellerView) 16.dp else 176.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (isSellerView) 16.dp else 220.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
@@ -317,7 +318,7 @@ internal fun ProductDetailScreen(
                             )
                         }
 
-                        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(resolvedProduct.displayPrice, color = detailAccent, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
                             pricingMeta.originalPrice?.let { originalPrice ->
                                 Text(
@@ -696,6 +697,7 @@ internal fun ProductDetailScreen(
                         }
 
                         val shippingInfo = shippingAddress.toBidShippingInfo(state.currentSession?.email.orEmpty())
+
                         val result = state.bargainUseCase.placeBid(
                             productId = resolvedProduct.id,
                             amount = amount,
@@ -936,14 +938,22 @@ internal fun MakeOfferCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(title, color = textColor, fontWeight = FontWeight.Bold)
                 Text(subtitle, color = mutedColor, style = MaterialTheme.typography.bodySmall)
             }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(stats, color = accentColor, style = MaterialTheme.typography.labelMedium)
+                Text(stats, color = accentColor, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                 Surface(color = chipColor, shape = RoundedCornerShape(8.dp)) {
-                    Text(badge, color = textColor, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        badge,
+                        color = textColor,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
