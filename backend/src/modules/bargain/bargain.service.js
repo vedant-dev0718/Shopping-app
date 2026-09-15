@@ -266,7 +266,7 @@ const placeBid = async (buyer, productId, { amount, quantity = 1, shippingInfo }
     return existingBid;
   }
 
-  return Bid.create({
+  const newBid = await Bid.create({
     productId: product._id,
     buyerId: buyer.id,
     sellerId: product.sellerId,
@@ -276,6 +276,14 @@ const placeBid = async (buyer, productId, { amount, quantity = 1, shippingInfo }
     paymentStatus: 'not_required',
     bidStatus: 'pending_seller_decision'
   });
+
+  await notificationService.sendToUser(product.sellerId, {
+    title: 'New bid received',
+    subtitle: `A buyer bid ₹${amount} on ${product.title}`,
+    data: { type: 'bargain_bid_raised', productId: product._id.toString(), bidId: newBid._id.toString() }
+  });
+
+  return newBid;
 };
 
 const releaseBidAuthorizations = async (bids, status = 'lost') => {
