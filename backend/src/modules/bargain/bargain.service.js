@@ -509,7 +509,7 @@ const acceptBid = async (seller, productId, bidId) => {
 
   await notificationService.sendToUser(bid.buyerId, {
     title: 'Your bid was accepted!',
-    subtitle: `Complete payment for ${product.title} to confirm your order`,
+    subtitle: `We'll confirm your order for ${product.title} shortly`,
     data: { type: 'bargain_bid_accepted', productId: product._id.toString(), bidId: bid._id.toString() }
   });
 

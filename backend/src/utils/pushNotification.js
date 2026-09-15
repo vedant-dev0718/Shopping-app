@@ -1,4 +1,5 @@
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 
 const env = require('../config/env');
 
@@ -20,7 +21,7 @@ const getFirebaseApp = () => {
 
   try {
     const credentials = JSON.parse(env.firebaseServiceAccountJson);
-    firebaseApp = admin.initializeApp({ credential: admin.credential.cert(credentials) });
+    firebaseApp = initializeApp({ credential: cert(credentials) });
   } catch (error) {
     console.error('[push] Failed to initialize Firebase Admin SDK:', error.message);
     firebaseApp = null;
@@ -45,7 +46,7 @@ const sendMulticast = async (tokens, { title, subtitle = '', data = {} }) => {
     return { successCount: 0, invalidTokens: [] };
   }
 
-  const response = await admin.messaging(app).sendEachForMulticast({
+  const response = await getMessaging(app).sendEachForMulticast({
     tokens,
     notification: { title, body: subtitle },
     apns: {
