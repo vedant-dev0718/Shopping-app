@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,9 +38,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +60,7 @@ import com.notwhat.shared.bargain.BargainScheduleDto
 import com.notwhat.shared.bargain.BidDto
 import com.notwhat.shared.catalog.ProductDto
 import com.notwhat.shared.core.NetworkResult
+import com.notwhat.shared.util.copyToClipboard
 import com.notwhat.shared.util.toIso8601
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -110,6 +114,7 @@ private fun sellerInitials(name: String?): String {
 }
 
 @Composable
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 internal fun SellerShellScreen(
     modifier: Modifier,
     state: NotWhatAppState,
@@ -368,8 +373,22 @@ internal fun SellerShellScreen(
             }
         },
     ) {
+        PullToRefreshBox(
+            isRefreshing = state.sellerContent.isLoading,
+            onRefresh = {
+                state.currentSession?.authToken
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { token ->
+                        scope.launch {
+                            state.sellerContent.load(token)
+                            state.sellerContent.loadEarningsTrend(token)
+                        }
+                    }
+            },
+            modifier = modifier.fillMaxSize(),
+        ) {
         LazyColumn(
-            modifier = modifier.fillMaxSize().background(bg),
+            modifier = Modifier.fillMaxSize().background(bg),
             contentPadding = PaddingValues(SellerUiTokens.screenPadding),
             verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
         ) {
@@ -558,6 +577,7 @@ internal fun SellerShellScreen(
             }
             }
         }
+        }
     }
 }
 
@@ -663,6 +683,17 @@ private fun StoreUpiCard(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     placeholder = { Text("yourstore@okaxis", color = muted) },
+                    trailingIcon = {
+                        if (upiId.isNotBlank()) {
+                            IconButton(onClick = {
+                                copyToClipboard("UPI ID", upiId)
+                                isError = false
+                                message = "UPI ID copied."
+                            }) {
+                                Icon(Icons.Filled.ContentCopy, contentDescription = "Copy UPI ID", tint = accent)
+                            }
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = surfaceHigh,
                         unfocusedContainerColor = surfaceHigh,
@@ -704,13 +735,11 @@ private fun StoreUpiCard(
                         Text("Save UPI ID", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
-                message?.let {
-                    Text(
-                        it,
-                        color = if (isError) Color(0xFFEF4444) else accent,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
+                AppMessageToast(
+                    message = message,
+                    severity = if (isError) AppMessageSeverity.Error else AppMessageSeverity.Success,
+                    onDismiss = { message = null },
+                )
             }
         }
     }
@@ -1388,6 +1417,9 @@ internal fun SellerAcceptedBidsQueueScreen(
     var actionNote by remember { mutableStateOf<String?>(null) }
     var actingBidId by remember { mutableStateOf<String?>(null) }
     var queueItems by remember { mutableStateOf<List<SellerAcceptedBidQueueItem>>(emptyList()) }
+    val openQueueCount by remember {
+        derivedStateOf { queueItems.count { it.bid.status in setOf("accepted", "won", "pending_seller_decision") } }
+    }
 
     suspend fun refreshQueue() {
         val token = state.currentSession?.authToken
@@ -1441,7 +1473,7 @@ internal fun SellerAcceptedBidsQueueScreen(
                 Text("Bid Queue", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                 Surface(color = surface, shape = RoundedCornerShape(10.dp)) {
                     Text(
-                        queueItems.size.toString(),
+                        openQueueCount.toString(),
                         color = text,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall,
@@ -1461,22 +1493,21 @@ internal fun SellerAcceptedBidsQueueScreen(
 
         actionNote?.let { note ->
             item {
-                Surface(color = Color(0xFFF0F6FF), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Text(note, color = Color(0xFF1F4B8F), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
-                }
+                AppMessageToast(
+                    message = note,
+                    severity = AppMessageSeverity.Info,
+                    onDismiss = { actionNote = null },
+                )
             }
         }
 
         loadError?.let { message ->
             item {
-                Surface(color = Color(0xFFFFF0E6), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        message,
-                        color = Color(0xFF8B4513),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(12.dp),
-                    )
-                }
+                AppMessageToast(
+                    message = message,
+                    severity = AppMessageSeverity.Error,
+                    onDismiss = { loadError = null },
+                )
             }
         }
 
