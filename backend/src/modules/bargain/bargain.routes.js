@@ -11,14 +11,12 @@ const {
   sellerBidActionValidation,
   closeBargainValidation,
   scheduleValidation,
-  createBidOrderValidation,
   placeBidValidation
 } = require('./bargain.validation');
 
 router.get('/active', bargainController.getActiveBargains);
 router.get('/my-bids', authenticate, requireBuyer, bargainController.getMyBids);
 router.post('/products/:productId/schedule', authenticate, requireSeller, scheduleValidation, validate, bargainController.scheduleBargain);
-router.post('/products/:productId/bid-order', authenticate, requireBuyer, createBidOrderValidation, validate, bargainController.createBidOrder);
 router.post('/products/:productId/bids', authenticate, requireBuyer, placeBidValidation, validate, bargainController.placeBid);
 router.get('/products/:productId/bids/summary', authenticate, requireBuyer, productIdValidation, validate, bargainController.getProductBidSummary);
 router.post('/products/:productId/bids/:bidId/accept', authenticate, requireSeller, acceptBidValidation, validate, bargainController.acceptBid);

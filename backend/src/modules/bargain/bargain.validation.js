@@ -1,7 +1,5 @@
 const { body, param } = require('express-validator');
 
-const env = require('../../config/env');
-
 const productIdValidation = [
   param('productId').isMongoId().withMessage('A valid product id is required')
 ];
@@ -11,12 +9,6 @@ const scheduleValidation = [
   body('startDate').isISO8601().withMessage('A valid startDate is required').toDate(),
   body('endDate').isISO8601().withMessage('A valid endDate is required').toDate(),
   body('reservePrice').optional().isFloat({ min: 0 }).withMessage('reservePrice must be zero or greater').toFloat()
-];
-
-const createBidOrderValidation = [
-  param('productId').isMongoId().withMessage('A valid product id is required'),
-  body('amount').isFloat({ gt: 0 }).withMessage('Bid amount must be greater than 0').toFloat(),
-  body('quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1').toInt()
 ];
 
 const placeBidValidation = [
@@ -30,12 +22,7 @@ const placeBidValidation = [
   body('shippingInfo.address').trim().notEmpty().withMessage('Shipping address is required'),
   body('shippingInfo.city').trim().notEmpty().withMessage('Shipping city is required'),
   body('shippingInfo.state').trim().notEmpty().withMessage('Shipping state is required'),
-  body('shippingInfo.postalCode').trim().notEmpty().withMessage('Shipping postal code is required'),
-  body('razorpayPaymentId')
-    .if(() => env.nodeEnv === 'production')
-    .trim()
-    .notEmpty()
-    .withMessage('razorpayPaymentId is required')
+  body('shippingInfo.postalCode').trim().notEmpty().withMessage('Shipping postal code is required')
 ];
 
 const bidIdValidation = [
@@ -64,6 +51,5 @@ module.exports = {
   sellerBidActionValidation,
   closeBargainValidation,
   scheduleValidation,
-  createBidOrderValidation,
   placeBidValidation
 };

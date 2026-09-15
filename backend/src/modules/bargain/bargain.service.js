@@ -1,10 +1,5 @@
 const AppError = require('../../utils/AppError');
 const env = require('../../config/env');
-const {
-  createManualCaptureOrder,
-  fetchPayment,
-  safeCaptureBidPaymentOnce
-} = require('../../utils/razorpay');
 const { sendEmailSafe } = require('../../utils/email');
 const {
   buildBidLostEmail,
@@ -21,19 +16,10 @@ const Product = require('../products/product.model');
 const User = require('../users/user.model');
 const Bid = require('./bid.model');
 const BargainSchedule = require('./bargainSchedule.model');
-const { splitPaymentToSellers } = require('../checkout/webhook.controller');
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_BARGAIN_DAYS = 1;
 const MAX_BARGAIN_DAYS = 2;
-
-const getBidAuthorizationExpiresAt = () => {
-  const minutes = Number.isFinite(env.bidAcceptanceWindowMinutes)
-    ? env.bidAcceptanceWindowMinutes
-    : 240;
-
-  return new Date(Date.now() + minutes * 60 * 1000);
-};
 
 const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
@@ -66,49 +52,6 @@ const shippingInfoIsComplete = (shippingInfo = {}) => {
     && cleaned.state
     && cleaned.postalCode
   );
-};
-
-const paymentMethodFromRazorpay = (payment = {}) => {
-  const method = String(payment.method || '').toLowerCase();
-
-  if (['card', 'netbanking', 'wallet'].includes(method)) {
-    return method;
-  }
-
-  return 'UPI';
-};
-
-const buildCaptureSummary = (payment = {}, fallback = {}) => ({
-  id: payment.id || fallback.paymentId || '',
-  orderId: payment.order_id || fallback.orderId || '',
-  status: payment.status || fallback.status || '',
-  amount: payment.amount || fallback.amount || 0,
-  currency: payment.currency || 'INR',
-  fee: payment.fee || 0,
-  tax: payment.tax || 0,
-  method: payment.method || ''
-});
-
-const getExpectedPaymentAmount = (order, winningBid) => Math.round(
-  roundMoney(order.finalTotal || winningBid.amount || 0) * 100
-);
-
-const validateCapturedAmountMatchesOrder = ({ order, winningBid, capturePayment }) => {
-  const expectedAmount = getExpectedPaymentAmount(order, winningBid);
-  const capturedAmount = Number(capturePayment?.amount);
-
-  if (!Number.isFinite(capturedAmount)) {
-    throw new AppError('Unable to verify captured payment amount against order total', 409);
-  }
-
-  if (Math.round(capturedAmount) !== expectedAmount) {
-    throw new AppError(
-      `Captured payment amount mismatch: expected ${expectedAmount} paise but received ${Math.round(capturedAmount)} paise`,
-      409
-    );
-  }
-
-  return expectedAmount;
 };
 
 const activeProductPopulate = {
@@ -260,7 +203,7 @@ const scheduleBargain = async (seller, productId, { startDate, endDate, reserveP
   return schedule;
 };
 
-const createBidOrder = async (buyer, productId, { amount, quantity = 1 }) => {
+const placeBid = async (buyer, productId, { amount, quantity = 1, shippingInfo }) => {
   const product = await Product.findById(productId);
 
   if (!product || product.status !== 'active' || product.stock <= 0) {
@@ -268,55 +211,7 @@ const createBidOrder = async (buyer, productId, { amount, quantity = 1 }) => {
   }
 
   if (amount >= product.price) {
-    throw new AppError('Bid price per item must be lower than the marked price', 400);
-  }
-
-  if (!Number.isInteger(quantity) || quantity < 1) {
-    throw new AppError('Quantity must be at least 1', 400);
-  }
-
-  if (quantity > product.stock) {
-    throw new AppError('Quantity cannot exceed available product stock', 400);
-  }
-
-  const schedule = await getActiveScheduleForProduct(product._id);
-
-  if (!scheduleIsCurrentlyOpen(schedule)) {
-    throw new AppError('Bargain schedule is not currently active', 400);
-  }
-
-  let razorpayOrderId;
-  let razorpayOrderAmount = Math.round(amount * quantity * 100);
-
-  if (env.razorpayKeyId && env.razorpayKeySecret) {
-    const razorpayOrder = await createManualCaptureOrder({
-      amount: razorpayOrderAmount,
-      currency: 'INR',
-      receipt: `bid_${buyer.id.toString().slice(-8)}_${Date.now().toString(36)}`,
-      notes: { buyerId: buyer.id.toString(), productId: product._id.toString() }
-    });
-    razorpayOrderId = razorpayOrder.id;
-    razorpayOrderAmount = razorpayOrder.amount;
-  } else {
-    razorpayOrderId = `mock_bid_order_${Date.now()}`;
-  }
-
-  return {
-    razorpayKeyId: env.razorpayKeyId || '',
-    razorpayOrderId,
-    razorpayOrderAmount
-  };
-};
-
-const placeBid = async (buyer, productId, { amount, quantity = 1, razorpayPaymentId, shippingInfo }) => {
-  const product = await Product.findById(productId);
-
-  if (!product || product.status !== 'active' || product.stock <= 0) {
-    throw new AppError('Product is not available for bidding', 400);
-  }
-
-  if (amount >= product.price) {
-    throw new AppError('Bid price per item must be lower than the marked price', 400);
+    throw new AppError(`Bid price per item must be lower than ₹${product.price}`, 400);
   }
 
   if (!Number.isInteger(quantity) || quantity < 1) {
@@ -353,43 +248,20 @@ const placeBid = async (buyer, productId, { amount, quantity = 1, razorpayPaymen
     throw new AppError('You already have an active bid at this amount. Enter a different amount to update your bid.', 400);
   }
 
-  let verifiedPaymentId = razorpayPaymentId;
-  let verifiedPayment = null;
-
-  if (!verifiedPaymentId && env.nodeEnv !== 'production') {
-    verifiedPaymentId = `dev_bid_payment_${Date.now()}`;
-  } else {
-    const payment = await fetchPayment(verifiedPaymentId);
-
-    if (!payment || payment.status !== 'authorized') {
-      throw new AppError('Payment not authorized', 400);
-    }
-
-    if (payment.amount !== Math.round(amount * quantity * 100)) {
-      throw new AppError('Payment amount mismatch', 400);
-    }
-
-    verifiedPayment = payment;
-  }
-
   // Buyers can revise their bid by placing another bid; the active bid is updated in place.
   if (existingBid) {
     existingBid.amount = amount;
     existingBid.quantity = quantity;
     existingBid.shippingInfo = cleanedShippingInfo;
-    existingBid.razorpayPaymentId = verifiedPaymentId;
-    existingBid.razorpayOrderId = verifiedPayment?.order_id || existingBid.razorpayOrderId;
-    existingBid.paymentStatus = 'authorized';
+    existingBid.paymentStatus = 'not_required';
     existingBid.bidStatus = 'pending_seller_decision';
-    existingBid.razorpay = {
-      ...(existingBid.razorpay || {}),
-      orderId: verifiedPayment?.order_id || existingBid.razorpay?.orderId || '',
-      paymentId: verifiedPaymentId,
-      authorizedAt: new Date(),
-      authorizationExpiresAt: getBidAuthorizationExpiresAt(),
-      captureFailureReason: ''
-    };
     await existingBid.save();
+
+    await notificationService.sendToUser(product.sellerId, {
+      title: 'Bid raised',
+      subtitle: `A buyer raised their bid to ₹${amount} on ${product.title}`,
+      data: { type: 'bargain_bid_raised', productId: product._id.toString(), bidId: existingBid._id.toString() }
+    });
 
     return existingBid;
   }
@@ -401,16 +273,8 @@ const placeBid = async (buyer, productId, { amount, quantity = 1, razorpayPaymen
     amount,
     quantity,
     shippingInfo: cleanedShippingInfo,
-    razorpayOrderId: verifiedPayment?.order_id || '',
-    razorpayPaymentId: verifiedPaymentId,
-    paymentStatus: 'authorized',
-    bidStatus: 'pending_seller_decision',
-    razorpay: {
-      orderId: verifiedPayment?.order_id || '',
-      paymentId: verifiedPaymentId,
-      authorizedAt: new Date(),
-      authorizationExpiresAt: getBidAuthorizationExpiresAt()
-    }
+    paymentStatus: 'not_required',
+    bidStatus: 'pending_seller_decision'
   });
 };
 
@@ -469,32 +333,22 @@ const createOrderFromWinningBid = async ({ winningBid, product, schedule }) => {
     sellerIds: [product.sellerId],
     items: [financialItem],
     shippingInfo: cleanShippingInfo(winningBid.shippingInfo),
-    paymentMethod: paymentMethodFromRazorpay(),
-    paymentCaptureMode: 'manual',
-    razorpayOrderId: winningBid.razorpayOrderId || winningBid.razorpay?.orderId || '',
-    razorpayPaymentId: winningBid.razorpayPaymentId || winningBid.razorpay?.paymentId || '',
-    paymentStatus: 'authorized',
+    paymentMethod: 'COD',
+    paymentCaptureMode: 'automatic',
+    paymentStatus: 'pending',
     orderStatus: 'processing',
-    trackingStatus: 'Winning bid accepted. Payment capture pending.',
+    trackingStatus: 'Order confirmed from winning bid',
     sellerAcceptance: {
       status: 'accepted',
       acceptedBy: product.sellerId,
       acceptedAt: now
     },
     paymentFlow: {
-      captureAfterSellerAcceptance: true,
-      razorpayOrderId: winningBid.razorpayOrderId || winningBid.razorpay?.orderId || '',
-      razorpayPaymentId: winningBid.razorpayPaymentId || winningBid.razorpay?.paymentId || '',
-      signatureVerified: Boolean(winningBid.razorpay?.signatureVerified),
-      authorizedAt: winningBid.razorpay?.authorizedAt || null,
-      authorizationExpiresAt: winningBid.razorpay?.authorizationExpiresAt || null
+      captureAfterSellerAcceptance: false,
+      signatureVerified: false
     },
     razorpay: {
-      orderId: winningBid.razorpayOrderId || winningBid.razorpay?.orderId || '',
-      paymentId: winningBid.razorpayPaymentId || winningBid.razorpay?.paymentId || '',
-      signatureVerified: Boolean(winningBid.razorpay?.signatureVerified),
-      authorizedAt: winningBid.razorpay?.authorizedAt || null,
-      authorizationExpiresAt: winningBid.razorpay?.authorizationExpiresAt || null
+      signatureVerified: false
     },
     inventoryConfirmation: {
       confirmedAvailable: true,
@@ -520,71 +374,6 @@ const createOrderFromWinningBid = async ({ winningBid, product, schedule }) => {
 
   winningBid.orderId = order._id;
   await winningBid.save();
-
-  return order;
-};
-
-const markWinningBidOrderCaptureFailed = async (order, reason) => {
-  order.paymentStatus = 'capture_failed';
-  order.trackingStatus = 'Winning bid payment capture failed';
-  order.paymentFlow = order.paymentFlow || {};
-  order.paymentFlow.captureFailureReason = reason;
-  order.razorpay = order.razorpay || {};
-  order.razorpay.captureFailureReason = reason;
-  await order.save();
-};
-
-const markWinningBidOrderPaid = async ({ order, winningBid, capturePayment }) => {
-  const now = new Date();
-  const captureAmount = validateCapturedAmountMatchesOrder({ order, winningBid, capturePayment });
-  const summary = buildCaptureSummary(capturePayment, {
-    paymentId: winningBid.razorpayPaymentId || winningBid.razorpay?.paymentId || '',
-    orderId: winningBid.razorpayOrderId || winningBid.razorpay?.orderId || '',
-    status: 'captured',
-    amount: captureAmount
-  });
-
-  order.paymentMethod = paymentMethodFromRazorpay(capturePayment);
-  order.paymentStatus = 'paid';
-  order.orderStatus = 'processing';
-  order.trackingStatus = 'Order confirmed from winning bid';
-  order.razorpayOrderId = winningBid.razorpayOrderId || winningBid.razorpay?.orderId || order.razorpayOrderId || '';
-  order.razorpayPaymentId = winningBid.razorpayPaymentId || winningBid.razorpay?.paymentId || order.razorpayPaymentId || '';
-  order.paymentFlow = {
-    ...(order.paymentFlow || {}),
-    captureAfterSellerAcceptance: true,
-    razorpayOrderId: order.razorpayOrderId,
-    razorpayPaymentId: order.razorpayPaymentId,
-    signatureVerified: Boolean(winningBid.razorpay?.signatureVerified),
-    authorizedAt: winningBid.razorpay?.authorizedAt || order.paymentFlow?.authorizedAt || null,
-    capturedAt: order.paymentFlow?.capturedAt || now,
-    captureAmount,
-    captureResponseSafeSummary: summary,
-    captureFailureReason: '',
-    authorizationExpiresAt: winningBid.razorpay?.authorizationExpiresAt || order.paymentFlow?.authorizationExpiresAt || null
-  };
-  order.razorpay = {
-    ...(order.razorpay || {}),
-    orderId: order.razorpayOrderId,
-    paymentId: order.razorpayPaymentId,
-    signatureVerified: Boolean(winningBid.razorpay?.signatureVerified),
-    authorizedAt: winningBid.razorpay?.authorizedAt || order.razorpay?.authorizedAt || null,
-    capturedAt: order.razorpay?.capturedAt || now,
-    captureAmount,
-    captureResponseSafeSummary: summary,
-    captureFailureReason: '',
-    authorizationExpiresAt: winningBid.razorpay?.authorizationExpiresAt || order.razorpay?.authorizationExpiresAt || null
-  };
-
-  await order.save();
-
-  try {
-    await splitPaymentToSellers(order, order.razorpayPaymentId, capturePayment);
-  } catch (error) {
-    console.error(`Failed to initiate Route transfer for winning bid order ${order._id}:`, error.message);
-    order.payoutStatus = 'route_transfer_failed';
-    await order.save();
-  }
 
   return order;
 };
@@ -693,11 +482,6 @@ const acceptBid = async (seller, productId, bidId) => {
     throw new AppError('Bid quantity exceeds available stock', 409);
   }
 
-  const authorizationExpiresAt = bid.razorpay?.authorizationExpiresAt;
-  if (authorizationExpiresAt && new Date(authorizationExpiresAt).getTime() <= Date.now()) {
-    throw new AppError('Bid payment authorization has expired', 409);
-  }
-
   const competingBids = await Bid.find({
     productId: product._id,
     _id: { $ne: bid._id },
@@ -714,7 +498,7 @@ const acceptBid = async (seller, productId, bidId) => {
     decidedBy: seller.id,
     decidedAt: new Date(),
     decision: 'accepted',
-    messageToBuyer: 'Your bid was accepted. Proceed to payment within the allowed window.',
+    messageToBuyer: 'Your bid was accepted. We will confirm your order shortly.',
     rejectionReason: ''
   };
   await bid.save();
@@ -722,6 +506,12 @@ const acceptBid = async (seller, productId, bidId) => {
   schedule.status = 'closed';
   schedule.winningBidId = bid._id;
   await schedule.save();
+
+  await notificationService.sendToUser(bid.buyerId, {
+    title: 'Your bid was accepted!',
+    subtitle: `Complete payment for ${product.title} to confirm your order`,
+    data: { type: 'bargain_bid_accepted', productId: product._id.toString(), bidId: bid._id.toString() }
+  });
 
   return {
     acceptedBid: bid,
@@ -753,19 +543,14 @@ const closeBidPaymentWindow = async (seller, productId, bidId) => {
 
   const now = new Date();
   bid.bidStatus = 'expired';
-  bid.paymentStatus = 'authorization_expired';
+  bid.paymentStatus = 'cancelled';
   bid.sellerDecision = {
     ...(bid.sellerDecision || {}),
     decidedBy: seller.id,
     decidedAt: now,
     decision: 'rejected',
-    messageToBuyer: 'Payment window closed by seller.',
+    messageToBuyer: 'Seller cancelled this bid before finalization.',
     rejectionReason: 'Payment window closed by seller'
-  };
-  bid.razorpay = {
-    ...(bid.razorpay || {}),
-    authorizationExpiresAt: now,
-    captureFailureReason: 'Payment window closed by seller'
   };
   await bid.save();
 
@@ -803,7 +588,7 @@ const reopenBidNegotiation = async (seller, productId, bidId) => {
   }
 
   bid.bidStatus = 'pending_seller_decision';
-  bid.paymentStatus = 'pending_authorization';
+  bid.paymentStatus = 'not_required';
   bid.sellerDecision = {
     ...(bid.sellerDecision || {}),
     decidedBy: seller.id,
@@ -895,31 +680,6 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
     schedule
   });
 
-  const captureResult = await safeCaptureBidPaymentOnce(winningBid);
-
-  if (!captureResult.captured) {
-    const reason = captureResult.reason || 'Winning bid payment could not be captured';
-    await markWinningBidOrderCaptureFailed(order, reason);
-    throw new AppError(reason, 409);
-  }
-
-  try {
-    validateCapturedAmountMatchesOrder({
-      order,
-      winningBid,
-      capturePayment: captureResult.payment
-    });
-  } catch (error) {
-    await markWinningBidOrderCaptureFailed(order, error.message);
-    throw error;
-  }
-
-  await markWinningBidOrderPaid({
-    order,
-    winningBid,
-    capturePayment: captureResult.payment
-  });
-
   const losingBids = await Bid.find({
     productId: product._id,
     _id: { $ne: winningBid._id },
@@ -929,7 +689,7 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
   await releaseBidAuthorizations(losingBids, 'lost');
 
   winningBid.bidStatus = 'won';
-  winningBid.paymentStatus = 'captured';
+  winningBid.paymentStatus = 'not_required';
   winningBid.sellerDecision = {
     ...(winningBid.sellerDecision || {}),
     decidedBy: seller.id,
@@ -1119,7 +879,6 @@ const getBuyerBids = async (buyer) => {
 
 module.exports = {
   scheduleBargain,
-  createBidOrder,
   placeBid,
   getBuyerBids,
   getProductBids,

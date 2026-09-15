@@ -12,16 +12,6 @@ const scheduleBargain = asyncHandler(async (req, res) => {
   });
 });
 
-const createBidOrder = asyncHandler(async (req, res) => {
-  const order = await bargainService.createBidOrder(req.user, req.params.productId, req.body);
-
-  return successResponse(res, {
-    statusCode: 201,
-    message: 'Bid order created successfully',
-    data: order
-  });
-});
-
 const placeBid = asyncHandler(async (req, res) => {
   const bid = await bargainService.placeBid(req.user, req.params.productId, req.body);
 
@@ -117,7 +107,6 @@ const getActiveBargains = asyncHandler(async (_req, res) => {
 
 module.exports = {
   scheduleBargain,
-  createBidOrder,
   placeBid,
   acceptBid,
   closeBidPaymentWindow,
