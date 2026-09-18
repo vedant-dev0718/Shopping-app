@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface": "#fcdcd3",
+            "surface": "#1f0f0b",
+            "surface-bright": "#49342e",
+            "surface-dim": "#1f0f0b",
+            "outline-variant": "#5c4037",
+            "tertiary": "#a5c8ff",
+            "on-tertiary-fixed": "#001c3a",
+            "tertiary-fixed": "#d4e3ff",
+            "on-primary-fixed": "#3a0b00",
+            "on-background": "#fcdcd3",
+            "inverse-surface": "#fcdcd3",
+            "tertiary-container": "#2492ff",
+            "surface-tint": "#ffb59e",
+            "inverse-on-surface": "#3f2c26",
+            "primary-container": "#ff571a",
+            "surface-container-lowest": "#190a06",
+            "primary-fixed": "#ffdbd0",
+            "error-container": "#93000a",
+            "on-error": "#690005",
+            "secondary-container": "#454747",
+            "on-secondary-container": "#b4b5b5",
+            "on-primary-container": "#521300",
+            "on-primary": "#5e1700",
+            "surface-variant": "#44302a",
+            "on-primary-fixed-variant": "#852400",
+            "on-tertiary-fixed-variant": "#004785",
+            "secondary-fixed": "#e2e2e2",
+            "surface-container-highest": "#44302a",
+            "secondary": "#c6c6c7",
+            "primary-fixed-dim": "#ffb59e",
+            "inverse-primary": "#ae3200",
+            "on-secondary": "#2f3131",
+            "surface-container-low": "#281712",
+            "on-tertiary": "#00315e",
+            "on-tertiary-container": "#002a53",
+            "secondary-fixed-dim": "#c6c6c7",
+            "on-secondary-fixed-variant": "#454747",
+            "surface-container-high": "#382620",
+            "on-secondary-fixed": "#1a1c1c",
+            "surface-container": "#2d1b16",
+            "outline": "#ad897e",
+            "primary": "#ffb59e",
+            "background": "#1f0f0b",
+            "tertiary-fixed-dim": "#a5c8ff",
+            "on-surface-variant": "#e6beb2",
+            "on-error-container": "#ffdad6",
+            "error": "#ffb4ab"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "xs": "4px",
+            "lg": "24px",
+            "margin": "16px",
+            "xl": "32px",
+            "md": "16px",
+            "gutter": "12px",
+            "sm": "8px",
+            "base": "4px"
+          },
+          "fontFamily": {
+            "headline-md": ["montserrat"],
+            "display-lg-mobile": ["montserrat"],
+            "caption": ["inter"],
+            "headline-sm": ["montserrat"],
+            "display-lg": ["montserrat"],
+            "label-md": ["inter"],
+            "body-md": ["inter"],
+            "body-lg": ["inter"]
+          },
+          "fontSize": {
+            "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+            "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "26px", "fontWeight": "700" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #0A0A0A;
+      color: #fcdcd3;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .active-glow {
+      box-shadow: 0px 0px 12px rgba(255, 77, 0, 0.4);
+    }
+    /* Custom toggle styling */
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #ff571a;
+    }
+    .toggle-checkbox:checked + .toggle-label .toggle-dot {
+      transform: translateX(100%);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 bg-background dark:bg-background flex justify-between items-center px-margin h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform duration-150 hover:opacity-80">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary">NOTWHAT</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</div>
+</header>
+<main class="pt-16 pb-32 max-w-[390px] mx-auto min-h-screen">
+<!-- Banner & Logo Preview Section -->
+<section class="relative">
+<div class="w-full h-48 bg-surface-container-highest overflow-hidden relative">
+<img class="w-full h-full object-cover opacity-60" data-alt="A cinematic, high-fashion urban photography shot with neon orange lighting reflecting off sleek black surfaces. The setting is a futuristic streetwear boutique in a bustling Tokyo alleyway at night. The mood is edgy, premium, and intensely electric, utilizing deep shadows and high-contrast coral accents to match a dark void aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPvXDy0Mp9yEvo17P5uxXAj8pKCHGRIlH5BVFBaU3kWfeOQdoG5qneUNFhe0OZKoXmngPbjb5UtYt7617gMc6dlCu3Tx6GQVhwcZHAkmjjCzBEczpjifkpZSHRwU_h5Vec-KEXLToDd9eVE--B7At0mezRTN9h-9XxadBylOzqP-oHbq7WI3cMUiDIqSB4hiH7wcVGvqXah4t4njct9hVp4sfb9GKotba5XFt3kySEcQAUL4q2E_F--j10CYjRoVxMQpVtDhutnQw"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<button class="bg-surface/80 backdrop-blur-sm p-3 rounded-full border border-outline-variant hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-primary">photo_camera</span>
+</button>
+</div>
+</div>
+<div class="px-margin -mt-10 relative z-10 flex flex-col items-center">
+<div class="relative">
+<div class="w-24 h-24 rounded-full border-4 border-background bg-surface-bright overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A stylized, minimalist vector-style logo for a modern streetwear brand. The logo features sharp geometric shapes in vibrant coral orange set against a pitch-black background. The visual style is clean, bold, and high-contrast, representing a Gen-Z social commerce aesthetic with high-velocity energy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfBU_L663wAb_27KZoiosXI86Op-NJc2cCCuGXp3XdYfbd41e10aN24R4bPFTKcEYwf3BaMOvA3Q_BfrGl9C1-IJnMsuPgI025B2yYqhEgaqWkHDf0UxpLVUaBVEhAZd5fjvRFDSrINyFyH-TOyEkZuXw8pLXqnC-JVHRhrR1FmEVEUqBzJznDE0czdrUTDS1rJzQhRkfj4NP3Gp0ZwRpvt-bLCSgDa6dhJI3ZlVTKOFJaPFu9_9o0SSqGXeDUIfz6B3AI2YCD9Jo"/>
+</div>
+<button class="absolute bottom-0 right-0 bg-primary-container p-2 rounded-full shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-on-primary-container text-[18px]">edit</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Store Status Toggle -->
+<section class="px-margin mt-8">
+<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between border border-outline-variant">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Store Visibility</h3>
+<p class="text-caption text-on-surface-variant">Set your store to open or closed</p>
+</div>
+<div class="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-surface-bright border-2 border-outline-variant appearance-none cursor-pointer z-10 checked:right-0 right-6 transition-all duration-300" id="toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-container-highest cursor-pointer" for="toggle"></label>
+</div>
+</div>
+</section>
+<!-- Edit Form -->
+<form class="px-margin mt-8 space-y-6">
+<!-- Store Name -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-primary uppercase tracking-widest px-1">Store Name</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary-container focus:ring-0 text-body-lg text-on-surface py-3 px-1 transition-all" type="text" value="VOID ARCHIVE"/>
+<span class="absolute right-2 top-3 material-symbols-outlined text-outline">store</span>
+</div>
+</div>
+<!-- Bio -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-primary uppercase tracking-widest px-1">Bio</label>
+<textarea class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary-container focus:ring-0 text-body-md text-on-surface py-3 px-1 transition-all resize-none" rows="3">Premium urban utility &amp; street aesthetics for the digital generation. Curated drops every Friday.</textarea>
+</div>
+<!-- Category Selection (Bento Style Chips) -->
+<div class="space-y-3">
+<label class="font-label-md text-label-md text-primary uppercase tracking-widest px-1">Category</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 rounded-full border-2 border-primary-container bg-primary-container/10 text-primary font-label-md" type="button">Streetwear</button>
+<button class="px-4 py-2 rounded-full border-2 border-outline-variant text-on-surface-variant font-label-md hover:border-primary transition-colors" type="button">Techwear</button>
+<button class="px-4 py-2 rounded-full border-2 border-outline-variant text-on-surface-variant font-label-md hover:border-primary transition-colors" type="button">Vintage</button>
+<button class="px-4 py-2 rounded-full border-2 border-outline-variant text-on-surface-variant font-label-md hover:border-primary transition-colors" type="button">Customs</button>
+</div>
+</div>
+<!-- Social Links -->
+<div class="space-y-4 pt-4 border-t border-outline-variant">
+<label class="font-label-md text-label-md text-primary uppercase tracking-widest px-1">Social Presence</label>
+<div class="flex items-center gap-3 bg-surface-container-low p-3 rounded-md">
+<span class="material-symbols-outlined text-secondary">alternate_email</span>
+<input class="bg-transparent border-none focus:ring-0 p-0 text-body-md w-full" placeholder="Instagram Username" type="text"/>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low p-3 rounded-md">
+<span class="material-symbols-outlined text-secondary">movie</span>
+<input class="bg-transparent border-none focus:ring-0 p-0 text-body-md w-full" placeholder="TikTok Profile" type="text"/>
+</div>
+</div>
+</form>
+<!-- Save Button Container -->
+<div class="px-margin mt-10">
+<button class="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm py-4 rounded-xl active:scale-95 transition-all active-glow shadow-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">save</span>
+        SAVE CHANGES
+      </button>
+<button class="w-full mt-4 text-on-surface-variant font-label-md py-2 uppercase tracking-widest hover:text-error transition-colors">
+        Delete Store
+      </button>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 dark:bg-background/90 backdrop-blur-md flex justify-around items-center h-20 px-gutter w-full">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">movie</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary hover:text-primary-fixed-dim transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+</a>
+</nav>
+<script>
+    // Micro-interactions for category selection
+    const chips = document.querySelectorAll('button[type="button"]');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        // Toggle active state locally for demonstration
+        if (chip.classList.contains('border-primary-container')) {
+          chip.classList.remove('border-primary-container', 'bg-primary-container/10', 'text-primary');
+          chip.classList.add('border-outline-variant', 'text-on-surface-variant');
+        } else {
+          chip.classList.add('border-primary-container', 'bg-primary-container/10', 'text-primary');
+          chip.classList.remove('border-outline-variant', 'text-on-surface-variant');
+        }
+      });
+    });
+
+    // Handle Form Focus Effects
+    const inputs = document.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+      input.addEventListener('focus', () => {
+        input.parentElement.classList.add('active-glow');
+      });
+      input.addEventListener('blur', () => {
+        input.parentElement.classList.remove('active-glow');
+      });
+    });
+  </script>
+</body></html>

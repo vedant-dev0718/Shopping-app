@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#fcdcd3",
+                    "surface": "#1f0f0b",
+                    "surface-bright": "#49342e",
+                    "surface-dim": "#1f0f0b",
+                    "outline-variant": "#5c4037",
+                    "tertiary": "#a5c8ff",
+                    "on-tertiary-fixed": "#001c3a",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-background": "#fcdcd3",
+                    "inverse-surface": "#fcdcd3",
+                    "tertiary-container": "#2492ff",
+                    "surface-tint": "#ffb59e",
+                    "inverse-on-surface": "#3f2c26",
+                    "primary-container": "#ff571a",
+                    "surface-container-lowest": "#190a06",
+                    "primary-fixed": "#ffdbd0",
+                    "error-container": "#93000a",
+                    "on-error": "#690005",
+                    "secondary-container": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-primary-container": "#521300",
+                    "on-primary": "#5e1700",
+                    "surface-variant": "#44302a",
+                    "on-primary-fixed-variant": "#852400",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-container-highest": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "primary-fixed-dim": "#ffb59e",
+                    "inverse-primary": "#ae3200",
+                    "on-secondary": "#2f3131",
+                    "surface-container-low": "#281712",
+                    "on-tertiary": "#00315e",
+                    "on-tertiary-container": "#002a53",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-secondary-fixed-variant": "#454747",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "surface-container": "#2d1b16",
+                    "outline": "#ad897e",
+                    "primary": "#ffb59e",
+                    "background": "#1f0f0b",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "on-surface-variant": "#e6beb2",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "lg": "24px",
+                    "margin": "16px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "gutter": "12px",
+                    "sm": "8px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "headline-md": ["montserrat"],
+                    "display-lg-mobile": ["montserrat"],
+                    "caption": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"],
+                    "label-md": ["inter"],
+                    "body-md": ["inter"],
+                    "body-lg": ["inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #fcdcd3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .video-trim-mask {
+            mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        }
+        .trim-handle {
+            box-shadow: 0 0 12px #FF4D00;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #FF4D00;
+            border-radius: 10px;
+        }
+        .glow-primary {
+            box-shadow: 0 0 15px rgba(255, 77, 0, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md selection:bg-primary-container selection:text-white overflow-x-hidden">
+<!-- Top AppBar (from JSON) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin h-16 w-full bg-background dark:bg-background">
+<button class="text-primary dark:text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary">UPLOAD REEL</h1>
+<button class="text-primary dark:text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="check">check</span>
+</button>
+</header>
+<main class="pt-20 pb-32 px-margin max-w-[390px] mx-auto min-h-screen">
+<!-- Video Preview & Trim Section -->
+<section class="relative rounded-lg overflow-hidden bg-surface-container-lowest aspect-[9/16] mb-lg border border-outline-variant group">
+<img class="w-full h-full object-cover" data-alt="A dynamic portrait shot of a fashionable Gen-Z model walking down a vibrant urban Indian street at night. Neon signs in deep coral and electric blue illuminate the scene, casting sharp highlights and deep shadows. The model is wearing futuristic street wear, and the atmosphere is high-energy, kinetic, and cinematic with a slight motion blur to suggest a video reel format." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAj2rSmT7vcg7y59l1IkpJGwhfgg58tXSoyVz1YMyDhq_08qPsq2r9E1fysMa_-c7fYLrv-GVh6Mil8FVED4hohpPvTzpIJWv40Bc5-bIY1ev0IOx-JVi-S17uwDbHNNZyzLdSSKUukQ0KRe8-RG4rd30rNgRsU6GZ6hQttdoO9q1G9nJXSEkedqtHRBfzH3CSGYSlmhbeGS4mrm2-1vT1Hs7i646ap7aGMaT8oebQ8qcATA999UAqyvZhl2NukAvt9yT2HD__emco"/>
+<!-- Trim Interface Overlay -->
+<div class="absolute bottom-0 left-0 w-full p-md bg-gradient-to-t from-black/80 to-transparent">
+<div class="flex items-center justify-between mb-sm">
+<span class="font-label-md text-label-md text-primary">0:04 / 0:15</span>
+<button class="p-xs bg-surface/50 rounded-full">
+<span class="material-symbols-outlined text-white" data-icon="play_circle" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</button>
+</div>
+<!-- Visual Trim Bar -->
+<div class="relative h-12 w-full bg-surface-container rounded-sm overflow-hidden flex items-center border border-primary-container/30">
+<div class="flex h-full space-x-1 opacity-40">
+<!-- Repeated thumbnail strips for trimming visualization -->
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+<div class="w-10 h-full bg-surface-bright shrink-0"></div>
+</div>
+<!-- Trim Handles -->
+<div class="absolute inset-y-0 left-4 right-12 border-y-2 border-primary-container z-10">
+<div class="absolute -left-1 inset-y-0 w-2 bg-primary-container trim-handle rounded-l-sm cursor-pointer flex items-center justify-center">
+<div class="w-[1px] h-4 bg-white/50"></div>
+</div>
+<div class="absolute -right-1 inset-y-0 w-2 bg-primary-container trim-handle rounded-r-sm cursor-pointer flex items-center justify-center">
+<div class="w-[1px] h-4 bg-white/50"></div>
+</div>
+<div class="absolute inset-0 bg-primary-container/10"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Metadata & Captions -->
+<section class="space-y-lg mb-xl">
+<!-- Caption Input -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant px-1 uppercase tracking-widest">Caption</label>
+<div class="relative">
+<textarea class="w-full bg-surface-container border-outline-variant rounded-md p-md focus:border-primary-container focus:ring-0 text-body-md transition-all resize-none h-24 placeholder:text-secondary/50" placeholder="Write a catchy bargain caption..."></textarea>
+<div class="absolute bottom-3 right-3 text-caption text-secondary">0/2000</div>
+</div>
+</div>
+<!-- Thumbnail Picker -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant px-1 uppercase tracking-widest">Cover Photo</label>
+<div class="flex space-x-sm overflow-x-auto custom-scrollbar pb-xs">
+<button class="w-16 h-20 rounded-sm bg-primary-container flex items-center justify-center shrink-0 glow-primary border-2 border-primary-container relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up of a neon-lit jacket detail, glowing coral threads on a dark tech-wear fabric. High contrast urban aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxmdl2YUW8soE72FDk2FvKiuzcOeemL-tZITpP2Zxv1Wx601Uj_ue_ODmEWe-HPzO5aYKfJjhANAYS_h_pMeqzVEhwdD_ZbEGjeIkylKuWvJXUlZaFody5D30MoyUAb4OnBqksUC08rH0uolb1kz-dn33wQsyK4o_d3-T8ZStfm0cUQsdDB0XOL7KRvQ9y8k_0As0YdO5p_b491CHCmejxii8Kc3ls2efvJKMDGTCOLWSumpqD3NtZ0phnoPAnDfNjrueVXdJ4FTk"/>
+<div class="absolute inset-0 bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-md" data-icon="done">done</span>
+</div>
+</button>
+<button class="w-16 h-20 rounded-sm bg-surface-container border border-outline-variant shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="A fashion product thumbnail showing a sleek streetwear accessory against a dark, textured concrete background with dramatic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWkePX3IS3zHT3MR8nAb7onCv6CvvwKtPapg09BA3RZKjqHQz1yT2pxAkuDkbMtoXVEtvXMefG0Cq6702d9TUlTlbzVI4MGM2OI5Wl_Qk08zFzsJFrFjjbGM-9zYi12WfhwBut6WV7BN9-Ugj34IbXJ7S-h0xvCT8BDiPb4V21L_Vjn1Lb66vdByOAtvaJZWL8LF_3pysdWKtH_E_93FcYiBZ_Xo4RZBrVRnlsmVjZs5gR5v-Qe4t9qsz7jTS_2lfQQzRpDgFypjE"/>
+</button>
+<button class="w-16 h-20 rounded-sm bg-surface-container border border-outline-variant shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="A blurry urban background with bokeh lights in warm coral and orange tones, perfectly matching the brand's aesthetic for a secondary thumbnail choice." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLuQR49xzum5aiNqlDUOaKXO4dabPpgmJqSIdwCB2xsypxgdqCx6dIchTDZbxal45dOhS3kn0M9QAUyEAlYJOqNXvFAvxMQkCBwzXKzEEDcjdWVW6JephGJI7A5nIDoX3UN8iz8-irq7aB7nTacyEBLQqORXvCyAB0X-UH2mTzgmqK1e0ZlrLbCjQ-G0H0XZQLpMrLF7EuyWkLuHetwpSDsh-Tfm1rn0lD7q0ei6mZkHDWJtxLqBrQwCZDbJbVxBTe-8hS_GcOy94"/>
+</button>
+<button class="w-16 h-20 rounded-sm border-2 border-dashed border-outline-variant shrink-0 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="add_photo_alternate">add_photo_alternate</span>
+<span class="text-[8px] uppercase font-bold text-secondary mt-1">Upload</span>
+</button>
+</div>
+</div>
+<!-- Tagging Section -->
+<div class="space-y-sm">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface-variant px-1 uppercase tracking-widest">Tag Products</label>
+<span class="text-caption text-primary">Max 5 items</span>
+</div>
+<!-- Tagging Chips -->
+<div class="flex flex-wrap gap-xs mb-sm">
+<div class="flex items-center bg-primary-container/20 border border-primary-container/50 text-primary px-sm py-1 rounded-full space-x-xs">
+<span class="text-caption font-bold">Urban Tech Hoodie</span>
+<button class="material-symbols-outlined text-xs leading-none" data-icon="close">close</button>
+</div>
+<div class="flex items-center bg-surface-bright border border-outline-variant text-on-surface px-sm py-1 rounded-full space-x-xs">
+<span class="text-caption font-bold">Neon Cargos</span>
+<button class="material-symbols-outlined text-xs leading-none" data-icon="close">close</button>
+</div>
+</div>
+<!-- Product Search -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-secondary group-focus-within:text-primary transition-colors" data-icon="search">search</span>
+</div>
+<input class="w-full bg-surface-container border-outline-variant rounded-full pl-10 pr-md py-sm focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 text-body-md transition-all placeholder:text-secondary/50" placeholder="Search items to tag..." type="text"/>
+</div>
+</div>
+<!-- Settings Toggle -->
+<div class="flex items-center justify-between p-md bg-surface-container-low rounded-md border border-outline-variant">
+<div class="flex items-center space-x-md">
+<span class="material-symbols-outlined text-on-surface" data-icon="share_reviews">share_reviews</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Allow Bargaining</p>
+<p class="text-caption text-secondary">Let users negotiate the price</p>
+</div>
+</div>
+<div class="relative inline-block w-10 h-5">
+<input checked="" class="sr-only peer" id="bargain-toggle" type="checkbox"/>
+<label class="absolute cursor-pointer inset-0 bg-outline-variant rounded-full peer-checked:bg-primary-container transition-colors duration-300" for="bargain-toggle"></label>
+<div class="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform duration-300 peer-checked:translate-x-5"></div>
+</div>
+</div>
+</section>
+<!-- CTA Action -->
+<div class="fixed bottom-0 left-0 w-full p-margin bg-gradient-to-t from-background via-background to-transparent z-40 max-w-[390px] mx-auto right-0">
+<button class="w-full bg-primary-container text-white font-headline-sm py-md rounded-md active:scale-[0.98] transition-all glow-primary flex items-center justify-center space-x-md group">
+<span class="material-symbols-outlined group-hover:animate-bounce" data-icon="rocket_launch" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+<span class="uppercase tracking-widest">Share Reel</span>
+</button>
+<p class="text-center text-caption text-secondary/60 mt-md">By posting, you agree to our Content Guidelines.</p>
+</div>
+</main>
+<!-- Bottom Navigation Mock (suppressed as per rules for transactional screen but visible for context if needed, here hidden to prioritize content canvas) -->
+<nav class="hidden md:hidden fixed bottom-0 w-full z-50 pb-safe flex justify-around items-center h-20 px-gutter bg-background/90 backdrop-blur-md">
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="movie" style="font-variation-settings: 'FILL' 1;">movie</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+</nav>
+<script>
+        // Simple Interaction logic for demo purposes
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const icon = this.querySelector('.material-symbols-outlined');
+                if(icon) {
+                    this.classList.add('scale-95');
+                    setTimeout(() => this.classList.remove('scale-95'), 150);
+                }
+            });
+        });
+
+        // Floating particle effect for "Void" aesthetic
+        const canvas = document.createElement('canvas');
+        canvas.classList.add('fixed', 'inset-0', '-z-10', 'pointer-events-none', 'opacity-30');
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2,
+                    speedY: Math.random() * -0.5,
+                    opacity: Math.random()
+                });
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.y += p.speedY;
+                if (p.y < 0) p.y = canvas.height;
+                ctx.fillStyle = `rgba(255, 77, 0, ${p.opacity})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', initParticles);
+        initParticles();
+        animateParticles();
+    </script>
+</body></html>

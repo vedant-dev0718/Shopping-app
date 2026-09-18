@@ -1,0 +1,780 @@
+package com.notwhat.shared.ui
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.notwhat.shared.catalog.UpdateReelRequestDto
+import kotlinx.coroutines.launch
+
+@Composable
+internal fun SellerReelListScreen(
+    modifier: Modifier,
+    state: NotWhatAppState,
+    onBack: () -> Unit,
+    onUploadReel: () -> Unit,
+    onPreviewReel: (SellerReelPreviewRoute) -> Unit = {},
+) {
+    val bg = NotWhatColors.background
+    val surface = NotWhatColors.surface
+    val surfaceHigh = NotWhatColors.surfaceContainerHigh
+    val text = NotWhatColors.onSurface
+    val muted = NotWhatColors.onSurfaceVariant
+    val accent = NotWhatAuthTokens.accent
+    val danger = Color(0xFFE53935)
+    val border = NotWhatColors.outline
+
+    var reels by remember(state.sellerContent.reels) {
+        mutableStateOf(
+            state.sellerContent.reels
+                .map { it.toDemoSellerReel() },
+        )
+    }
+    var pendingDeleteId by remember { mutableStateOf<String?>(null) }
+    var tagPickerReelId by remember { mutableStateOf<String?>(null) }
+    var deleteError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    // Product tag picker overlay
+    tagPickerReelId?.let { reelId ->
+        val reel = reels.firstOrNull { it.id == reelId } ?: return@let
+        ReelProductTagSheet(
+            modifier = modifier,
+            reel = reel,
+            allProducts =
+                state.sellerContent.products,
+            initialSelectedProductIds =
+                state.sellerContent.products
+                    .filter { product -> reel.taggedProducts.contains(product.displayTitle) }
+                    .map { it.id },
+            bg = bg,
+            surface = surface,
+            surfaceHigh = surfaceHigh,
+            text = text,
+            muted = muted,
+            accent = accent,
+            border = border,
+            onDismiss = { tagPickerReelId = null },
+            onSave = { products ->
+                val token = state.currentSession?.authToken
+                if (token.isNullOrBlank()) {
+                    deleteError = "Please sign in again to update reel products."
+                    tagPickerReelId = null
+                    return@ReelProductTagSheet
+                }
+
+                scope.launch {
+                    val updateResult =
+                        state.sellerContent.updateReel(
+                            reel.id,
+                            UpdateReelRequestDto(taggedProductIds = products.map { it.id }),
+                            token,
+                        )
+                    if (updateResult is com.notwhat.shared.core.NetworkResult.Success) {
+                        reels =
+                            reels.map {
+                                if (it.id == reel.id) updateResult.data.toDemoSellerReel() else it
+                            }
+                        deleteError = null
+                    } else if (updateResult is com.notwhat.shared.core.NetworkResult.Failure) {
+                        deleteError = updateResult.error.userMessage()
+                    }
+                }
+
+                tagPickerReelId = null
+            },
+        )
+        return
+    }
+
+    // Delete confirmation overlay
+    pendingDeleteId?.let { reelId ->
+        val reel = reels.firstOrNull { it.id == reelId }
+        Box(
+            modifier = modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.72f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Surface(
+                color = surface,
+                shape = RoundedCornerShape(20.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(
+                        "Delete Reel",
+                        color = text,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "\"${reel?.title ?: "this reel"}\" will be permanently removed from your storefront and the buyer feed.",
+                        color = muted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick = { pendingDeleteId = null },
+                            modifier = Modifier.weight(1f),
+                            shape = SellerUiTokens.radiusButton,
+                            border = BorderStroke(1.dp, border),
+                        ) {
+                            Text("Cancel", color = muted, fontWeight = FontWeight.SemiBold)
+                        }
+                        Button(
+                            onClick = {
+                                val token = state.currentSession?.authToken
+                                if (token.isNullOrBlank()) {
+                                    deleteError = "Please sign in again to delete this reel."
+                                    pendingDeleteId = null
+                                    return@Button
+                                }
+
+                                scope.launch {
+                                    val deleteResult = state.sellerContent.deleteReel(reelId, token)
+                                    if (deleteResult.getOrNull()?.deleted == true) {
+                                        reels = reels.filterNot { it.id == reelId }
+                                        deleteError = null
+                                    } else {
+                                        deleteError = "Failed to delete reel. Please retry."
+                                    }
+                                }
+                                pendingDeleteId = null
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = SellerUiTokens.radiusButton,
+                            colors = ButtonDefaults.buttonColors(containerColor = danger),
+                        ) {
+                            Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(bg),
+        contentPadding = PaddingValues(SellerUiTokens.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(SellerUiTokens.sectionGap),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onBack) {
+                        Text("←", color = muted, fontWeight = FontWeight.SemiBold)
+                    }
+                    Text("MY REELS", color = text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                }
+                Button(
+                    onClick = onUploadReel,
+                    shape = SellerUiTokens.radiusButton,
+                    colors = ButtonDefaults.buttonColors(containerColor = accent),
+                ) {
+                    Text("+ Upload", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+
+        deleteError?.let { message ->
+            item {
+                Surface(color = Color(0xFF4A1F1F), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = message,
+                        color = Color(0xFFFFC9C9),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    )
+                }
+            }
+        }
+
+        if (reels.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Text("No reels yet", color = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Upload your first reel to start showcasing\nproducts on the buyer feed.",
+                            color = muted,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                        )
+                        Button(
+                            onClick = onUploadReel,
+                            shape = SellerUiTokens.radiusButton,
+                            colors = ButtonDefaults.buttonColors(containerColor = accent),
+                        ) {
+                            Text("Upload Reel", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        items(reels, key = { it.id }) { reel ->
+            SellerReelCard(
+                reel = reel,
+                surface = surface,
+                surfaceHigh = surfaceHigh,
+                text = text,
+                muted = muted,
+                accent = accent,
+                danger = danger,
+                border = border,
+                onDelete = { pendingDeleteId = reel.id },
+                onTagProducts = { tagPickerReelId = reel.id },
+                onPreview = {
+                    // Look up original ReelDto so preview shows the same view the buyer sees
+                    val originalReel = state.sellerContent.reels.firstOrNull { it.id == reel.id }
+                    if (originalReel != null) {
+                        onPreviewReel(SellerReelPreviewRoute(reel = originalReel))
+                    }
+                },
+                onEditCaption = { newCaption ->
+                    val token = state.currentSession?.authToken
+                    if (token.isNullOrBlank()) {
+                        deleteError = "Please sign in again to update the reel caption."
+                    } else {
+                        scope.launch {
+                            val updateResult =
+                                state.sellerContent.updateReel(
+                                    reel.id,
+                                    UpdateReelRequestDto(caption = newCaption),
+                                    token,
+                                )
+                            if (updateResult is com.notwhat.shared.core.NetworkResult.Success) {
+                                reels =
+                                    reels.map {
+                                        if (it.id == reel.id) updateResult.data.toDemoSellerReel() else it
+                                    }
+                                deleteError = null
+                            } else if (updateResult is com.notwhat.shared.core.NetworkResult.Failure) {
+                                deleteError = updateResult.error.userMessage()
+                            }
+                        }
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SellerReelCard(
+    reel: DemoSellerReel,
+    surface: Color,
+    surfaceHigh: Color,
+    text: Color,
+    muted: Color,
+    accent: Color,
+    danger: Color,
+    border: Color,
+    onDelete: () -> Unit,
+    onTagProducts: () -> Unit,
+    onPreview: () -> Unit,
+    onEditCaption: (String) -> Unit,
+) {
+    var isEditingCaption by remember { mutableStateOf(false) }
+    var draftCaption by remember(reel.caption) { mutableStateOf(reel.caption) }
+    Surface(
+        color = surface,
+        shape = SellerUiTokens.radiusCard,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(SellerUiTokens.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(SellerUiTokens.cardGap),
+        ) {
+            // Thumbnail + meta row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .width(80.dp)
+                            .aspectRatio(9f / 16f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(surfaceHigh),
+                ) {
+                    AsyncImage(
+                        model = reel.thumbnailUrl,
+                        contentDescription = reel.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        reel.title,
+                        color = text,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        reel.caption,
+                        color = muted,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Surface(
+                            color = if (reel.isShared) Color(0xFF1A3A28) else surfaceHigh,
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(
+                                if (reel.isShared) "LIVE" else "DRAFT",
+                                color = if (reel.isShared) Color(0xFF4CAF50) else muted,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            )
+                        }
+                        Text(
+                            "${reel.taggedProducts.size} products",
+                            color = accent,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(color = border.copy(alpha = 0.4f))
+
+            // Inline caption editor – shown when Edit Caption is active
+            if (isEditingCaption) {
+                OutlinedTextField(
+                    value = draftCaption,
+                    onValueChange = { if (it.length <= 2000) draftCaption = it },
+                    modifier = Modifier.fillMaxWidth().height(90.dp),
+                    placeholder = { Text("Edit caption…", style = MaterialTheme.typography.bodySmall) },
+                    textStyle = MaterialTheme.typography.bodySmall.copy(color = text),
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = accent,
+                            unfocusedBorderColor = border,
+                            focusedContainerColor = surfaceHigh,
+                            unfocusedContainerColor = surfaceHigh,
+                            focusedTextColor = text,
+                            unfocusedTextColor = text,
+                            focusedPlaceholderColor = muted,
+                            unfocusedPlaceholderColor = muted,
+                        ),
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            isEditingCaption = false
+                            draftCaption = reel.caption
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = SellerUiTokens.radiusButton,
+                        border = BorderStroke(1.dp, border),
+                    ) {
+                        Text("Cancel", color = muted, style = MaterialTheme.typography.labelMedium)
+                    }
+                    Button(
+                        onClick = {
+                            onEditCaption(draftCaption)
+                            isEditingCaption = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = SellerUiTokens.radiusButton,
+                        colors = ButtonDefaults.buttonColors(containerColor = accent),
+                    ) {
+                        Text("Save", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                HorizontalDivider(color = border.copy(alpha = 0.4f))
+            }
+
+            // Action row: Edit Caption | Edit/Tag Products
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                OutlinedButton(
+                    onClick = onPreview,
+                    modifier = Modifier.weight(1f),
+                    shape = SellerUiTokens.radiusButton,
+                    border = BorderStroke(1.dp, accent),
+                ) {
+                    Text(
+                        "▶  Preview",
+                        color = accent,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        isEditingCaption = !isEditingCaption
+                        draftCaption = reel.caption
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = SellerUiTokens.radiusButton,
+                    border = BorderStroke(1.dp, if (isEditingCaption) accent else border),
+                ) {
+                    Text(
+                        "Edit Caption",
+                        color = if (isEditingCaption) accent else text,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+                OutlinedButton(
+                    onClick = onTagProducts,
+                    modifier = Modifier.weight(1f),
+                    shape = SellerUiTokens.radiusButton,
+                    border = BorderStroke(1.dp, accent.copy(alpha = 0.6f)),
+                ) {
+                    Text(
+                        if (reel.taggedProducts.isEmpty()) "Tag Products" else "Edit Products",
+                        color = accent,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
+            OutlinedButton(
+                onClick = onDelete,
+                modifier = Modifier.fillMaxWidth(),
+                shape = SellerUiTokens.radiusButton,
+                border = BorderStroke(1.dp, danger.copy(alpha = 0.5f)),
+            ) {
+                Text(
+                    "Delete",
+                    color = danger,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun ReelProductTagSheet(
+    modifier: Modifier,
+    reel: DemoSellerReel,
+    allProducts: List<com.notwhat.shared.catalog.ProductDto>,
+    initialSelectedProductIds: List<String>,
+    bg: Color,
+    surface: Color,
+    surfaceHigh: Color,
+    text: Color,
+    muted: Color,
+    accent: Color,
+    border: Color,
+    onDismiss: () -> Unit,
+    onSave: (List<com.notwhat.shared.catalog.ProductDto>) -> Unit,
+) {
+    val selectedIds =
+        remember {
+            mutableStateListOf<String>().apply { addAll(initialSelectedProductIds) }
+        }
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(bg),
+    ) {
+        Surface(color = surface, modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel", color = muted, fontWeight = FontWeight.SemiBold)
+                    }
+                    Button(
+                        onClick = {
+                            val picked = allProducts.filter { selectedIds.contains(it.id) }
+                            onSave(picked)
+                        },
+                        shape = SellerUiTokens.radiusButton,
+                        colors = ButtonDefaults.buttonColors(containerColor = accent),
+                        enabled = selectedIds.size in 1..3,
+                    ) {
+                        Text(
+                            "Save ${selectedIds.size}/3",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        "TAG PRODUCTS",
+                        color = text,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                    )
+                    Text(
+                        reel.title.ifBlank { reel.caption }.ifBlank { "Reel" },
+                        color = muted,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                    )
+
+                    Surface(
+                        color = accent.copy(alpha = 0.12f),
+                        shape = SellerUiTokens.radiusChip,
+                    ) {
+                        Text(
+                            "Choose up to 3 products",
+                            color = accent,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        )
+                    }
+                }
+
+                Surface(
+                    color = surfaceHigh,
+                    shape = SellerUiTokens.radiusInnerCard,
+                    border = BorderStroke(1.dp, border.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Surface(
+                            color = accent.copy(alpha = 0.15f),
+                            shape = CircleShape,
+                            modifier = Modifier.size(18.dp),
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("i", color = accent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Text(
+                            "Selected products appear in the buyer feed when this reel is shared.",
+                            color = muted,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+
+        HorizontalDivider(color = border.copy(alpha = 0.28f))
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(allProducts, key = { it.id }) { product ->
+                val isSelected = selectedIds.contains(product.id)
+                val atLimit = selectedIds.size >= 3 && !isSelected
+                val isOutOfStock = product.stock == 0
+                val isDisabled = atLimit
+
+                Surface(
+                    color = if (isSelected) accent.copy(alpha = 0.1f) else surface,
+                    shape = SellerUiTokens.radiusInnerCard,
+                    border =
+                        BorderStroke(
+                            1.dp,
+                            if (isSelected) accent else border.copy(alpha = 0.45f),
+                        ),
+                    tonalElevation = if (isSelected) 2.dp else 0.dp,
+                    shadowElevation = if (isSelected) 1.dp else 0.dp,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isDisabled) {
+                                if (isSelected) {
+                                    selectedIds.remove(product.id)
+                                } else {
+                                    selectedIds.add(product.id)
+                                }
+                            },
+                ) {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AsyncImage(
+                            model = product.displayImageUrl,
+                            contentDescription = product.displayTitle,
+                            modifier =
+                                Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(14.dp)),
+                            contentScale = ContentScale.Crop,
+                        )
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text(
+                                product.displayTitle,
+                                color = if (isDisabled) muted.copy(alpha = 0.5f) else text,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    product.displayPrice,
+                                    color = if (isDisabled) accent.copy(alpha = 0.45f) else accent,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Surface(
+                                    color = accent.copy(alpha = if (isDisabled) 0.12f else 0.16f),
+                                    shape = SellerUiTokens.radiusChip,
+                                ) {
+                                    Text(
+                                        product.category,
+                                        color = if (isDisabled) muted.copy(alpha = 0.6f) else accent,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    if (isOutOfStock) "Out of stock" else "${product.stock} in stock",
+                                    color = if (isOutOfStock) Color(0xFFE53935) else muted.copy(alpha = if (isDisabled) 0.45f else 0.85f),
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                        }
+
+                        val indicatorColor =
+                            when {
+                                isSelected -> accent
+                                isDisabled -> muted.copy(alpha = 0.25f)
+                                else -> border.copy(alpha = 0.8f)
+                            }
+
+                        Surface(
+                            color = if (isSelected) accent else Color.Transparent,
+                            shape = CircleShape,
+                            border = BorderStroke(1.5.dp, indicatorColor),
+                            modifier = Modifier.size(30.dp),
+                        ) {
+                            if (isSelected) {
+                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                    Text(
+                                        "✓",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Black,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

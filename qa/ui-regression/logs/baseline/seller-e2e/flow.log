@@ -1,0 +1,107 @@
+Running on emulator-5554
+ > Flow seller_e2e_visual_flow
+Run seller_checkpoint_dashboard.yaml...
+  Launch app "com.notwhat.app.seller" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot seller_01_auth_login... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text seller@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "SELLER PORTAL" is visible... COMPLETED
+  Assert that "Order Pulse" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot seller_02_dashboard... COMPLETED
+Run seller_checkpoint_dashboard.yaml... COMPLETED
+Run seller_checkpoint_insights.yaml...
+  Launch app "com.notwhat.app.seller" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text seller@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "SELLER PORTAL" is visible... COMPLETED
+  Tap on "Insights"... COMPLETED
+  Assert that "Low stock alert" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot seller_03_insights... COMPLETED
+Run seller_checkpoint_insights.yaml... COMPLETED
+Run seller_checkpoint_orders.yaml...
+  Launch app "com.notwhat.app.seller" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text seller@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "SELLER PORTAL" is visible... COMPLETED
+  Tap on "Orders"... COMPLETED
+  Assert that "Operational queue" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot seller_04_orders... COMPLETED
+Run seller_checkpoint_orders.yaml... COMPLETED
+Run seller_checkpoint_products.yaml...
+  Launch app "com.notwhat.app.seller" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text seller@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "SELLER PORTAL" is visible... COMPLETED
+  Tap on "Products"... COMPLETED
+  Assert that "Inventory summary" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot seller_05_products... COMPLETED
+Run seller_checkpoint_products.yaml... COMPLETED
+Run seller_checkpoint_returns.yaml...
+  Launch app "com.notwhat.app.seller" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text seller@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "SELLER PORTAL" is visible... COMPLETED
+  Scrolling DOWN until "Returns & Refunds" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Returns & Refunds"... COMPLETED
+  Assert that "Returns & Refunds" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot seller_06_returns... COMPLETED
+Run seller_checkpoint_returns.yaml... COMPLETED
+Run seller_checkpoint_upload_reel.yaml...
+  Launch app "com.notwhat.app.seller" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text seller@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "SELLER PORTAL" is visible... COMPLETED
+  Scrolling DOWN until "Upload Reel" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Upload Reel"... COMPLETED
+  Assert that "UPLOAD REEL" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot seller_07_upload_reel... COMPLETED
+Run seller_checkpoint_upload_reel.yaml... COMPLETED

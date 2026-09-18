@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "on-error": "#690005",
+                    "inverse-on-surface": "#3f2c26",
+                    "error": "#ffb4ab",
+                    "on-surface": "#fcdcd3",
+                    "surface-dim": "#1f0f0b",
+                    "tertiary-fixed": "#d4e3ff",
+                    "primary-fixed-dim": "#ffb59e",
+                    "primary-fixed": "#ffdbd0",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "inverse-primary": "#ae3200",
+                    "on-primary": "#5e1700",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-tertiary-container": "#002a53",
+                    "on-primary-container": "#521300",
+                    "surface-tint": "#ffb59e",
+                    "tertiary": "#a5c8ff",
+                    "surface-container-highest": "#44302a",
+                    "on-error-container": "#ffdad6",
+                    "surface-container": "#2d1b16",
+                    "on-primary-fixed-variant": "#852400",
+                    "inverse-surface": "#fcdcd3",
+                    "secondary-container": "#454747",
+                    "outline": "#ad897e",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface-container-lowest": "#190a06",
+                    "tertiary-container": "#2492ff",
+                    "surface-bright": "#49342e",
+                    "outline-variant": "#5c4037",
+                    "on-background": "#fcdcd3",
+                    "surface-container-low": "#281712",
+                    "on-surface-variant": "#e6beb2",
+                    "surface": "#1f0f0b",
+                    "error-container": "#93000a",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-variant": "#44302a",
+                    "secondary": "#c6c6c7",
+                    "on-tertiary": "#00315e",
+                    "background": "#1f0f0b",
+                    "primary-container": "#ff571a",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-secondary": "#2f3131",
+                    "primary": "#ffb59e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "margin": "16px",
+                    "xl": "32px",
+                    "xs": "4px",
+                    "gutter": "12px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["inter"],
+                    "caption": ["inter"],
+                    "label-md": ["inter"],
+                    "display-lg-mobile": ["montserrat"],
+                    "headline-md": ["montserrat"],
+                    "body-md": ["inter"],
+                    "headline-sm": ["montserrat"],
+                    "display-lg": ["montserrat"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #0A0A0A; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bid-input-glow:focus-within {
+            box-shadow: 0px 0px 12px rgba(255, 77, 0, 0.4);
+        }
+        .bottom-sheet-transition {
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface font-body-md overflow-hidden h-screen flex flex-col justify-end">
+<!-- Backdrop Overlay -->
+<div class="fixed inset-0 bg-black/70 z-40"></div>
+<!-- Place Bid Sheet (70% Height Container) -->
+<div class="glass-panel z-50 rounded-t-lg h-[663px] flex flex-col border-t border-outline-variant/30 bottom-sheet-transition">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center pt-xs pb-sm">
+<div class="w-10 h-1 rounded-full bg-outline-variant/50"></div>
+</div>
+<!-- Scrollable Content Section -->
+<div class="flex-1 overflow-y-auto px-margin pb-32">
+<!-- Header: Product Info -->
+<div class="flex items-center gap-md py-md border-b border-outline-variant/10">
+<div class="w-20 h-20 rounded-md overflow-hidden bg-surface-container flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A cinematic close-up of high-end limited edition streetwear sneakers in a sleek, dark studio setting. The lighting is dramatic and moody, emphasizing the premium textures of leather and mesh. The palette is dominated by deep blacks and vibrant coral accents, reflecting a high-contrast urban aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaB_Zs2oo7HTNv9xdntg8AwSKmtN-iiItNRjz-ldxP_kOnadTunMlHObGfG8BKnLCGnDP3f4ZzcXdenppJImibslrZOcz8iR682EBwibqew8LnUiThL-CIbYAEsVoKS6g3XQRyhNvM8NoCUUJLOsGDuANtMC3VwUiT6tbMfdafMXwvjwsGwN--ouzQyyKmLU3GVl4GojmiXgywzI21b9niQmXhlN5UTTq44BFeo7SCldqvudG1Dvj2qY6mewUd4ffk76CEItFWeLQ"/>
+</div>
+<div class="flex flex-col">
+<h2 class="font-headline-sm text-headline-sm leading-tight tracking-tight">Vapor Max 'Void Edition'</h2>
+<p class="text-on-surface-variant text-caption flex items-center gap-xs">
+                        Original Price: <span class="line-through">₹18,999</span>
+</p>
+<div class="mt-sm">
+<span class="text-primary-container font-headline-md text-headline-md tracking-tight">₹12,450</span>
+<span class="text-caption text-primary font-bold uppercase ml-xs">Highest Bid</span>
+</div>
+</div>
+</div>
+<!-- Bid Input Area -->
+<div class="mt-lg">
+<div class="flex flex-col gap-sm">
+<label class="text-label-md text-on-surface-variant uppercase tracking-widest px-xs">Place Your Bid</label>
+<div class="relative flex items-center bid-input-glow transition-all duration-300 rounded-md bg-surface-container border border-outline-variant/30 overflow-hidden">
+<span class="absolute left-md font-headline-md text-headline-md text-primary">₹</span>
+<input class="w-full bg-transparent border-none py-lg pl-xl pr-md text-display-lg-mobile font-display-lg-mobile focus:ring-0 text-on-surface placeholder:text-on-surface-variant/30" id="bidInput" inputmode="numeric" pattern="\d*" placeholder="13,000" type="number"/>
+</div>
+<p class="text-caption text-on-surface-variant px-xs">
+                        Min. bid increment: <span class="text-on-surface font-semibold">+₹500</span>
+</p>
+</div>
+</div>
+<!-- Bid History Section -->
+<div class="mt-xl">
+<div class="flex justify-between items-center mb-md">
+<h3 class="text-label-md text-on-surface-variant uppercase tracking-widest">Recent Bids</h3>
+<span class="bg-primary/10 text-primary px-sm py-xs rounded-full text-caption font-bold">5 Bids</span>
+</div>
+<div class="flex flex-col gap-base">
+<!-- Bid Item 1 -->
+<div class="flex items-center justify-between p-sm rounded-md bg-surface-container-low border border-outline-variant/5">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center overflow-hidden border border-primary/20">
+<span class="material-symbols-outlined text-sm text-primary">person</span>
+</div>
+<div>
+<p class="text-body-md font-bold text-on-surface">Rahul K.</p>
+<p class="text-caption text-on-surface-variant">2 mins ago</p>
+</div>
+</div>
+<p class="font-headline-sm text-headline-sm text-primary-container tracking-tighter">₹12,450</p>
+</div>
+<!-- Bid Item 2 -->
+<div class="flex items-center justify-between p-sm rounded-md hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-sm text-secondary">person</span>
+</div>
+<div>
+<p class="text-body-md font-semibold text-on-surface-variant">SneakerHead01</p>
+<p class="text-caption text-on-surface-variant">5 mins ago</p>
+</div>
+</div>
+<p class="text-body-lg font-bold text-on-surface-variant tracking-tighter">₹11,900</p>
+</div>
+<!-- Bid Item 3 -->
+<div class="flex items-center justify-between p-sm rounded-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-sm text-secondary">person</span>
+</div>
+<div>
+<p class="text-body-md font-semibold text-on-surface-variant">Anjali_S</p>
+<p class="text-caption text-on-surface-variant">12 mins ago</p>
+</div>
+</div>
+<p class="text-body-lg font-bold text-on-surface-variant tracking-tighter">₹11,400</p>
+</div>
+<!-- Bid Item 4 -->
+<div class="flex items-center justify-between p-sm rounded-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-sm text-secondary">person</span>
+</div>
+<div>
+<p class="text-body-md font-semibold text-on-surface-variant">Vikas Pro</p>
+<p class="text-caption text-on-surface-variant">1 hour ago</p>
+</div>
+</div>
+<p class="text-body-lg font-bold text-on-surface-variant tracking-tighter">₹10,900</p>
+</div>
+<!-- Bid Item 5 -->
+<div class="flex items-center justify-between p-sm rounded-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-sm text-secondary">person</span>
+</div>
+<div>
+<p class="text-body-md font-semibold text-on-surface-variant">User992</p>
+<p class="text-caption text-on-surface-variant">3 hours ago</p>
+</div>
+</div>
+<p class="text-body-lg font-bold text-on-surface-variant tracking-tighter">₹10,400</p>
+</div>
+</div>
+</div>
+<!-- Notification Preview -->
+<div class="mt-lg p-md rounded-md bg-primary/5 border border-primary/10 flex items-start gap-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+<div>
+<p class="text-label-md text-primary leading-none">Smart Alerts Enabled</p>
+<p class="text-caption text-on-surface-variant mt-1">You'll be notified instantly if someone outbids you. Fast fingers win!</p>
+</div>
+</div>
+</div>
+<!-- Fixed Bottom Action Area -->
+<div class="absolute bottom-0 left-0 w-full glass-panel border-t border-outline-variant/20 px-margin pt-md pb-10 flex flex-col gap-sm">
+<button class="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm py-md rounded-md active:scale-95 transition-transform duration-150 flex items-center justify-center gap-sm shadow-lg shadow-primary-container/20">
+                Confirm Bid
+                <span class="material-symbols-outlined">gavel</span>
+</button>
+<p class="text-[10px] text-center text-on-surface-variant/60 leading-tight">
+                By confirming, you agree to the <span class="underline">Bidding Terms</span> and authorize a hold on your payment method if you win.
+            </p>
+</div>
+</div>
+<!-- Toast Component (Hidden by default) -->
+<div class="fixed top-12 left-1/2 -translate-x-1/2 z-[60] bg-on-surface text-surface py-sm px-lg rounded-full shadow-xl flex items-center gap-sm opacity-0 pointer-events-none transition-all duration-300" id="toast">
+<span class="material-symbols-outlined text-md">check_circle</span>
+<span class="font-bold text-label-md">Bid Placed Successfully!</span>
+</div>
+<script>
+        // Simple Interaction logic
+        const bidInput = document.getElementById('bidInput');
+        const confirmBtn = document.querySelector('button');
+        const toast = document.getElementById('toast');
+
+        confirmBtn.addEventListener('click', () => {
+            const value = bidInput.value;
+            if(value && parseInt(value) > 12450) {
+                // Success feedback
+                toast.classList.remove('opacity-0', 'pointer-events-none');
+                toast.classList.add('opacity-100');
+                
+                confirmBtn.innerText = "BIDDING...";
+                confirmBtn.disabled = true;
+
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'pointer-events-none');
+                    toast.classList.remove('opacity-100');
+                    confirmBtn.innerHTML = 'Confirm Bid <span class="material-symbols-outlined">gavel</span>';
+                    confirmBtn.disabled = false;
+                }, 3000);
+            } else {
+                // Shake effect on input if invalid
+                bidInput.parentElement.classList.add('animate-shake');
+                setTimeout(() => bidInput.parentElement.classList.remove('animate-shake'), 400);
+                alert("Please enter a bid higher than the current highest bid.");
+            }
+        });
+
+        // Add shake animation style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-4px); }
+                75% { transform: translateX(4px); }
+            }
+            .animate-shake { animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both; }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body></html>

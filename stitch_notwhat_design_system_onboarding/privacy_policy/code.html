@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&family=montserrat:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f0f0b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #44302a;
+            border-radius: 10px;
+        }
+        .glass-card {
+            background: rgba(45, 27, 22, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 181, 158, 0.1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#a5c8ff",
+                        "on-tertiary": "#00315e",
+                        "secondary-fixed": "#e2e2e2",
+                        "primary-container": "#ff571a",
+                        "on-secondary-container": "#b4b5b5",
+                        "surface-bright": "#49342e",
+                        "secondary": "#c6c6c7",
+                        "on-background": "#fcdcd3",
+                        "inverse-primary": "#ae3200",
+                        "inverse-on-surface": "#3f2c26",
+                        "on-secondary": "#2f3131",
+                        "on-primary": "#5e1700",
+                        "surface-container-high": "#382620",
+                        "on-tertiary-fixed": "#001c3a",
+                        "on-primary-fixed": "#3a0b00",
+                        "on-error": "#690005",
+                        "on-surface-variant": "#e6beb2",
+                        "surface-container-highest": "#44302a",
+                        "on-tertiary-fixed-variant": "#004785",
+                        "on-surface": "#fcdcd3",
+                        "on-secondary-fixed-variant": "#454747",
+                        "primary-fixed": "#ffdbd0",
+                        "tertiary-fixed": "#d4e3ff",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#44302a",
+                        "surface-container-low": "#281712",
+                        "tertiary-container": "#2492ff",
+                        "on-primary-fixed-variant": "#852400",
+                        "inverse-surface": "#fcdcd3",
+                        "surface-tint": "#ffb59e",
+                        "surface-container-lowest": "#190a06",
+                        "tertiary": "#a5c8ff",
+                        "secondary-container": "#454747",
+                        "outline": "#ad897e",
+                        "on-primary-container": "#521300",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-tertiary-container": "#002a53",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "primary-fixed-dim": "#ffb59e",
+                        "error-container": "#93000a",
+                        "outline-variant": "#5c4037",
+                        "surface-dim": "#1f0f0b",
+                        "primary": "#ffb59e",
+                        "on-error-container": "#ffdad6",
+                        "background": "#1f0f0b",
+                        "surface": "#1f0f0b",
+                        "surface-container": "#2d1b16"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "margin": "16px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "gutter": "12px",
+                        "base": "4px",
+                        "sm": "8px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["inter"],
+                        "headline-sm": ["montserrat"],
+                        "headline-md": ["montserrat"],
+                        "body-md": ["inter"],
+                        "display-lg": ["montserrat"],
+                        "display-lg-mobile": ["montserrat"],
+                        "body-lg": ["inter"],
+                        "caption": ["inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-container selection:text-white">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-background/90 dark:bg-background/90 backdrop-blur-md flex items-center justify-between px-margin h-16">
+<div class="flex items-center gap-4">
+<button class="text-primary active:scale-95 transition-transform hover:opacity-80">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile md:text-headline-sm text-primary">Privacy Policy</h1>
+</div>
+<button class="text-primary active:scale-95 transition-transform hover:opacity-80">
+<span class="material-symbols-outlined text-[24px]">shopping_bag</span>
+</button>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-20 pb-32 px-margin max-w-2xl mx-auto min-h-screen">
+<!-- Header Info -->
+<header class="mb-lg">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-xs">Legal Information</p>
+<p class="font-caption text-caption text-on-secondary-container">Last Updated: Oct 20, 2023</p>
+</header>
+<!-- Rich Text Content -->
+<section class="space-y-lg">
+<div class="space-y-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">1. Introduction</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                    Welcome to <span class="text-primary font-bold">NotWhat</span>. We value your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website or use our application.
+                </p>
+</div>
+<div class="p-lg rounded-lg border border-outline-variant bg-surface-container-low">
+<p class="font-body-md text-body-md text-primary italic">
+                    "Our mission is to provide a high-energy shopping experience without compromising your digital safety."
+                </p>
+</div>
+<div class="space-y-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">2. Data We Collect</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                    We collect various types of information to provide and improve our services, including:
+                </p>
+<ul class="list-disc list-inside space-y-xs font-body-md text-on-surface-variant pl-xs">
+<li>Identity Data (Name, Username)</li>
+<li>Contact Data (Email, Delivery Address)</li>
+<li>Transactional Data (Bargain History, Purchases)</li>
+<li>Usage Data (Short-form video interactions)</li>
+</ul>
+</div>
+<div class="space-y-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">3. How We Use It</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                    Your data fuels the <a class="text-primary-container font-semibold hover:underline" href="#">Bargain Engine</a>. We use your preferences to show you short-form videos of products you actually want to bid on. For more details, view our <a class="text-primary-container font-semibold hover:underline" href="#">Terms of Service</a>.
+                </p>
+</div>
+<div class="space-y-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">4. Security Layers</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                    We have put in place appropriate security measures to prevent your personal data from being accidentally lost, used, or accessed in an unauthorized way. We use <span class="text-on-surface font-semibold">Tonal Layering Encryption</span> to ensure data height and accessibility levels are strictly managed.
+                </p>
+</div>
+<!-- Asymmetric Bento-like Highlight -->
+<div class="grid grid-cols-2 gap-gutter py-lg">
+<div class="col-span-2 md:col-span-1 glass-card p-md rounded-lg flex flex-col justify-between min-h-[120px]">
+<span class="material-symbols-outlined text-primary text-3xl">shield</span>
+<p class="font-label-md text-on-surface">Secure Transactions</p>
+</div>
+<div class="col-span-2 md:col-span-1 glass-card p-md rounded-lg flex flex-col justify-between min-h-[120px]">
+<span class="material-symbols-outlined text-primary text-3xl">visibility_off</span>
+<p class="font-label-md text-on-surface">Private Browsing</p>
+</div>
+</div>
+<div class="space-y-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">5. Your Rights</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                    Under certain circumstances, you have rights under data protection laws in relation to your personal data, including the right to request access, correction, or erasure of your personal data.
+                </p>
+</div>
+</section>
+<!-- Spacer for FAB/Sticky content -->
+<div class="h-32"></div>
+</main>
+<!-- Sticky Contact Us Card -->
+<div class="fixed bottom-24 left-margin right-margin z-40 max-w-2xl mx-auto">
+<div class="glass-card p-md rounded-xl shadow-2xl flex items-center justify-between border-l-4 border-l-primary-container">
+<div class="flex-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Have questions?</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Our support team is here 24/7.</p>
+</div>
+<button class="bg-primary-container text-white px-lg py-sm rounded-full font-bold active:scale-95 transition-transform hover:opacity-90 shadow-[0px_0px_8px_#FF4D00]">
+                Contact Us
+            </button>
+</div>
+</div>
+<!-- BottomNavBar (Suppressed check: Legal page, but keeping shell as per request for consistency in top-level ecosystem) -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-background/90 dark:bg-background/90 backdrop-blur-lg flex justify-around items-center h-20 px-4">
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined text-[28px]">play_circle</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">gavel</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined text-[28px]">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined text-[28px]">local_mall</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:text-primary-fixed-dim active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined text-[28px]">person</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction for scroll reveal
+        document.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section > div');
+            const triggerBottom = window.innerHeight / 5 * 4;
+            
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                if(sectionTop < triggerBottom) {
+                    section.classList.add('opacity-100');
+                    section.classList.remove('opacity-0');
+                    section.style.transform = 'translateY(0)';
+                } else {
+                    section.classList.add('opacity-0');
+                    section.style.transform = 'translateY(20px)';
+                    section.style.transition = 'all 0.6s ease-out';
+                }
+            });
+        });
+
+        // Initial trigger
+        window.dispatchEvent(new Event('scroll'));
+    </script>
+</body></html>

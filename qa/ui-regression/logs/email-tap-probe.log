@@ -1,0 +1,43 @@
+Running on iPhone 17 Pro - iOS 26.5 - 3D0C9DF5-53F3-4617-86BF-55EAE24A0EB5
+ > Flow _tmp_email_tap_probe
+Launch app "com.notwhat.app" with clear state and clear keychain... COMPLETED
+Tap on point (50%,40.5%)...java.lang.NumberFormatException: For input string: "40.5"
+	at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.java:67)
+	at java.base/java.lang.Integer.parseInt(Integer.java:668)
+	at java.base/java.lang.Integer.parseInt(Integer.java:786)
+	at maestro.orchestra.Orchestra.tapOnPointV2Command(Orchestra.kt:1336)
+	at maestro.orchestra.Orchestra.executeCommand(Orchestra.kt:397)
+	at maestro.orchestra.Orchestra.executeCommands(Orchestra.kt:325)
+	at maestro.orchestra.Orchestra.access$executeCommands(Orchestra.kt:129)
+	at maestro.orchestra.Orchestra$executeCommands$1.invokeSuspend(Orchestra.kt)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at maestro.cli.runner.TestRunner.runSingle$lambda$0(TestRunner.kt:73)
+	at maestro.cli.runner.TestRunner.runCatching-ta8aW1Q(TestRunner.kt:190)
+	at maestro.cli.runner.TestRunner.runSingle(TestRunner.kt:72)
+	at maestro.cli.command.TestCommand.runSingleFlow(TestCommand.kt:566)
+	at maestro.cli.command.TestCommand.runShardSuite$lambda$10(TestCommand.kt:528)
+	at maestro.cli.session.MaestroSessionManager.newSession(MaestroSessionManager.kt:135)
+	at maestro.cli.session.MaestroSessionManager.newSession$default(MaestroSessionManager.kt:66)
+	at maestro.cli.command.TestCommand.runShardSuite(TestCommand.kt:477)
+	at maestro.cli.command.TestCommand.access$runShardSuite(TestCommand.kt:81)
+	at maestro.cli.command.TestCommand$handleSessions$1$results$1$1.invokeSuspend(TestCommand.kt:438)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:820)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+
+
+==== Debug output (logs & screenshots) ====
+
+/Users/vedant.tiwari/.maestro/tests/2026-08-08_162345

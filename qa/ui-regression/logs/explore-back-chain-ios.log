@@ -1,0 +1,18 @@
+Running on iPhone 17 Pro - iOS 26.5 - 3D0C9DF5-53F3-4617-86BF-55EAE24A0EB5
+ > Flow explore_back_chain_ios
+Launch app "com.notwhat.app"... COMPLETED
+Take screenshot explore_01_start... COMPLETED
+Tap on "Back"... FAILED
+
+Element not found: Text matching regex: Back
+
+Element with Text matching regex: Back not found. Check the UI hierarchy in debug artifacts to verify if the element exists.
+
+Possible causes:
+- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.
+- Element may be temporarily unavailable due to loading state.
+- This could be a real regression that needs to be addressed.
+
+==== Debug output (logs & screenshots) ====
+
+/Users/vedant.tiwari/.maestro/tests/2026-08-08_161705

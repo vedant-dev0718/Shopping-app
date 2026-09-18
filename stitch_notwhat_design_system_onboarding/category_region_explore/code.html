@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>NotWhat | Explore</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#001c3a",
+                      "on-secondary-container": "#b4b5b5",
+                      "on-surface": "#fcdcd3",
+                      "on-error-container": "#ffdad6",
+                      "tertiary": "#a5c8ff",
+                      "background": "#1f0f0b",
+                      "surface-variant": "#44302a",
+                      "surface-container": "#2d1b16",
+                      "surface-tint": "#ffb59e",
+                      "error": "#ffb4ab",
+                      "secondary-container": "#454747",
+                      "on-primary": "#5e1700",
+                      "on-background": "#fcdcd3",
+                      "on-primary-container": "#521300",
+                      "surface-container-low": "#281712",
+                      "tertiary-container": "#2492ff",
+                      "inverse-on-surface": "#3f2c26",
+                      "outline": "#ad897e",
+                      "primary-fixed": "#ffdbd0",
+                      "on-surface-variant": "#e6beb2",
+                      "inverse-primary": "#ae3200",
+                      "surface-container-lowest": "#190a06",
+                      "primary-container": "#ff571a",
+                      "tertiary-fixed-dim": "#a5c8ff",
+                      "secondary-fixed": "#e2e2e2",
+                      "on-error": "#690005",
+                      "outline-variant": "#5c4037",
+                      "on-secondary-fixed-variant": "#454747",
+                      "surface-dim": "#1f0f0b",
+                      "surface-container-highest": "#44302a",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "on-tertiary": "#00315e",
+                      "on-secondary": "#2f3131",
+                      "inverse-surface": "#fcdcd3",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "on-primary-fixed-variant": "#852400",
+                      "on-tertiary-fixed-variant": "#004785",
+                      "tertiary-fixed": "#d4e3ff",
+                      "on-tertiary-container": "#002a53",
+                      "secondary": "#c6c6c7",
+                      "surface-container-high": "#382620",
+                      "primary-fixed-dim": "#ffb59e",
+                      "on-primary-fixed": "#3a0b00",
+                      "surface": "#1f0f0b",
+                      "error-container": "#93000a",
+                      "surface-bright": "#49342e",
+                      "primary": "#ffb59e"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "md": "16px",
+                      "margin": "16px",
+                      "xs": "4px",
+                      "base": "4px",
+                      "lg": "24px",
+                      "gutter": "12px",
+                      "xl": "32px"
+              },
+              "fontFamily": {
+                      "label-md": ["inter"],
+                      "headline-md": ["montserrat"],
+                      "caption": ["inter"],
+                      "display-lg-mobile": ["montserrat"],
+                      "body-lg": ["inter"],
+                      "headline-sm": ["montserrat"],
+                      "display-lg": ["montserrat"],
+                      "body-md": ["inter"],
+                      "headline-sm-mobile": ["montserrat"]
+              },
+              "fontSize": {
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                      "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                      "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                      "headline-sm-mobile": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #fcdcd3;
+            -webkit-font-smoothing: antialiased;
+        }
+        .custom-scrollbar::-webkit-scrollbar { display: none; }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 77, 0, 0.1);
+        }
+        .active-chip {
+            background-color: #ff571a;
+            color: white;
+            box-shadow: 0px 0px 8px rgba(255, 77, 0, 0.4);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- Top AppBar (from JSON blueprint) -->
+<header class="fixed top-0 w-full z-50 bg-background flex justify-between items-center px-margin h-16">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-2xl active:scale-90 transition-all cursor-pointer" data-icon="menu">menu</span>
+<h1 class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary tracking-tighter">NotWhat</h1>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-2xl active:scale-90 transition-all cursor-pointer" data-icon="notifications">notifications</span>
+</div>
+</header>
+<main class="pt-20 pb-32 min-h-screen">
+<!-- Region Explore Section (Map Focus) -->
+<section class="px-margin mb-xl">
+<div class="flex justify-between items-end mb-md">
+<div>
+<p class="text-primary font-label-md text-label-md uppercase tracking-widest mb-xs">Nearby Vibes</p>
+<h2 class="font-headline-md text-headline-md text-on-background">Explore Mumbai</h2>
+</div>
+<div class="flex items-center gap-xs text-primary font-label-md text-label-md cursor-pointer">
+<span>Change</span>
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+</div>
+</div>
+<!-- Asymmetric Map Card -->
+<div class="relative w-full h-56 rounded-lg overflow-hidden mb-lg shadow-2xl border border-outline-variant/30">
+<div class="absolute inset-0 bg-[#1A1A1A]">
+<img alt="Mumbai City Map" class="w-full h-full object-cover opacity-40 mix-blend-luminosity" data-location="Mumbai" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCajBfJ81jy_F--5dRF4Jx4zmKXsYpQ_70ZqvCEjX4udOi-xxnkp4zyfYQOKs796cc-LrFHhAuQJ1B6rkE642XwwNz_z07mGauWx96L9-XdFBb96tzqqaztFQe8yvTZrTS9bYZRdwIsPGfTz_n1H390yJ01rUOS9iXMwduJKlDvW_M15J0_Lza6r8VgB_tlox_ZHjOiiDeQDBYnUgxlP_cpmnOejaa-Xe5QDQ1vRz-wXOTT7yq6L4ZWtn6MlP8uMtVvhi6wB-jCIFk"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+<!-- Floating Store Ping -->
+<div class="absolute top-1/4 left-1/3 animate-bounce">
+<div class="bg-primary-container p-xs rounded-full shadow-[0_0_15px_#ff571a]">
+<span class="material-symbols-outlined text-white text-base fill-icon" data-icon="store">store</span>
+</div>
+</div>
+<div class="absolute bottom-1/2 right-1/4 animate-pulse delay-700">
+<div class="bg-tertiary-container p-xs rounded-full shadow-[0_0_15px_#2492ff]">
+<span class="material-symbols-outlined text-white text-base fill-icon" data-icon="local_mall">local_mall</span>
+</div>
+</div>
+<div class="absolute bottom-md left-md">
+<button class="bg-white/10 backdrop-blur-md border border-white/20 text-white px-md py-sm rounded-full font-label-md text-label-md flex items-center gap-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="explore">explore</span>
+                        Open Interactive Map
+                    </button>
+</div>
+</div>
+<!-- Shops Near You Carousel -->
+<div class="flex gap-md overflow-x-auto custom-scrollbar pb-xs">
+<div class="min-w-[240px] glass-card p-md rounded-lg flex flex-col gap-sm">
+<div class="h-28 rounded-md overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A trendy urban boutique interior with neon lighting accents, featuring racks of designer streetwear and minimalist concrete walls. The mood is high-energy, premium urban fashion boutique in Mumbai at night, with electric orange highlights reflecting off polished surfaces." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHwUWujP0RzEPwhRyRV7MC01rAg-wweOR0BirCVHQpEhmtsd0lSG_Kx64Ca8yryib6jeirN2cE-oC5zclb_KzBGV_ndwJ6rsrKy3T3FGqItX87-RP1a1QOxXJM2ejN0crFjGovG4z_Ffv17gDxmKc8Qfs8pccTC7S7LB66nYqrLLdFR8bTa7ABh2s1feDEpxxz7QOyZwYEmfjLZYRXYqWmkgEZYoGrRaOT6BQbZoBRZQw70W3eviUWJDCyVgd1cKnmTFXh44jM7Rc"/>
+<span class="absolute top-sm right-sm bg-primary text-on-primary px-sm py-xs rounded-full font-label-md text-[10px] uppercase">0.8 km</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">The Hype Studio</h4>
+<p class="text-on-surface-variant font-label-md text-label-md">Streetwear • Bandra West</p>
+</div>
+</div>
+<div class="min-w-[240px] glass-card p-md rounded-lg flex flex-col gap-sm">
+<div class="h-28 rounded-md overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A modern, minimalist concept store with clean architectural lines and warm lighting. The space displays curated accessories on glass pedestals with deep black shadows and soft orange glowing accents. The atmosphere is sophisticated and exclusive social commerce hub." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC6I_sYaRKPT_QFRtXjqBehVsP4SGTLrcES9givBw0866z0zsqLPwAygVjU_jviUxPsSLVCQETIaXtvsNyaXP17IPi_PlPgizFPJAse3aIdtBvYSy0VPu9OsRiBPxbslR8A__r8_d_nTwewLttLsslYghEbIgwQU4Mo-4mD0Yj025ZXknfuje4llvL2TeSVS85DpT_Y_W8bRnbzSryHgTNNi6o0t9pVcUatTTaXISLLmGFgWB5tn0BcywSSw5E7GePvQYhVHJe8oA"/>
+<span class="absolute top-sm right-sm bg-primary text-on-primary px-sm py-xs rounded-full font-label-md text-[10px] uppercase">1.2 km</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Curated Co.</h4>
+<p class="text-on-surface-variant font-label-md text-label-md">Lifestyle • Colaba</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Category Browse Header -->
+<section class="px-margin mb-lg">
+<div class="flex items-center gap-md mb-md">
+<div class="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center shadow-[0_0_12px_rgba(255,87,26,0.3)]">
+<span class="material-symbols-outlined text-white text-2xl" data-icon="checkroom">checkroom</span>
+</div>
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-background">Browse Apparel</h2>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-sm overflow-x-auto custom-scrollbar py-xs">
+<button class="active-chip px-lg py-sm rounded-full font-label-md text-label-md whitespace-nowrap active:scale-95 transition-all">Trending</button>
+<button class="bg-surface-container-high text-on-surface-variant px-lg py-sm rounded-full font-label-md text-label-md whitespace-nowrap active:scale-95 transition-all">New Arrivals</button>
+<button class="bg-surface-container-high text-on-surface-variant px-lg py-sm rounded-full font-label-md text-label-md whitespace-nowrap active:scale-95 transition-all">Price</button>
+<button class="bg-surface-container-high text-on-surface-variant px-lg py-sm rounded-full font-label-md text-label-md whitespace-nowrap active:scale-95 transition-all">Discount</button>
+<button class="bg-surface-container-high text-on-surface-variant px-lg py-sm rounded-full font-label-md text-label-md whitespace-nowrap active:scale-95 transition-all flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm" data-icon="tune">tune</span>
+                    More
+                </button>
+</div>
+</section>
+<!-- Infinite Product Grid -->
+<section class="px-margin">
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Card 1 -->
+<div class="flex flex-col gap-sm group">
+<div class="aspect-[3/4] rounded-lg overflow-hidden relative bg-surface-container-low">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Close-up of a premium oversized black hoodie with high-density orange graphic prints. The lighting is dramatic and moody, with sharp highlights showcasing the fabric texture. The visual style is edgy urban fashion photography with deep shadows and vibrant contrast." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCH8L5TH9pj4dtJYKL2OUjNmHn3rn916WZ6sLC_CCKEAXCAeKfKKjNwbCVuKfwEBrxtUl-XuMhOTSoxDLcM45bi8c2MaejAaXXtGi1IJFvfLM_mEMkeXU2gjkwIscW4BdTLwTsDLRHoGF4rMdrKttujFTFU-Yfn0QClYk42gp-IOc19QaZeaBjc7O7gPH-epugB9ufYILbJUdVZYvFH66_SzcrokAO3iHrPrbtKjvl1ikne9w3Y8rAVtFxSmyIMdT8KDyDbrhR6Pcs"/>
+<div class="absolute top-sm left-sm">
+<span class="bg-primary-container text-white px-sm py-[2px] rounded-sm font-label-md text-[10px] uppercase">Bargain Live</span>
+</div>
+<button class="absolute bottom-sm right-sm w-10 h-10 bg-white/10 backdrop-blur-lg rounded-full flex items-center justify-center text-white active:scale-90 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface truncate">Vortex Oversized Hoodie</h3>
+<div class="flex justify-between items-center mt-xs">
+<span class="font-headline-sm text-headline-sm text-primary">₹3,499</span>
+<span class="text-caption font-caption text-on-secondary-container line-through">₹5,999</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex flex-col gap-sm group">
+<div class="aspect-[3/4] rounded-lg overflow-hidden relative bg-surface-container-low">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="High-tech athletic sneaker in vibrant orange and black colors, captured in a dynamic action shot with motion blur in the background. Professional product photography with neon lighting, glowing edges, and high-contrast urban aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY7F-n3LiSdjh7lNNmidIDNClQfRExjBr2c1bpmAgGIzCi625w2LBwbG_6mhHEVQwt9VjsT5okyWuIOGEEEKO-TCUTHNUhpuGH9QbN9R6Dc3EZwgd0rIWuS14rJm3S26N08TfLqES_G7ezBWxnpao19ZdcavDmzpYJVZnaZ1IYSgAOzouZyAkGQcwp9wJT-xR7cX-38gF9-C4ZiiN_2oP0q1tsKofj9mX_nqQXt0pMRJscemL8muzwQmIdiclh6HV8AN220im2Gek"/>
+<div class="absolute top-sm left-sm">
+<span class="bg-tertiary-container text-white px-sm py-[2px] rounded-sm font-label-md text-[10px] uppercase">Best Seller</span>
+</div>
+<button class="absolute bottom-sm right-sm w-10 h-10 bg-white/10 backdrop-blur-lg rounded-full flex items-center justify-center text-white active:scale-90 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface truncate">Ignite Runner X1</h3>
+<div class="flex justify-between items-center mt-xs">
+<span class="font-headline-sm text-headline-sm text-primary">₹7,200</span>
+<span class="text-caption font-caption text-on-secondary-container">Brand New</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="flex flex-col gap-sm group">
+<div class="aspect-[3/4] rounded-lg overflow-hidden relative bg-surface-container-low">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Fashion-forward utility vest with multiple pockets in a deep black technical fabric. The lighting is cool-toned with electric orange laser lines crisscrossing the frame. High-contrast street-wear aesthetic, edgy and futuristic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfn50cjM9ZWi3XTLGje8g2zYH-X26yvJYY85L3P57CZ0i12Z4t7Idjr0T4j5Ugw4z1_hFNlBx1CVgdQz6HW7DAbILN4mFQEOgk5kpIZmzDdfz2o8aJSQtNQLXbdu_W57EeU2cV4mDbrBFyTPq1-sd02Gqz724nENnORbOr6kTACLmWKy84EUiTo49CAFjYazy4iYXKoBfq_GiGeTyfT0H8Drpsytx7dY2TB2qPvLJthx-UaZMBguG8ILXLx_M4jAET2LKRLBuDKUY"/>
+<button class="absolute bottom-sm right-sm w-10 h-10 bg-white/10 backdrop-blur-lg rounded-full flex items-center justify-center text-white active:scale-90 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface truncate">Tech-Wear Utility Vest</h3>
+<div class="flex justify-between items-center mt-xs">
+<span class="font-headline-sm text-headline-sm text-primary">₹4,150</span>
+<span class="text-caption font-caption text-on-secondary-container line-through">₹6,500</span>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="flex flex-col gap-sm group">
+<div class="aspect-[3/4] rounded-lg overflow-hidden relative bg-surface-container-low">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A model wearing a striking graphic tee with neon orange typography on a black background, standing in a dark alleyway lit by glowing advertisements. The vibe is gritty, urban, and high-velocity Gen-Z social commerce fashion." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQvXKQmIqBgTLjyoqNwwZwZjLn8t1D0Crdje9baVLN6OFfve-Qzo4NlnnLruqlhHpNPVkKocOEpN5qZrSw7NgB8Li3yO_WBmXBomzsOSc8ueC6tU9kOu1vYhgFIarUMfBtydMkXtSJyyCyQAT_is8yKtON8cU2tI2Krrn6dHgq6CfLjodR_oZVh3bcnHELZ70rwAjVqawXKZuJOQNSRPr8Zhc4bSWbHvF2dSuOW5d3Imbl-k4MH3Vtx3udeOTfH9qxPboloXHhqiU"/>
+<div class="absolute top-sm left-sm">
+<span class="bg-error-container text-on-error-container px-sm py-[2px] rounded-sm font-label-md text-[10px] uppercase">Ending Soon</span>
+</div>
+<button class="absolute bottom-sm right-sm w-10 h-10 bg-white/10 backdrop-blur-lg rounded-full flex items-center justify-center text-white active:scale-90 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface truncate">Cipher Graphic Tee</h3>
+<div class="flex justify-between items-center mt-xs">
+<span class="font-headline-sm text-headline-sm text-primary">₹1,899</span>
+<span class="text-caption font-caption text-on-secondary-container">12 Bids</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Scroll Indicator / Loading -->
+<div class="flex flex-col items-center justify-center py-xl opacity-50">
+<div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mb-sm"></div>
+<p class="font-label-md text-label-md text-on-secondary-container">Loading more drops...</p>
+</div>
+</section>
+</main>
+<!-- FAB for quick action (Conditional Context) -->
+<button class="fixed bottom-24 right-margin w-14 h-14 bg-primary-container rounded-full shadow-[0_4px_20px_rgba(255,87,26,0.4)] flex items-center justify-center text-white z-40 active:scale-90 transition-all">
+<span class="material-symbols-outlined text-2xl fill-icon" data-icon="gavel">gavel</span>
+</button>
+<!-- Bottom Navigation Bar (from JSON blueprint) -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface/90 backdrop-blur-md dark:bg-surface/90 flex justify-around items-center px-margin pb-8 pt-xs h-20">
+<div class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-2xl" data-icon="home">home</span>
+</div>
+<!-- Active Tab: Explore (Search icon is contextually closest) -->
+<div class="flex flex-col items-center justify-center text-primary hover:opacity-80 active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-2xl fill-icon" data-icon="search">search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-2xl" data-icon="movie">movie</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-2xl" data-icon="shopping_bag">shopping_bag</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+</div>
+</nav>
+<script>
+        // Micro-interactions for chips
+        const chips = document.querySelectorAll('button[class*="rounded-full"]');
+        chips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                if (!this.classList.contains('active-chip')) {
+                    document.querySelector('.active-chip')?.classList.remove('active-chip', 'shadow-[0px_0px_8px_rgba(255,77,0,0.4)]');
+                    document.querySelector('.active-chip')?.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+                    
+                    this.classList.add('active-chip');
+                    this.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+                }
+            });
+        });
+
+        // Simple scroll reveal for header
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            const header = document.querySelector('header');
+            if (currentScroll > lastScroll && currentScroll > 100) {
+                header.style.transform = 'translateY(-100%)';
+                header.style.transition = 'transform 0.3s ease-in-out';
+            } else {
+                header.style.transform = 'translateY(0)';
+            }
+            lastScroll = currentScroll;
+        });
+    </script>
+</body></html>

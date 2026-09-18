@@ -1,0 +1,19 @@
+Running on emulator-5554
+ > Flow admin_e2e_visual_flow
+Run admin_checkpoint_console.yaml...
+  Launch app "com.notwhat.app.admin" with clear state... COMPLETED
+  Assert that "Welcome Back" is visible... COMPLETED
+  Take screenshot admin_01_auth_login... COMPLETED
+  Tap on "Mock"... COMPLETED
+  Tap on "Email"... COMPLETED
+  Input text admin@example.com... COMPLETED
+  Scrolling DOWN until "Password" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text Password123!... COMPLETED
+  Hide Keyboard... COMPLETED
+  Scrolling DOWN until "Log In" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Assert that "Admin Operations Center" is visible... COMPLETED
+  Wait for animation to end... COMPLETED
+  Take screenshot admin_02_console... COMPLETED
+Run admin_checkpoint_console.yaml... COMPLETED

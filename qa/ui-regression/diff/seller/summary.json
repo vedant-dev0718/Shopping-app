@@ -1,0 +1,134 @@
+[
+  {
+    "name": "seller_dashboard_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_dashboard_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_dashboard_app_vs_stitch",
+    "status": "ok",
+    "gate": "soft",
+    "mismatchedPixels": 145953,
+    "totalPixels": 482820,
+    "mismatchPct": 30.23,
+    "thresholdPct": null,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_dashboard_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_insights_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_insights_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_insights_app_vs_stitch",
+    "status": "ok",
+    "gate": "soft",
+    "mismatchedPixels": 347154,
+    "totalPixels": 906750,
+    "mismatchPct": 38.29,
+    "thresholdPct": null,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_insights_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_orders_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_orders_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_orders_app_vs_stitch",
+    "status": "ok",
+    "gate": "soft",
+    "mismatchedPixels": 132380,
+    "totalPixels": 367380,
+    "mismatchPct": 36.03,
+    "thresholdPct": null,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_orders_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_products_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_products_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_products_app_vs_stitch",
+    "status": "ok",
+    "gate": "soft",
+    "mismatchedPixels": 111800,
+    "totalPixels": 341250,
+    "mismatchPct": 32.76,
+    "thresholdPct": null,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_products_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_returns_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_returns_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_returns_app_vs_stitch",
+    "status": "ok",
+    "gate": "soft",
+    "mismatchedPixels": 154443,
+    "totalPixels": 452400,
+    "mismatchPct": 34.14,
+    "thresholdPct": null,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_returns_app_vs_stitch.png"
+  },
+  {
+    "name": "seller_upload_reel_app_vs_baseline",
+    "status": "ok",
+    "gate": "hard",
+    "mismatchedPixels": 0,
+    "totalPixels": 2617920,
+    "mismatchPct": 0,
+    "thresholdPct": 1,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_upload_reel_app_vs_baseline.png"
+  },
+  {
+    "name": "seller_upload_reel_app_vs_stitch",
+    "status": "ok",
+    "gate": "soft",
+    "mismatchedPixels": 240873,
+    "totalPixels": 531570,
+    "mismatchPct": 45.31,
+    "thresholdPct": null,
+    "pass": true,
+    "diffPath": "/Users/vedant.tiwari/Downloads/NotWhat-ios-main/qa/ui-regression/diff/seller/seller_upload_reel_app_vs_stitch.png"
+  }
+]

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .coral-glow {
+      box-shadow: 0 0 15px rgba(255, 77, 0, 0.4);
+    }
+    .glass-card {
+      background: rgba(26, 26, 26, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(58, 58, 58, 0.5);
+    }
+    body {
+      background-color: #0A0A0A;
+      color: #fcdcd3;
+      overflow-x: hidden;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-surface": "#fcdcd3",
+            "on-background": "#fcdcd3",
+            "inverse-on-surface": "#3f2c26",
+            "tertiary-container": "#2492ff",
+            "surface-tint": "#ffb59e",
+            "surface-container-lowest": "#190a06",
+            "primary-container": "#ff571a",
+            "on-error": "#690005",
+            "primary-fixed": "#ffdbd0",
+            "error-container": "#93000a",
+            "secondary-container": "#454747",
+            "on-secondary-container": "#b4b5b5",
+            "on-surface": "#fcdcd3",
+            "surface": "#1f0f0b",
+            "surface-bright": "#49342e",
+            "outline-variant": "#5c4037",
+            "surface-dim": "#1f0f0b",
+            "tertiary": "#a5c8ff",
+            "on-tertiary-fixed": "#001c3a",
+            "tertiary-fixed": "#d4e3ff",
+            "on-primary-fixed": "#3a0b00",
+            "secondary-fixed-dim": "#c6c6c7",
+            "on-secondary-fixed-variant": "#454747",
+            "on-tertiary-container": "#002a53",
+            "surface-container-high": "#382620",
+            "on-secondary-fixed": "#1a1c1c",
+            "outline": "#ad897e",
+            "surface-container": "#2d1b16",
+            "tertiary-fixed-dim": "#a5c8ff",
+            "primary": "#ffb59e",
+            "background": "#1f0f0b",
+            "on-surface-variant": "#e6beb2",
+            "on-error-container": "#ffdad6",
+            "error": "#ffb4ab",
+            "surface-variant": "#44302a",
+            "on-primary-fixed-variant": "#852400",
+            "on-primary-container": "#521300",
+            "on-primary": "#5e1700",
+            "on-tertiary-fixed-variant": "#004785",
+            "secondary-fixed": "#e2e2e2",
+            "primary-fixed-dim": "#ffb59e",
+            "surface-container-highest": "#44302a",
+            "secondary": "#c6c6c7",
+            "inverse-primary": "#ae3200",
+            "on-secondary": "#2f3131",
+            "on-tertiary": "#00315e",
+            "surface-container-low": "#281712"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "sm": "8px",
+            "base": "4px",
+            "xl": "32px",
+            "md": "16px",
+            "gutter": "12px",
+            "xs": "4px",
+            "lg": "24px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "body-md": ["inter"],
+            "body-lg": ["inter"],
+            "headline-sm": ["montserrat"],
+            "display-lg": ["montserrat"],
+            "label-md": ["inter"],
+            "headline-md": ["montserrat"],
+            "display-lg-mobile": ["montserrat"],
+            "caption": ["inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+            "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+            "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+            "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+            "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased">
+<!-- Top Bar -->
+<header class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md flex justify-between items-center px-margin h-16">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary active:scale-95 transition-transform" data-icon="menu">menu</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile italic font-black text-primary tracking-tighter">NOTWHAT</h1>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface active:scale-95 transition-transform" data-icon="settings">settings</span>
+<span class="material-symbols-outlined text-on-surface active:scale-95 transition-transform" data-icon="notifications">notifications</span>
+</div>
+</header>
+<main class="pt-20 pb-24 px-margin max-w-[390px] mx-auto min-h-screen">
+<!-- Profile Header Section -->
+<section class="flex flex-col items-center mt-md">
+<!-- Large Avatar with Coral Ring -->
+<div class="relative group">
+<div class="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-[#FF4D00] to-[#FF8A00] coral-glow">
+<div class="w-full h-full rounded-full border-4 border-background overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A portrait of a stylish young Gen-Z man with a confident expression, wearing streetwear, set against a blurred urban background at night. The lighting is dramatic and warm, with vibrant orange and deep blue hues reflecting the high-contrast urban energy. The aesthetic is sharp, premium, and focused on modern fashion culture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL6ybDXJju3OTDeXvN2joAS-8wDOVY7qyEIfD24Oe19gL_krgqD-k6_28gPslfa17vAHIBiez3TT9td8MHrAPg-pwyQNv44NPJre6S_bLQBsYxEZHyoOVMW9e5dKZCvKRNI4lfh_AYZIW3Q1pB26I3RwTHNQJxTrvLaWzHsxlcz5KCmrvB4Y-naUf-i9hx1uBZQxEzOeDSdzcv1vB27TL9nCPH1w04v70GLc02wCNmT7-boojbZAOq6f7fXY1dtl58XoucCF_0LmY"/>
+</div>
+</div>
+<div class="absolute bottom-1 right-1 bg-primary text-on-primary-container p-1.5 rounded-full coral-glow active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined !text-[18px]" data-icon="add_a_photo">add_a_photo</span>
+</div>
+</div>
+<!-- Identity -->
+<div class="mt-lg text-center">
+<h2 class="font-headline-md text-headline-md text-on-surface">Arjun Sharma</h2>
+<p class="font-body-md text-primary font-semibold">@arjun_vibe</p>
+<p class="mt-sm font-body-md text-on-surface-variant max-w-[280px] leading-relaxed">
+          Hunting for the rarest street drops ⚡️ Bargain King 🔨 Sneakers, Vinyl, &amp; Tech.
+        </p>
+</div>
+<!-- Actions -->
+<button class="mt-lg w-full py-md bg-primary-container text-on-primary-container rounded-full font-headline-sm text-headline-sm coral-glow active:scale-95 transition-all">
+        Edit Profile
+      </button>
+</section>
+<!-- Stats Bento -->
+<section class="grid grid-cols-2 gap-base mt-xl">
+<div class="glass-card p-lg rounded-lg flex flex-col items-center justify-center">
+<span class="font-display-lg text-display-lg text-primary">42</span>
+<span class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Orders</span>
+</div>
+<div class="glass-card p-lg rounded-lg flex flex-col items-center justify-center">
+<span class="font-display-lg text-display-lg text-primary">128</span>
+<span class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Saved</span>
+</div>
+<div class="glass-card p-lg rounded-lg flex flex-col items-center justify-center">
+<span class="font-display-lg text-display-lg text-primary">15</span>
+<span class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Reviews</span>
+</div>
+<div class="glass-card p-lg rounded-lg flex flex-col items-center justify-center">
+<span class="font-display-lg text-display-lg text-primary">890</span>
+<span class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Following</span>
+</div>
+</section>
+<!-- Tabs Navigation -->
+<nav class="mt-xl border-b border-outline-variant flex justify-between px-md relative">
+<button class="pb-md px-base font-label-md text-label-md uppercase text-primary border-b-2 border-primary" id="tab-activity" onclick="switchTab('activity')">
+        Activity
+      </button>
+<button class="pb-md px-base font-label-md text-label-md uppercase text-on-surface-variant" id="tab-reviews" onclick="switchTab('reviews')">
+        Reviews
+      </button>
+<button class="pb-md px-base font-label-md text-label-md uppercase text-on-surface-variant" id="tab-following" onclick="switchTab('following')">
+        Following
+      </button>
+</nav>
+<!-- Tab Content -->
+<section class="mt-lg mb-12" id="content-area">
+<!-- Activity Content (Default) -->
+<div class="space-y-md" id="view-activity">
+<div class="flex items-center gap-md p-md bg-surface-container rounded-lg">
+<div class="w-16 h-16 rounded overflow-hidden flex-shrink-0">
+<img alt="Product" class="w-full h-full object-cover" data-alt="A cinematic close-up shot of a pair of high-end limited edition streetwear sneakers featuring bold orange and black colorways. The shoes are placed on a reflective dark surface with neon light accents tracing their silhouettes. The photography style is high-contrast, moody, and ultra-modern, emphasizing textures and premium design details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNo_WKyTkqjklkIaLmL7Ic1YAvY3RIe-_kuxQOah6Ph_0tfjgUtxhpPfP3_QxE768XuFSCY9VInrXGJGl-44WooQ3ib3oEH8VeOqVmy4Dxt4BzBfYrlUqkxHUv_BDtBlx8zPWJcl3dPzNEEDWYDJdJpWhNmtxD0XaAgq4Il6yME8dAXGUMqGobcLPb5Imf7A2fUV-XYLcVoRhu0511FBc3kpgWR7lTksWa8LJEcn1y2X3hccvAL6n13TnzdAqfT3gRP5KVzF9aKgo"/>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-on-surface"><span class="font-bold">Won the bid</span> for "Retro Z-Max"</p>
+<p class="text-caption text-on-surface-variant">2 hours ago</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="gavel" style="font-variation-settings: 'FILL' 1;">gavel</span>
+</div>
+<div class="flex items-center gap-md p-md bg-surface-container rounded-lg">
+<div class="w-16 h-16 rounded overflow-hidden flex-shrink-0">
+<img alt="Product" class="w-full h-full object-cover" data-alt="A stylized product shot of designer sunglasses with orange-tinted lenses and a thick black frame. The glasses are set against a dark, monochromatic background with a single dramatic spotlight creating sharp highlights. The overall vibe is futuristic, high-fashion, and high-contrast, fitting a premium social commerce interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6XtphObTuCrRcRcY11VmWAaX8lFXUE5hrW7HsfqqNFbNCv98TSiDwsUCUwLxKpTXhN9c_2L4EOSObVeziivaktVfGYxBXI6qk_nT2xr3pIONC1hWk9yDCiczUGawbNIHnT7maE2YRZc858H_3YupKKIYSJQSw_UG1ASbAX1sdv7RUXtr_tXTyBR6fHeE58pyDjzAFDqxLXvWbMHjOlHOfvAE2fk9e3L3LCgCHvnMxl_ZQCFSzlcLl_U-RTUQ58XyyefXwyHpbGvY"/>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-on-surface"><span class="font-bold">Saved</span> Neon Peak Shades</p>
+<p class="text-caption text-on-surface-variant">Yesterday</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="bookmark" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</div>
+</div>
+<!-- Reviews Content (Hidden Initially) -->
+<div class="hidden space-y-md" id="view-reviews">
+<div class="p-md bg-surface-container rounded-lg border border-outline-variant">
+<div class="flex justify-between items-start">
+<h4 class="font-body-lg font-bold text-on-surface">Urban Utility Vest</h4>
+<div class="flex text-primary">
+<span class="material-symbols-outlined !text-[16px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined !text-[16px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined !text-[16px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined !text-[16px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined !text-[16px]" data-icon="star" style="font-variation-settings: 'FILL' 0;">star</span>
+</div>
+</div>
+<p class="mt-sm text-body-md text-on-surface-variant italic">"Quality is insane. Delivery was faster than expected. 10/10 vibe."</p>
+</div>
+</div>
+<!-- Following Content (Hidden Initially) -->
+<div class="hidden grid grid-cols-2 gap-md" id="view-following">
+<div class="flex flex-col items-center p-md bg-surface-container rounded-lg">
+<div class="w-12 h-12 rounded-full overflow-hidden mb-sm border-2 border-primary">
+<img alt="User" class="w-full h-full object-cover" data-alt="A close-up portrait of a chic Gen-Z woman with vibrant accessories and urban street style. She is smiling naturally, illuminated by soft golden-hour light that creates a premium, warm glow against a dark, stylized city background. The aesthetic is polished, energetic, and high-fashion." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw7Aodq272MEf957n6BMnLOHediZ4_Q7DEdrAbTBqY3ZXmj-BuDZr_A7Alg2EOUG_UBD-FNTJg9sWTOFv1igoVT5S876Tn9jv9GWNbLtR7botVvogdpoHBu-yLBUVzovqJEbk1z2i6tdP799fqiUVr7-pbNO4SibLWteRXBzSiiBu75Ax9al-XaumTrcdIpfYUJmhJLBWmyVe5VRF_lQCa1aR2e729ejmdLWrCPZMSYhop7DdWDD8Ur_u5RYhYUN9HOiQIJUi_MpE"/>
+</div>
+<span class="font-label-md text-on-surface">Riya_Styles</span>
+<button class="mt-base px-sm py-xs border border-primary text-primary rounded-full text-[10px] uppercase font-bold">Following</button>
+</div>
+<div class="flex flex-col items-center p-md bg-surface-container rounded-lg">
+<div class="w-12 h-12 rounded-full overflow-hidden mb-sm border-2 border-primary">
+<img alt="User" class="w-full h-full object-cover" data-alt="A portrait of a trendy young man with a focused look, wearing a minimalist hoodie and tech-wear gear. The lighting is low-key with sharp orange rim lights emphasizing his profile against a pitch-black background. The style is urban, high-contrast, and edgy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXNBT86tp9qMyJBsyB2MnMFTDtNiXj5nbugwqbIuTOfXF6iaOF1MTbhsIu3C8TleTJB47JPgfUYwcGtNbKCgdnKFjdJTe-cm-GCvCFS-P2yHqmFDGAA4_THlspwERcSlMRSaBTvRIBZ_q-7p0PY8mK85IVFtFuFVpAIskjl1xVtpLsNoMeP334HrQHEQJPua1BGht1wKUlWZoTfH1xcUJKfUkWrIrUsP_CTZl9AQZjMma8pZYXtpCY6AP_7jEGCGHEz44KwQ2CoSc"/>
+</div>
+<span class="font-label-md text-on-surface">StreetKing_99</span>
+<button class="mt-base px-sm py-xs border border-primary text-primary rounded-full text-[10px] uppercase font-bold">Following</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation -->
+<footer class="fixed bottom-0 w-full pb-safe z-50 bg-background/90 backdrop-blur-lg flex justify-around items-center h-20 px-4">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary fill-current transition-colors active:scale-90 duration-75">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</footer>
+<script>
+    function switchTab(tab) {
+      // Hide all views
+      document.getElementById('view-activity').classList.add('hidden');
+      document.getElementById('view-reviews').classList.add('hidden');
+      document.getElementById('view-following').classList.add('hidden');
+      
+      // Reset tab styling
+      const tabs = ['activity', 'reviews', 'following'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        el.classList.remove('text-primary', 'border-b-2', 'border-primary');
+        el.classList.add('text-on-surface-variant');
+      });
+
+      // Show selected view
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      
+      // Update selected tab styling
+      const activeEl = document.getElementById(`tab-${tab}`);
+      activeEl.classList.add('text-primary', 'border-b-2', 'border-primary');
+      activeEl.classList.remove('text-on-surface-variant');
+    }
+  </script>
+</body></html>

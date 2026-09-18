@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Seller Analytics - NOTWHAT</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#ffdad6",
+                    "inverse-surface": "#fcdcd3",
+                    "error-container": "#93000a",
+                    "surface-bright": "#49342e",
+                    "surface": "#1f0f0b",
+                    "on-tertiary-fixed-variant": "#004785",
+                    "primary-fixed-dim": "#ffb59e",
+                    "inverse-primary": "#ae3200",
+                    "surface-container": "#2d1b16",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-primary-fixed": "#3a0b00",
+                    "on-primary-fixed-variant": "#852400",
+                    "on-tertiary": "#00315e",
+                    "surface-container-high": "#382620",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface-container-low": "#281712",
+                    "tertiary-container": "#2492ff",
+                    "outline-variant": "#5c4037",
+                    "on-surface-variant": "#e6beb2",
+                    "primary-fixed": "#ffdbd0",
+                    "on-primary-container": "#521300",
+                    "on-tertiary-container": "#002a53",
+                    "error": "#ffb4ab",
+                    "on-background": "#fcdcd3",
+                    "surface-container-highest": "#44302a",
+                    "on-secondary": "#2f3131",
+                    "secondary-container": "#454747",
+                    "background": "#0A0A0A",
+                    "tertiary": "#a5c8ff",
+                    "outline": "#ad897e",
+                    "tertiary-fixed-dim": "#a5c8ff",
+                    "inverse-on-surface": "#3f2c26",
+                    "surface-dim": "#1f0f0b",
+                    "secondary-fixed": "#e2e2e2",
+                    "secondary": "#c6c6c7",
+                    "surface-container-lowest": "#190a06",
+                    "on-primary": "#5e1700",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-surface": "#fcdcd3",
+                    "on-error": "#690005",
+                    "primary-container": "#FF4D00",
+                    "primary": "#FF4D00",
+                    "surface-variant": "#1A1A1A",
+                    "tertiary-fixed": "#d4e3ff",
+                    "surface-tint": "#ffb59e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin": "16px",
+                    "gutter": "12px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["montserrat"],
+                    "headline-md": ["montserrat"],
+                    "body-lg": ["inter"],
+                    "caption": ["inter"],
+                    "body-md": ["inter"],
+                    "display-lg": ["montserrat"],
+                    "display-lg-mobile": ["montserrat"],
+                    "label-md": ["inter"]
+            },
+            "fontSize": {
+                    "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #0A0A0A; color: #fcdcd3; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(58, 58, 58, 0.5); }
+        .chart-glow { filter: drop-shadow(0px 0px 8px rgba(255, 77, 0, 0.4)); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-50 bg-background border-b border-outline-variant flex items-center justify-between px-margin py-base w-full max-w-[390px] mx-auto">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary transition-transform duration-200 active:scale-95 cursor-pointer">menu</span>
+<h1 class="font-headline-md text-headline-md-mobile italic tracking-tighter text-primary">NOTWHAT SELLER</h1>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline transition-transform duration-200 active:scale-95 cursor-pointer">
+<img alt="Seller Profile" class="w-full h-full object-cover" data-alt="A stylish urban professional avatar photo with dramatic high-contrast studio lighting. The person has a modern hairstyle and wearing premium streetwear. The background is a dark, moody grey, fitting a high-end streetwear brand aesthetic with deep blacks and vibrant coral accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbOCVrhiwFjLUjMghC2_jAGEtDHDCj2qBO4uLdEUuZonyi1gtUcf-nBsL96xtottsnVqUgoZx-1KN6fvig6j-nCpwPxysgrDHulzH8MHGXdLMxylPzFk6b1bhylWXLapghtPDW0qQlmr03o4JUMTs__ut6T1K-QpZV3GJ2MThojJmRZnrE8N_kgxLeaTyZE50YUO5U91XeTaJBdgy7w1Htp9AYxKUQgtMtkJG60XJujNUQ9zLF36KZJQu8qSQSgxGH1PSGLH1nVbg"/>
+</div>
+</header>
+<main class="flex-1 w-full max-w-[390px] mx-auto px-margin pt-lg pb-xl space-y-lg overflow-y-auto hide-scrollbar">
+<!-- Header & Date Picker -->
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm-mobile text-on-surface">Analytics</h2>
+<button class="flex items-center gap-xs px-md py-sm rounded-full glass-card border-none text-primary transition-transform duration-200 active:scale-95">
+<span class="font-label-md text-label-md">Last 30 Days</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</div>
+<!-- Revenue Hero Card -->
+<div class="glass-card rounded-lg p-md space-y-sm">
+<p class="font-label-md text-label-md text-secondary uppercase tracking-widest">Total Revenue</p>
+<div class="flex items-end justify-between">
+<div>
+<h3 class="font-display-lg text-display-lg-mobile text-on-surface">₹4,28,450</h3>
+<div class="flex items-center gap-xs text-green-400">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span class="font-label-md text-label-md">+12.4% vs prev. month</span>
+</div>
+</div>
+<div class="w-24 h-12">
+<svg class="w-full h-full chart-glow" viewbox="0 0 100 40">
+<path d="M0 35 Q10 32 20 28 T40 30 T60 15 T80 20 T100 5" fill="none" stroke="#FF4D00" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M0 35 Q10 32 20 28 T40 30 T60 15 T80 20 T100 5 V40 H0 Z" fill="url(#grad1)" opacity="0.3"></path>
+<defs>
+<lineargradient id="grad1" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#FF4D00;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#FF4D00;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+</div>
+</div>
+<!-- KPI Bento Grid -->
+<div class="grid grid-cols-2 gap-gutter">
+<div class="glass-card rounded-lg p-md flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary">shopping_bag</span>
+<div>
+<p class="font-label-md text-label-md text-secondary">Total Orders</p>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">1,842</h4>
+</div>
+</div>
+<div class="glass-card rounded-lg p-md flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary">inventory_2</span>
+<div>
+<p class="font-label-md text-label-md text-secondary">Units Sold</p>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">3,105</h4>
+</div>
+</div>
+<div class="glass-card rounded-lg p-md flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary">play_circle</span>
+<div>
+<p class="font-label-md text-label-md text-secondary">Reel Views</p>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">840K</h4>
+</div>
+</div>
+<div class="glass-card rounded-lg p-md flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary">group</span>
+<div>
+<p class="font-label-md text-label-md text-secondary">Visitors</p>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">52.1K</h4>
+</div>
+</div>
+</div>
+<!-- Performance Chart -->
+<div class="glass-card rounded-lg p-md space-y-md">
+<div class="flex items-center justify-between">
+<h5 class="font-label-md text-label-md text-secondary uppercase tracking-widest">Revenue Growth</h5>
+<span class="font-caption text-caption text-secondary">Daily (May 2024)</span>
+</div>
+<div class="relative h-40 w-full">
+<div class="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
+<div class="border-t border-on-surface w-full"></div>
+<div class="border-t border-on-surface w-full"></div>
+<div class="border-t border-on-surface w-full"></div>
+<div class="border-t border-on-surface w-full"></div>
+</div>
+<svg class="w-full h-full absolute inset-0 chart-glow" viewbox="0 0 300 120">
+<path d="M0 100 L30 90 L60 110 L90 80 L120 85 L150 40 L180 55 L210 20 L240 45 L270 10 L300 25" fill="none" stroke="#FF4D00" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<path d="M0 100 L30 90 L60 110 L90 80 L120 85 L150 40 L180 55 L210 20 L240 45 L270 10 L300 25 V120 H0 Z" fill="url(#areaGrad)" opacity="0.2"></path>
+<defs>
+<lineargradient id="areaGrad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#FF4D00;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#FF4D00;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+</div>
+<!-- Reel Performance -->
+<section class="space-y-md">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm-mobile text-on-surface">Reel Impact</h2>
+<button class="text-primary font-label-md text-label-md">View All</button>
+</div>
+<div class="flex gap-gutter overflow-x-auto hide-scrollbar -mx-margin px-margin">
+<div class="min-w-[140px] flex-shrink-0 space-y-sm">
+<div class="relative aspect-[9/16] rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A high-energy fashion reel thumbnail featuring a model strutting in vibrant neon streetwear against a dark urban alleyway. Cinematic lighting with strong highlights and deep shadows. Professional editing style with blurred background and focus on textile textures. Modern, bold aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgIFTmkHT9fmbO2fp_kXbmU88Yeh3Qoy32Rmsq_7iwzv-kRqDEpR3G6J9f2ukaXDHyVC4z_PbVAw5mz6F9yXthvIq6UqkcDf_mAcvo8mXG-xIocWFYD7oTbeTTSlTiGBtd8dfySp6W4lbw2S-GYcBFEBkzritSAqevfm-mzAifF3ES5luA-kpEh4vBc4-36LqbSwwqrwqs2POWBhLDnArqtXBgsPrOX1wjX5HXNhW8X6sXWvyGYjkJeG_75LdOKolmnh90WuGO9IA"/>
+<div class="absolute bottom-2 left-2 flex items-center gap-xs bg-black/60 backdrop-blur-md px-base py-xs rounded text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px] text-primary" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                            24.5K
+                        </div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface line-clamp-1">Oversized Hoodie Drop</p>
+<p class="font-caption text-caption text-primary">₹82K Rev</p>
+</div>
+</div>
+<div class="min-w-[140px] flex-shrink-0 space-y-sm">
+<div class="relative aspect-[9/16] rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Dynamic shot of a stylized model posing in limited edition cargo pants. The scene is illuminated by neon coral and electric blue studio lights creating a futuristic void aesthetic. High-contrast, sharp focus on accessories and fabric details. Professional street commerce photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-bidyR2czbFT2uDPcO22W6WhURrjsCP__2RF3fOlnaUEuFGR6Maa6SrEiegwwpoTpugM2Zb5trci2C4P-DdEle-aQEgVfVmjaOXINJQryyl_8GOWMjrsxRLcDPtxL0s-6t0MskpMei1RnSIAqZVMG3qmai7WWLad3n0N6KohMddVQd6Jd-CAWyRLPugA9nP6iIU92mrz8LJ5ZL4tetmHITQjf8zimytHe5C7zkYFjZrSSmUaoecTC9fmwi9l_llkwVhkFLqHXRY8"/>
+<div class="absolute bottom-2 left-2 flex items-center gap-xs bg-black/60 backdrop-blur-md px-base py-xs rounded text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px] text-primary" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                            18.2K
+                        </div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface line-clamp-1">Summer Techwear Vibe</p>
+<p class="font-caption text-caption text-primary">₹45K Rev</p>
+</div>
+</div>
+<div class="min-w-[140px] flex-shrink-0 space-y-sm">
+<div class="relative aspect-[9/16] rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="An energetic urban lifestyle reel cover showing a model in sneakers jumping over a ledge. Dramatic low-angle shot, sun-drenched concrete texture, high contrast. The mood is rebellious and youthful. Rich blacks and pop of orange detail." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHbk9zEoBNdudHbARzX4o-RTi-RG5G3SmjeFDrJpmKbAoSl7diDOcMw8thIOwUzQPWPvVYidGoBS_B91YzBn9K_1lEJoxw1nUynlWyWz1Mba4IIpjAzu-EQ4NNB4R-w9XhNT5x_-8qT8RTkz-_iJA8wJY7G7YIWxxMdccdJFuxQ6JDQ98nI8hyKMEKY7CKoJYrkBKYYcE86jEJFPGlJO5ePClqfzr0bMvg-h9phCkG3hCY43LXlxAT8q0xjKuOC82DZwu8tpBWhaI"/>
+<div class="absolute bottom-2 left-2 flex items-center gap-xs bg-black/60 backdrop-blur-md px-base py-xs rounded text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px] text-primary" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                            12.1K
+                        </div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface line-clamp-1">Night Jogger Review</p>
+<p class="font-caption text-caption text-primary">₹12K Rev</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Top Products & Traffic -->
+<div class="space-y-lg">
+<section class="glass-card rounded-lg p-md space-y-md">
+<h5 class="font-label-md text-label-md text-secondary uppercase tracking-widest">Top Products</h5>
+<div class="space-y-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 bg-surface rounded-md overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Product shot of a sleek, black minimalist puffer jacket on a dark background. Studio lighting highlights the texture of the waterproof fabric. High-contrast aesthetic with deep shadows and clean edges." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAx5KKTPKjdOi5EBpoQRwTAv2XDOEuYtynDn1YmcRT6vZTT-NLVHaKgu39tcC2nqSJwJFAKgOO7qrU0EmQqFKUjNb9a1-i6fPSfK-YaaVd7GDTQHrp9aatIji8dMsbNYxqhVjbphn6ou-rBpwP0Kx56kIsfws3VvAyQfdxi8np1_Afhw-1SxjR8cfEPKlXtW9HRN_cnSXxyASiTeF8aPsny9gfebnwKD6sKTiwTMLEAAFtyGUWPrr1Lxq7lr2rqIvnjogwpJrxkFQ"/>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Neon Cargo Pants</p>
+<p class="font-caption text-caption text-secondary">524 units sold</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface">₹1.2L</p>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 bg-surface rounded-md overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A pair of futuristic high-top sneakers with transparent panels and neon accents. Professional footwear photography on a reflective black surface. Dramatic electric glow and high-end street culture vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBo5UUi81tP7tltw3w6Y7Wt6HWtf1gQxnhYKTja4snC8ZNhIvs5qT-o-WLk_yKVxhy7w8nDD0PsF3FfW9PaXeLiGs85DpcbLA20vL2M8F1brw3NNrpH96swEOv9pgTV0xqvj6RWQqHK35IOAXjezgjhInZ1aQfvk3nFxD2vl8qeDCrGDkY5Bbj49DPFESeEk-8PfowsoIr4Bcp-d3GSnswv_b4ih9UP2muvwDi_D4feRUfJ_wheX8gOlghXQfKcuO4q8dargYic9yk"/>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Cyberpunk Sneakers</p>
+<p class="font-caption text-caption text-secondary">312 units sold</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface">₹0.8L</p>
+</div>
+</div>
+</section>
+<!-- Traffic Sources Donut -->
+<section class="glass-card rounded-lg p-md space-y-md">
+<h5 class="font-label-md text-label-md text-secondary uppercase tracking-widest text-center">Traffic Sources</h5>
+<div class="flex items-center justify-around">
+<div class="relative w-32 h-32 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="16" stroke="#2A2A2A" stroke-width="4"></circle>
+<circle class="chart-glow" cx="18" cy="18" fill="none" r="16" stroke="#FF4D00" stroke-dasharray="65, 100" stroke-linecap="round" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#690005" stroke-dasharray="20, 100" stroke-dashoffset="-65" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline-sm text-headline-sm text-on-surface">65%</span>
+<span class="font-caption text-caption text-secondary">Social</span>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-caption text-caption text-on-surface">Reels Ads</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-on-error"></div>
+<span class="font-caption text-caption text-on-surface">Direct Search</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-surface-container-highest"></div>
+<span class="font-caption text-caption text-on-surface">External Links</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-md border-t border-outline-variant shadow-[0px_-4px_10px_rgba(0,0,0,0.5)] flex justify-around items-center px-lg h-20">
+<div class="flex items-center justify-center text-secondary p-3 hover:text-primary transition-all duration-150 ease-in-out">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+</div>
+<div class="flex items-center justify-center text-secondary p-3 hover:text-primary transition-all duration-150 ease-in-out">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</div>
+<div class="flex items-center justify-center text-secondary p-3 hover:text-primary transition-all duration-150 ease-in-out">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+</div>
+<!-- Active Tab: Analytics -->
+<div class="flex items-center justify-center bg-primary-container text-on-primary-container rounded-full p-3 shadow-[0px_0px_8px_#FF4D00] scale-110">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+</nav>
+<script>
+        // Micro-interactions for KPI cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousedown', () => {
+                card.style.transform = 'scale(0.98)';
+            });
+            card.addEventListener('mouseup', () => {
+                card.style.transform = 'scale(1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>
