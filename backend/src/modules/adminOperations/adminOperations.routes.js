@@ -29,7 +29,6 @@ router.patch('/orders/:orderId/force-refund', [mongoId('orderId'), body('amount'
 router.get('/orders/:orderId/timeline', [mongoId('orderId')], validate, controller.getOrderTimeline);
 
 router.get('/payments', paging, validate, controller.listPayments);
-router.get('/payments/razorpay/:razorpayPaymentId', [param('razorpayPaymentId').trim().notEmpty()], validate, controller.getPaymentByRazorpay);
 router.get('/payments/:paymentId', [mongoId('paymentId')], validate, controller.getPayment);
 
 router.get('/refunds', paging, validate, controller.listRefunds);

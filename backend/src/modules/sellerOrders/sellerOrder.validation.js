@@ -22,19 +22,12 @@ const ORDER_STATUSES = [
 const PAYMENT_STATUSES = [
   'created',
   'pending',
-  'pending_authorization',
-  'authorized',
-  'capture_pending',
-  'captured',
+  'pending_seller_confirmation',
   'paid',
   'failed',
-  'authorization_released',
-  'authorization_expired',
-  'auto_refund_pending',
   'refunded',
   'refund_pending',
-  'partially_refunded',
-  'capture_failed'
+  'partially_refunded'
 ];
 const SELLER_STATUS_UPDATES = ['confirmed', 'processing'];
 

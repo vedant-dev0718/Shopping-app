@@ -79,13 +79,9 @@ const bidSchema = new mongoose.Schema({
     type: bidShippingInfoSchema,
     default: () => ({})
   },
-  razorpayPaymentId: {
-    type: String,
-    default: ''
-  },
-  razorpayOrderId: {
-    type: String,
-    default: '',
+  paymentWindowEndsAt: {
+    type: Date,
+    default: null,
     index: true
   },
   paymentStatus: {
@@ -93,18 +89,12 @@ const bidSchema = new mongoose.Schema({
     enum: [
       'not_required',
       'pending',
-      'pending_authorization',
-      'authorized',
-      'captured',
+      'paid',
       'failed',
-      'authorization_released',
-      'authorization_expired',
-      'auto_refund_pending',
       'refunded',
-      'capture_failed',
       'cancelled'
     ],
-    default: 'authorized',
+    default: 'not_required',
     index: true
   },
   bidStatus: {
@@ -112,7 +102,6 @@ const bidSchema = new mongoose.Schema({
     enum: [
       'draft',
       'active',
-      'pending_payment_authorization',
       'pending_seller_decision',
       'accepted',
       'rejected',
@@ -124,42 +113,6 @@ const bidSchema = new mongoose.Schema({
     ],
     default: 'active',
     index: true
-  },
-  razorpay: {
-    orderId: {
-      type: String,
-      default: ''
-    },
-    paymentId: {
-      type: String,
-      default: ''
-    },
-    signatureVerified: {
-      type: Boolean,
-      default: false
-    },
-    authorizedAt: {
-      type: Date,
-      default: null
-    },
-    capturedAt: {
-      type: Date,
-      default: null
-    },
-    captureAmount: {
-      type: Number,
-      min: 0,
-      default: 0
-    },
-    authorizationExpiresAt: {
-      type: Date,
-      default: null,
-      index: true
-    },
-    captureFailureReason: {
-      type: String,
-      default: ''
-    }
   },
   sellerDecision: {
     decidedBy: {

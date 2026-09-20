@@ -16,12 +16,9 @@ cloudinary.config({
 });
 
 const isS3Configured = () => {
-  return Boolean(
-    env.awsS3Bucket
-    && env.awsRegion
-    && env.awsAccessKeyId
-    && env.awsSecretAccessKey
-  );
+  // Access keys are optional: on EC2 the instance's IAM role supplies credentials
+  // via the SDK's default provider chain, so only the bucket/region are required.
+  return Boolean(env.awsS3Bucket && env.awsRegion);
 };
 
 const isCloudinaryConfigured = () => {
@@ -36,12 +33,18 @@ const ensureUploadProviderConfigured = () => {
 
 const getS3Client = () => {
   const options = {
-    region: env.awsRegion,
-    credentials: {
+    region: env.awsRegion
+  };
+
+  // Only override the default credential provider chain when explicit keys are
+  // supplied (e.g. local dev); on EC2, omitting this lets the SDK pick up the
+  // instance's IAM role automatically.
+  if (env.awsAccessKeyId && env.awsSecretAccessKey) {
+    options.credentials = {
       accessKeyId: env.awsAccessKeyId,
       secretAccessKey: env.awsSecretAccessKey
-    }
-  };
+    };
+  }
 
   if (env.awsS3Endpoint) {
     options.endpoint = env.awsS3Endpoint;

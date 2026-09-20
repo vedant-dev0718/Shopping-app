@@ -1,7 +1,6 @@
 const Order = require('../modules/orders/order.model');
 const ReturnRequest = require('../modules/returns/return.model');
 const financeService = require('../modules/finance/finance.service');
-const { releaseTransferOnHold } = require('../utils/razorpay');
 
 const OPEN_RETURN_STATUSES = ['requested', 'approved', 'in_transit', 'received'];
 
@@ -13,7 +12,7 @@ const runEarningsEligibility = async () => {
     'items.payoutStatus': 'pending'
   });
 
-  const summary = { processed: 0, skippedOpenReturns: 0, transfersReleased: 0, errors: 0 };
+  const summary = { processed: 0, skippedOpenReturns: 0, errors: 0 };
 
   for (const order of orders) {
     try {
@@ -28,34 +27,6 @@ const runEarningsEligibility = async () => {
       }
 
       await financeService.markOrderEarningsEligible(order, order.deliveryInfo.deliveredAt);
-
-      const eligibleSellerIds = new Set(
-        order.items
-          .filter((item) => item.payoutStatus === 'eligible')
-          .map((item) => item.sellerId.toString())
-      );
-
-      for (const transfer of order.razorpayTransfers || []) {
-        if (transfer.status !== 'on_hold' || !transfer.sellerId || !eligibleSellerIds.has(transfer.sellerId.toString())) {
-          continue;
-        }
-
-        try {
-          await releaseTransferOnHold(transfer.transferId);
-          transfer.status = 'released';
-          summary.transfersReleased += 1;
-        } catch (error) {
-          summary.errors += 1;
-          console.error(`Failed to release Razorpay transfer ${transfer.transferId}:`, error.message);
-        }
-      }
-
-      if (
-        (order.razorpayTransfers || []).length > 0
-        && order.razorpayTransfers.every((transfer) => transfer.status === 'released')
-      ) {
-        order.payoutStatus = 'released';
-      }
 
       await order.save();
       summary.processed += 1;

@@ -1,9 +1,6 @@
-const crypto = require('crypto');
-
 const Order = require('../../src/modules/orders/order.model');
 const Address = require('../../src/modules/addresses/address.model');
 const env = require('../../src/config/env');
-const { razorpay } = require('../../src/utils/razorpay');
 const { api } = require('../helpers/testServer.helper');
 const { authHeader, createAdmin, createBuyer, createSeller } = require('../helpers/auth.helper');
 const { createProduct } = require('../helpers/mockData.helper');
@@ -49,11 +46,6 @@ const pickupPayload = {
   pickupInstructions: 'Pickup from back gate',
   shiprocketPickupLocationNickname: 'Main Store Delhi'
 };
-
-const signPayment = (razorpayOrderId, razorpayPaymentId) => crypto
-  .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-  .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-  .digest('hex');
 
 describe('address APIs and order snapshots', () => {
   test('buyer can create, default, validate, and isolate delivery addresses', async () => {
@@ -155,10 +147,6 @@ describe('address APIs and order snapshots', () => {
   });
 
   test('checkout can use deliveryAddressId and saves immutable shippingAddressSnapshot', async () => {
-    const originalManualCaptureEnabled = env.razorpayManualCaptureEnabled;
-    env.razorpayManualCaptureEnabled = true;
-
-    try {
       const buyer = await createBuyer();
       const seller = await createSeller();
       const product = await createProduct(seller, { price: 250, stock: 2 });
@@ -172,28 +160,12 @@ describe('address APIs and order snapshots', () => {
 
       await api().post('/api/cart/items').set('Authorization', authHeader(buyer)).send({ productId: product._id, quantity: 1 }).expect(201);
 
-      const start = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
-      const razorpayOrderId = start.body.data.razorpayOrderId;
-      const razorpayPaymentId = 'pay_address_checkout_123';
-
-      razorpay.payments.fetch.mockResolvedValueOnce({
-        id: razorpayPaymentId,
-        order_id: razorpayOrderId,
-        status: 'authorized',
-        amount: 34900,
-        currency: 'INR',
-        method: 'upi'
-      });
-
       const placed = await api()
-        .post('/api/checkout/verify')
+        .post('/api/checkout/place-cod')
         .set('Authorization', authHeader(buyer))
         .send({
-          razorpayOrderId,
-          razorpayPaymentId,
-          razorpaySignature: signPayment(razorpayOrderId, razorpayPaymentId),
           deliveryAddressId: address._id,
-          paymentMethod: 'UPI'
+          paymentMethod: 'COD'
         })
         .expect(201);
 
@@ -206,9 +178,6 @@ describe('address APIs and order snapshots', () => {
       await address.save();
       const unchanged = await Order.findById(order._id).lean();
       expect(unchanged.shippingAddressSnapshot.addressLine1).toBe(deliveryPayload.addressLine1);
-    } finally {
-      env.razorpayManualCaptureEnabled = originalManualCaptureEnabled;
-    }
   });
 
   test('shipment uses selected pickup address and saves pickupAddressSnapshot', async () => {

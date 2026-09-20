@@ -5,10 +5,8 @@ process.env.CLIENT_URL = '*';
 process.env.CLOUDINARY_CLOUD_NAME = 'notwhat-test';
 process.env.CLOUDINARY_API_KEY = 'test-key';
 process.env.CLOUDINARY_API_SECRET = 'test-secret';
-process.env.RAZORPAY_KEY_ID = 'rzp_test_notwhat';
-process.env.RAZORPAY_KEY_SECRET = 'razorpay-test-secret';
-process.env.RAZORPAY_WEBHOOK_SECRET = 'webhook-test-secret';
-process.env.RAZORPAY_ENABLE_LIVE_REFUNDS = 'false';
+process.env.ENABLE_COD_CHECKOUT = 'true';
+process.env.ENABLE_QR_PAYMENT_CHECKOUT = 'true';
 process.env.PLATFORM_COMMISSION_PERCENTAGE = '10';
 process.env.SHIPROCKET_EMAIL = 'shiprocket@example.com';
 process.env.SHIPROCKET_PASSWORD = 'shiprocket-password';
@@ -49,44 +47,6 @@ jest.mock('cloudinary', () => {
       uploader: { upload_stream }
     }
   };
-});
-
-jest.mock('razorpay', () => {
-  return jest.fn().mockImplementation(() => ({
-    orders: {
-      create: jest.fn(async (payload) => ({
-        id: 'order_mock_123',
-        amount: payload.amount,
-        currency: payload.currency || 'INR',
-        status: 'created'
-      }))
-    },
-    payments: {
-      fetch: jest.fn(async () => ({ id: 'pay_mock_123', status: 'captured' })),
-      capture: jest.fn(async () => ({ id: 'pay_mock_123', status: 'captured' })),
-      refund: jest.fn(async () => ({ id: 'rfnd_mock_123', status: 'processed' })),
-      transfer: jest.fn(async (_paymentId, payload = {}) => ({
-        id: 'trf_mock_123',
-        status: 'processed',
-        items: (payload.transfers || []).map((transfer, index) => ({
-          id: `trf_mock_${index + 1}`,
-          amount: transfer.amount,
-          currency: transfer.currency || 'INR',
-          recipient: transfer.account,
-          on_hold: transfer.on_hold
-        }))
-      }))
-    },
-    accounts: {
-      create: jest.fn(async () => ({ id: 'acc_mock_123' }))
-    },
-    stakeholders: {
-      create: jest.fn(async () => ({ id: 'sth_mock_123' }))
-    },
-    transfers: {
-      edit: jest.fn(async () => ({ id: 'trf_mock_123', on_hold: false }))
-    }
-  }));
 });
 
 jest.mock('nodemailer', () => ({

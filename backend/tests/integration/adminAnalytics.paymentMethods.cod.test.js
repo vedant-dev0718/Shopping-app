@@ -50,7 +50,7 @@ describe('admin analytics payment method aggregation with COD', () => {
             product,
             overrides: {
                 orderNumber: 'NW-COD-AN-003',
-                paymentMethod: 'card',
+                paymentMethod: 'UPI_QR',
                 paymentStatus: 'paid',
                 finalTotal: 1099,
                 subtotal: 1000,
@@ -68,7 +68,7 @@ describe('admin analytics payment method aggregation with COD', () => {
 
         const paymentRows = response.body.data;
         const codRow = paymentRows.find((row) => row.method === 'COD');
-        const cardRow = paymentRows.find((row) => row.method === 'card');
+        const cardRow = paymentRows.find((row) => row.method === 'UPI_QR');
 
         expect(codRow).toBeTruthy();
         expect(codRow.count).toBe(2);

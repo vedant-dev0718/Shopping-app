@@ -124,12 +124,8 @@ const buildOrderFilter = async (query = {}) => {
 
     filter.$or = [
       { orderNumber: q },
-      { razorpayPaymentId: q },
-      { razorpayOrderId: q },
       { trackingNumber: q },
       { trackingCarrier: q },
-      { 'paymentFlow.razorpayPaymentId': q },
-      { 'paymentFlow.razorpayOrderId': q },
       { 'items.itemTrackingNumber': q },
       { 'items.titleSnapshot': q },
       { buyerId: { $in: buyerIds } },
@@ -153,12 +149,11 @@ const getMoneyBreakdown = (order) => {
     tax: order.gstAmount || 0,
     discount: order.discountAmount || 0,
     finalTotalPaidByBuyer: order.finalTotal || 0,
-    razorpayFees: order.paymentFlow?.razorpayFees || order.refundInfo?.refundMetadata?.razorpayFees || 0,
     platformCommission,
     sellerNetEarnings,
     refundAmount: totalRefundAmount,
     netPlatformEarningAfterRefunds: Math.max(platformCommission - totalRefundAmount, 0),
-    pendingPayout: ['pending', 'scheduled', 'route_transfer_initiated'].includes(order.payoutStatus) ? sellerNetEarnings : 0,
+    pendingPayout: ['pending', 'scheduled'].includes(order.payoutStatus) ? sellerNetEarnings : 0,
     paidPayout: ['paid', 'released'].includes(order.payoutStatus) ? sellerNetEarnings : 0
   };
 };
@@ -179,8 +174,6 @@ const normalizeOrderListItem = (order) => ({
   returnStatus: order.returnInfo?.returnStatus || 'none',
   trackingNumber: order.trackingNumber || '',
   trackingStatus: order.trackingStatus || '',
-  razorpayPaymentId: order.razorpayPaymentId || order.paymentFlow?.razorpayPaymentId || '',
-  razorpayOrderId: order.razorpayOrderId || order.paymentFlow?.razorpayOrderId || '',
   createdAt: order.createdAt,
   updatedAt: order.updatedAt
 });
@@ -216,8 +209,7 @@ const buildTimeline = async (orderId) => {
 
   const timeline = [
     { type: 'order_created', title: 'Order created', createdAt: order.createdAt },
-    order.paymentFlow?.authorizedAt && { type: 'payment_authorized', title: 'Payment authorized', createdAt: order.paymentFlow.authorizedAt },
-    order.paymentFlow?.capturedAt && { type: 'payment_captured', title: 'Payment captured', createdAt: order.paymentFlow.capturedAt },
+    order.manualPaymentConfirmation?.sellerConfirmedAt && { type: 'payment_confirmed', title: 'Payment confirmed by seller', createdAt: order.manualPaymentConfirmation.sellerConfirmedAt },
     order.sellerAcceptance?.acceptedAt && { type: 'seller_accepted', title: 'Seller accepted', createdAt: order.sellerAcceptance.acceptedAt },
     order.sellerAcceptance?.rejectedAt && { type: 'seller_rejected', title: 'Seller rejected', createdAt: order.sellerAcceptance.rejectedAt, metadata: { reason: order.sellerAcceptance.rejectionReason } },
     order.shippedAt && { type: 'shipped', title: 'Order shipped', createdAt: order.shippedAt },
@@ -276,16 +268,9 @@ const getOrderDetail = async (orderId) => {
     })),
     moneyBreakdown: getMoneyBreakdown(order),
     payment: {
-      provider: 'Razorpay',
-      razorpayOrderId: order.razorpayOrderId || order.paymentFlow?.razorpayOrderId || '',
-      razorpayPaymentId: order.razorpayPaymentId || order.paymentFlow?.razorpayPaymentId || '',
-      razorpayRefundId: order.refundInfo?.razorpayRefundId || order.paymentFlow?.razorpayRefundId || '',
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
-      paymentCapturedAt: order.paymentFlow?.capturedAt || null,
-      paymentFailedReason: order.paymentFlow?.failureReason || '',
-      webhookEventsReceived: timeline.filter((event) => String(event.type).includes('webhook')).length,
-      signatureVerified: order.paymentFlow?.signatureVerified ?? null
+      manualPaymentConfirmation: order.manualPaymentConfirmation || {}
     },
     shipping: buildShipmentView(order),
     cancellation: {
@@ -336,10 +321,6 @@ const forceRefundOrder = async (adminId, orderId, { amount, reason = 'Refund for
 
 const listPayments = async (query = {}) => {
   const filter = await buildOrderFilter({ ...query, paymentStatus: query.paymentStatus || query.status });
-  filter.$or = filter.$or || [];
-  if (!query.q) {
-    filter.$or.push({ razorpayPaymentId: { $ne: '' } }, { 'paymentFlow.razorpayPaymentId': { $ne: '' } }, { paymentStatus: { $exists: true } });
-  }
   const result = await pageResult(
     populateOrder(Order.find(filter).sort(sortFor(query.sortBy))),
     Order.countDocuments(filter),
@@ -349,29 +330,18 @@ const listPayments = async (query = {}) => {
     ...result,
     items: result.items.map((order) => ({
       _id: order._id,
-      paymentId: order.razorpayPaymentId || order.paymentFlow?.razorpayPaymentId || order._id,
+      paymentId: order._id,
       orderNumber: order.orderNumber,
       buyer: order.buyerId,
       amount: order.finalTotal,
-      provider: 'Razorpay',
       method: order.paymentMethod,
       status: order.paymentStatus,
-      razorpayPaymentId: order.razorpayPaymentId || order.paymentFlow?.razorpayPaymentId || '',
-      razorpayOrderId: order.razorpayOrderId || order.paymentFlow?.razorpayOrderId || '',
       createdAt: order.createdAt
     }))
   };
 };
 
 const getPaymentByOrder = async (paymentId) => getOrderDetail(paymentId);
-
-const getPaymentByRazorpay = async (razorpayPaymentId) => {
-  const order = await Order.findOne({
-    $or: [{ razorpayPaymentId }, { 'paymentFlow.razorpayPaymentId': razorpayPaymentId }]
-  });
-  if (!order) throw new AppError('Payment not found', 404);
-  return getOrderDetail(order._id);
-};
 
 const refundPopulate = (query) => query.populate('orderId', 'orderNumber orderStatus paymentStatus refundStatus finalTotal createdAt').populate('buyerId', cleanUserSelect).populate('sellerId', cleanUserSelect);
 const returnPopulate = (query) => query.populate('orderId', 'orderNumber orderStatus paymentStatus returnInfo refundStatus finalTotal createdAt').populate('buyerId', cleanUserSelect).populate('sellerId', cleanUserSelect).populate('reviewedBy', cleanUserSelect);
@@ -382,8 +352,8 @@ const listRefunds = async (query = {}) => {
   if (query.status) filter.status = query.status;
   if (query.q) {
     const q = regex(query.q);
-    const orderIds = await Order.distinct('_id', { $or: [{ orderNumber: q }, { razorpayPaymentId: q }, { razorpayOrderId: q }] });
-    filter.$or = [{ razorpayPaymentId: q }, { razorpayRefundId: q }, { reason: q }, { orderId: { $in: orderIds } }];
+    const orderIds = await Order.distinct('_id', { orderNumber: q });
+    filter.$or = [{ reason: q }, { orderId: { $in: orderIds } }];
   }
   return pageResult(refundPopulate(Refund.find(filter).sort({ createdAt: -1 })), Refund.countDocuments(filter), query);
 };
@@ -395,7 +365,7 @@ const getRefund = async (refundId) => {
 };
 
 const markRefund = async (adminId, refundId, status, body = {}) => {
-  const refund = await postOrderService.markRefund(refundId, status, body.failureReason || '');
+  const refund = await postOrderService.markRefund(refundId, status, body.failureReason || '', body.manualReference);
   await logAction({ adminId, actionType: `refund_${status}`, targetType: 'refund', targetId: refundId, reason: body.reason || body.failureReason || '', metadata: { orderId: refund.orderId?.toString?.() || refund.orderId } });
   return getRefund(refundId);
 };
@@ -446,7 +416,7 @@ const refundReturn = async (adminId, returnId, body = {}) => {
     requestedBy: 'admin',
     returnId
   });
-  returnRequest.refundStatus = refund.status === 'refunded' ? 'completed' : 'initiated';
+  returnRequest.refundStatus = refund.status === 'refunded' ? 'completed' : 'pending';
   await returnRequest.save();
   await logAction({ adminId, actionType: 'return_refund', targetType: 'return', targetId: returnId, reason: body.reason || '', metadata: { orderId: returnRequest.orderId?.toString?.() || returnRequest.orderId, refundId: refund._id } });
   return getReturn(returnId);
@@ -604,7 +574,6 @@ module.exports = {
   buildTimeline,
   listPayments,
   getPaymentByOrder,
-  getPaymentByRazorpay,
   listRefunds,
   getRefund,
   markRefund,

@@ -112,15 +112,6 @@ const sellerProfileSchema = new mongoose.Schema({
     default: 'active',
     index: true
   },
-  razorpayLinkedAccountId: {
-    type: String,
-    default: ''
-  },
-  razorpayLinkedAccountStatus: {
-    type: String,
-    enum: ['not_created', 'created', 'bank_added', 'active'],
-    default: 'not_created'
-  },
   commissionPercentageOverride: {
     type: Number,
     min: 0,

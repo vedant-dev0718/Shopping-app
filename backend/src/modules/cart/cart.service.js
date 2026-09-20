@@ -92,7 +92,7 @@ const resolveAcceptedBidForCart = async (buyerId, product, bargainBidId) => {
     throw new AppError('Accepted bid not found for this product', 404);
   }
 
-  const lockExpiry = bid.razorpay?.authorizationExpiresAt || null;
+  const lockExpiry = bid.paymentWindowEndsAt || null;
   if (lockExpiry && new Date(lockExpiry).getTime() <= Date.now()) {
     throw new AppError('Accepted bid payment window has expired', 400);
   }
@@ -136,14 +136,14 @@ const addItem = async (buyerId, { productId, quantity, bargainBidId }) => {
     existingItem.quantity = nextQuantity;
     existingItem.priceSnapshot = acceptedBid ? acceptedBid.amount : product.price;
     existingItem.bargainBidId = acceptedBid ? acceptedBid._id : null;
-    existingItem.bargainLockExpiresAt = acceptedBid?.razorpay?.authorizationExpiresAt || null;
+    existingItem.bargainLockExpiresAt = acceptedBid?.paymentWindowEndsAt || null;
   } else {
     cart.items.push({
       productId: product._id,
       quantity,
       priceSnapshot: acceptedBid ? acceptedBid.amount : product.price,
       bargainBidId: acceptedBid ? acceptedBid._id : null,
-      bargainLockExpiresAt: acceptedBid?.razorpay?.authorizationExpiresAt || null
+      bargainLockExpiresAt: acceptedBid?.paymentWindowEndsAt || null
     });
   }
 
@@ -190,7 +190,7 @@ const updateItem = async (buyerId, itemId, { quantity }) => {
 
   item.quantity = quantity;
   item.priceSnapshot = acceptedBid ? acceptedBid.amount : product.price;
-  item.bargainLockExpiresAt = acceptedBid?.razorpay?.authorizationExpiresAt || null;
+  item.bargainLockExpiresAt = acceptedBid?.paymentWindowEndsAt || null;
   recalculateCartTotals(cart);
   await cart.save();
 

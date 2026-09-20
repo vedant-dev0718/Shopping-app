@@ -13,12 +13,6 @@ const cartService = require('../cart/cart.service');
 const Order = require('../orders/order.model');
 const addressService = require('../addresses/address.service');
 const notificationService = require('../notifications/notification.service');
-const {
-  razorpay,
-  createManualCaptureOrder,
-  fetchPayment,
-  verifyPaymentSignature
-} = require('../../utils/razorpay');
 const { sendEmail } = require('../../utils/email');
 const { buildUpiQrPayload } = require('../../utils/upiQr');
 const {
@@ -26,7 +20,6 @@ const {
   buildNewOrderAlertEmail
 } = require('../../utils/emailTemplates');
 
-const RAZORPAY_PAYMENT_METHOD = 'RAZORPAY';
 const COD_PAYMENT_METHOD = 'COD';
 
 const roundMoney = (value) => Math.round(value * 100) / 100;
@@ -117,19 +110,10 @@ const buildStorePaymentGroups = async (cart) => {
     };
   });
 };
-const toPaise = (value) => Math.round(roundMoney(Number(value) || 0) * 100);
 
 const getSellerAcceptanceExpiresAt = () => {
   const minutes = Number.isFinite(env.sellerAcceptanceWindowMinutes)
     ? env.sellerAcceptanceWindowMinutes
-    : 240;
-
-  return new Date(Date.now() + minutes * 60 * 1000);
-};
-
-const getAuthorizationExpiresAt = () => {
-  const minutes = Number.isFinite(env.razorpayAuthorizationTimeoutMinutes)
-    ? env.razorpayAuthorizationTimeoutMinutes
     : 240;
 
   return new Date(Date.now() + minutes * 60 * 1000);
@@ -217,11 +201,7 @@ const mapOrderPaymentStatusToBidPaymentStatus = (orderPaymentStatus) => {
   const normalized = String(orderPaymentStatus || '').toLowerCase();
 
   if (normalized === 'paid') {
-    return 'captured';
-  }
-
-  if (normalized === 'authorized') {
-    return 'authorized';
+    return 'paid';
   }
 
   if (normalized === 'failed') {
@@ -232,7 +212,7 @@ const mapOrderPaymentStatusToBidPaymentStatus = (orderPaymentStatus) => {
     return 'pending';
   }
 
-  return 'authorized';
+  return 'pending';
 };
 
 const syncBargainBidsForOrder = async ({ cart, buyerId, order, session, productIds = null }) => {
@@ -284,32 +264,8 @@ const syncBargainBidsForOrder = async ({ cart, buyerId, order, session, productI
       decidedAt: bid.sellerDecision?.decidedAt || now,
       messageToBuyer: 'Order placed from accepted bid.'
     };
-    bid.razorpay = {
-      ...(bid.razorpay || {}),
-      capturedAt: nextBidPaymentStatus === 'captured' ? (bid.razorpay?.capturedAt || now) : bid.razorpay?.capturedAt,
-      captureAmount: nextBidPaymentStatus === 'captured'
-        ? Math.round(((Number(cartItem.priceSnapshot) || 0) * (Number(cartItem.quantity) || 0)) * 100)
-        : (bid.razorpay?.captureAmount || 0),
-      captureFailureReason: ''
-    };
 
     await bid.save({ session });
-  }
-};
-
-const validatePaymentAmountMatchesCart = (payment, cart) => {
-  const expectedAmount = toPaise(cart.finalTotal);
-  const paidAmount = Number(payment?.amount);
-
-  if (!Number.isFinite(paidAmount)) {
-    throw new AppError('Unable to verify payment amount against cart total', 400);
-  }
-
-  if (Math.round(paidAmount) !== expectedAmount) {
-    throw new AppError(
-      `Payment amount mismatch: expected ${expectedAmount} paise but received ${Math.round(paidAmount)} paise`,
-      400
-    );
   }
 };
 
@@ -324,36 +280,12 @@ const getSupportedPaymentMethods = () => {
     methods.push(COD_PAYMENT_METHOD);
   }
 
-  if (env.razorpayCheckoutEnabled) {
-    methods.push(RAZORPAY_PAYMENT_METHOD);
-  }
-
   return methods;
 };
 
 const startCheckout = async (buyerId) => {
   const cart = await getCheckoutCart(buyerId);
   await validateCartForCheckout(cart);
-
-  let razorpayOrderAmount = Math.round(cart.finalTotal * 100);
-  let razorpayOrderId;
-
-  if (env.razorpayCheckoutEnabled && env.razorpayKeyId && env.razorpayKeySecret) {
-    const orderPayload = {
-      amount: razorpayOrderAmount,
-      currency: 'INR',
-      receipt: `nw_${buyerId.toString().slice(-8)}_${Date.now().toString(36)}`,
-      notes: { buyerId: buyerId.toString() }
-    };
-    const razorpayOrder = env.razorpayManualCaptureEnabled
-      ? await createManualCaptureOrder(orderPayload)
-      : await razorpay.orders.create({
-        ...orderPayload,
-        payment_capture: 1
-      });
-    razorpayOrderId = razorpayOrder.id;
-    razorpayOrderAmount = razorpayOrder.amount;
-  }
 
   await Promise.all(cart.items.map((item) => {
     const product = item.productId;
@@ -374,9 +306,6 @@ const startCheckout = async (buyerId) => {
 
   return {
     cart,
-    razorpayKeyId: env.razorpayKeyId || '',
-    razorpayOrderId,
-    razorpayOrderAmount,
     shippingOptions: [
       {
         label: cart.shipping === 0 ? 'Free shipping' : 'Standard shipping',
@@ -491,203 +420,6 @@ const sendOrderEmails = async (order) => {
   return allSent;
 };
 
-const verifyAndPlaceOrder = async (
-  razorpayOrderId,
-  razorpayPaymentId,
-  razorpaySignature,
-  buyerId,
-  addressInput,
-  paymentMethod
-) => {
-  if (!env.razorpayCheckoutEnabled) {
-    throw new AppError('Online Razorpay checkout is disabled for this demo', 400);
-  }
-
-  if (paymentMethod !== RAZORPAY_PAYMENT_METHOD) {
-    throw new AppError('paymentMethod must be RAZORPAY for /checkout/verify', 400);
-  }
-
-  const signatureIsValid = verifyPaymentSignature({
-    razorpayOrderId,
-    razorpayPaymentId,
-    razorpaySignature
-  });
-
-  if (!signatureIsValid) {
-    throw new AppError('Payment verification failed', 400);
-  }
-
-  const existingOrder = await Order.findOne({ buyerId, razorpayOrderId });
-
-  if (existingOrder) {
-    return buildOrderConfirmation(existingOrder);
-  }
-
-  const paymentCaptureMode = env.razorpayManualCaptureEnabled ? 'manual' : 'automatic';
-  let verifiedPaymentStatus = env.razorpayManualCaptureEnabled ? 'authorized' : 'paid';
-  let verifiedPayment = null;
-
-  if (env.nodeEnv === 'production' || env.razorpayManualCaptureEnabled) {
-    const payment = await fetchPayment(razorpayPaymentId);
-    const acceptableStatuses = env.razorpayManualCaptureEnabled
-      ? ['authorized', 'captured']
-      : ['captured'];
-
-    if (!payment || !acceptableStatuses.includes(payment.status) || payment.order_id !== razorpayOrderId) {
-      throw new AppError('Payment verification failed', 400);
-    }
-
-    verifiedPayment = payment;
-    verifiedPaymentStatus = payment.status === 'authorized' ? 'authorized' : 'paid';
-  }
-
-  let order;
-  let items = [];
-  const buyer = await User.findById(buyerId).select('email').lean();
-  const delivery = await addressService.resolveDeliveryAddressForOrder(buyerId, addressInput);
-  if (!delivery.shippingInfo.email) {
-    delivery.shippingInfo.email = buyer?.email || 'buyer@notwhat.in';
-    delivery.snapshot.email = delivery.shippingInfo.email;
-  }
-
-  await runMaybeTransaction(async (session) => {
-    const cart = await getCheckoutCart(buyerId, { session });
-
-    if (verifiedPayment) {
-      validatePaymentAmountMatchesCart(verifiedPayment, cart);
-    }
-
-    const checkoutItems = await validateCartForCheckout(cart, { session });
-    const orderNumber = generateOrderNumber();
-    items = applyPendingAcceptanceDefaults(await financeService.applyFinancialsToOrderItems(checkoutItems.map((item) => ({
-      productId: item.product._id,
-      sellerId: item.product.sellerId,
-      storeId: item.product.storeId,
-      titleSnapshot: item.product.title,
-      imageSnapshot: Array.isArray(item.product.imageUrls) && item.product.imageUrls.length > 0
-        ? item.product.imageUrls[0]
-        : '',
-      quantity: item.quantity,
-      priceSnapshot: item.priceSnapshot,
-      itemTotal: item.itemTotal
-    }))));
-    const sellerIds = [...new Set(items.map((item) => item.sellerId.toString()))];
-    const financialTotals = financeService.summarizeOrderFinancials(items, cart.shipping);
-    const commission = calculateCommission(cart.subtotal);
-    const gstAmount = extractGSTFromInclusivePrice(cart.finalTotal);
-
-    const sellerAcceptanceExpiresAt = getSellerAcceptanceExpiresAt();
-    const authorizationExpiresAt = getAuthorizationExpiresAt();
-
-    const [createdOrder] = await Order.create([{
-      buyerId,
-      orderNumber,
-      sellerIds,
-      items,
-      shippingInfo: delivery.shippingInfo,
-      shippingAddressSnapshot: delivery.snapshot,
-      paymentMethod,
-      paymentCaptureMode,
-      razorpayOrderId,
-      razorpayPaymentId,
-      paymentStatus: verifiedPaymentStatus,
-      orderStatus: 'awaiting_seller_acceptance',
-      trackingStatus: 'Waiting for seller confirmation',
-      sellerAcceptance: {
-        status: 'pending',
-        expiresAt: sellerAcceptanceExpiresAt
-      },
-      paymentFlow: {
-        captureAfterSellerAcceptance: env.razorpayManualCaptureEnabled,
-        razorpayOrderId,
-        razorpayPaymentId,
-        signatureVerified: true,
-        authorizedAt: verifiedPaymentStatus === 'authorized' ? new Date() : null,
-        capturedAt: verifiedPaymentStatus === 'paid' ? new Date() : null,
-        authorizationExpiresAt
-      },
-      razorpay: {
-        orderId: razorpayOrderId,
-        paymentId: razorpayPaymentId,
-        signatureVerified: true,
-        authorizedAt: verifiedPaymentStatus === 'authorized' ? new Date() : null,
-        capturedAt: verifiedPaymentStatus === 'paid' ? new Date() : null,
-        captureAmount: verifiedPaymentStatus === 'paid' ? (verifiedPayment?.amount || Math.round(cart.finalTotal * 100)) : 0,
-        captureResponseSafeSummary: verifiedPayment ? {
-          id: verifiedPayment.id || '',
-          orderId: verifiedPayment.order_id || '',
-          status: verifiedPayment.status || '',
-          amount: verifiedPayment.amount || 0,
-          currency: verifiedPayment.currency || 'INR'
-        } : {},
-        authorizationExpiresAt
-      },
-      inventoryConfirmation: {
-        confirmedAvailable: false
-      },
-      inventoryReservation: {
-        reservationIds: [],
-        expiresAt: sellerAcceptanceExpiresAt,
-        status: 'active'
-      },
-      subtotal: cart.subtotal,
-      shipping: cart.shipping,
-      finalTotal: cart.finalTotal,
-      commissionRate: PLATFORM_COMMISSION_RATE,
-      commissionAmount: financialTotals.totalPlatformCommission || commission.commissionAmount,
-      sellerPayoutAmount: financialTotals.totalSellerEarnings || commission.sellerPayoutAmount,
-      ...financialTotals,
-      payoutStatus: 'pending',
-      gstAmount,
-      gstRate: GST_RATE,
-      emailSent: false
-    }], { session });
-
-    await syncBargainBidsForOrder({
-      cart,
-      buyerId,
-      order: createdOrder,
-      session
-    });
-
-    await cartService.clearCart(buyerId, { session });
-    order = createdOrder;
-  });
-
-  await Promise.all(items.map((item) => {
-    return analyticsService.trackEventSafe({
-      userId: buyerId,
-      sellerId: item.sellerId,
-      storeId: item.storeId,
-      productId: item.productId,
-      eventType: 'order_placed',
-      metadata: {
-        orderId: order._id,
-        orderNumber: order.orderNumber,
-        quantity: item.quantity,
-        itemTotal: item.itemTotal,
-        paymentMethod
-      }
-    });
-  }));
-  await Promise.all(items.map((item) => analyticsService.trackEventSafe({
-    userId: buyerId,
-    sellerId: item.sellerId,
-    storeId: item.storeId,
-    productId: item.productId,
-    eventType: 'order_awaiting_seller_acceptance',
-    metadata: {
-      orderId: order._id,
-      orderNumber: order.orderNumber,
-      quantity: item.quantity,
-      itemTotal: item.itemTotal
-    }
-  })));
-  await sendOrderEmails(order);
-
-  return buildOrderConfirmation(order);
-};
-
 const placeQrPaymentOrder = async (buyerId, addressInput, paymentMethod) => {
   if (!env.enableQrPaymentCheckout) {
     throw new AppError('UPI QR checkout is currently unavailable', 400);
@@ -727,6 +459,10 @@ const placeQrPaymentOrder = async (buyerId, addressInput, paymentMethod) => {
     const sellerAcceptanceExpiresAt = getSellerAcceptanceExpiresAt();
     const paymentGroups = await buildStorePaymentGroups(cart);
 
+    if (paymentGroups.length !== storeGroups.length || paymentGroups.some((group) => !group.qrCode)) {
+      throw new AppError('Every store must have a valid UPI ID for QR checkout', 400);
+    }
+
     for (let index = 0; index < storeGroups.length; index += 1) {
       const groupItems = storeGroups[index];
       const orderItems = applyPendingAcceptanceDefaults(
@@ -760,7 +496,6 @@ const placeQrPaymentOrder = async (buyerId, addressInput, paymentMethod) => {
         shippingInfo: delivery.shippingInfo,
         shippingAddressSnapshot: delivery.snapshot,
         paymentMethod: 'UPI_QR',
-        paymentCaptureMode: 'automatic',
         paymentStatus: 'pending_seller_confirmation',
         orderStatus: 'payment_pending_confirmation',
         trackingStatus: 'Waiting for seller to confirm payment',
@@ -776,8 +511,6 @@ const placeQrPaymentOrder = async (buyerId, addressInput, paymentMethod) => {
           qrCode: qrGroup?.qrCode || '',
           amount: orderFinalTotal
         },
-        paymentFlow: { captureAfterSellerAcceptance: false, signatureVerified: false },
-        razorpay: { signatureVerified: false },
         inventoryConfirmation: { confirmedAvailable: false },
         inventoryReservation: {
           reservationIds: [],
@@ -893,20 +626,12 @@ const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
         shippingInfo: delivery.shippingInfo,
         shippingAddressSnapshot: delivery.snapshot,
         paymentMethod: COD_PAYMENT_METHOD,
-        paymentCaptureMode: 'automatic',
         paymentStatus: 'pending',
         orderStatus: 'awaiting_seller_acceptance',
         trackingStatus: 'Waiting for seller confirmation',
         sellerAcceptance: {
           status: 'pending',
           expiresAt: sellerAcceptanceExpiresAt
-        },
-        paymentFlow: {
-          captureAfterSellerAcceptance: false,
-          signatureVerified: false
-        },
-        razorpay: {
-          signatureVerified: false
         },
         inventoryConfirmation: {
           confirmedAvailable: false
@@ -985,7 +710,6 @@ const placeCodOrder = async (buyerId, addressInput, paymentMethod) => {
 
 module.exports = {
   startCheckout,
-  verifyAndPlaceOrder,
   placeCodOrder,
   placeQrPaymentOrder
 };

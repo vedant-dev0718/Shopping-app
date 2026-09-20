@@ -19,16 +19,7 @@ const refundSchema = new mongoose.Schema({
     default: null,
     index: true
   },
-  razorpayPaymentId: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  razorpayRefundId: {
-    type: String,
-    trim: true,
-    default: ''
-  },
+  manualHandlingRequired: { type: Boolean, default: true },
   amount: {
     type: Number,
     required: true,

@@ -22,7 +22,7 @@ const activeScheduleWindow = () => ({
 });
 
 describe('bargain bid checkout flow', () => {
-  test('closing a bargain captures the winning bid and creates an order with shipping info', async () => {
+  test('closing a bargain creates an unpaid COD order with shipping info', async () => {
     const buyer = await createBuyer();
     const seller = await createSeller();
     const product = await createProduct(seller, { price: 1000, stock: 2 });
@@ -40,15 +40,16 @@ describe('bargain bid checkout flow', () => {
       shippingInfo
     });
 
-    expect(bid.paymentStatus).toBe('authorized');
+    expect(bid.paymentStatus).toBe('not_required');
     expect(bid.shippingInfo.city).toBe('Jaipur');
 
     const result = await bargainService.closeBargain(seller, product._id, { force: true });
 
-    expect(result.winningBid.paymentStatus).toBe('captured');
+    expect(result.winningBid.paymentStatus).toBe('not_required');
     expect(result.order).toBeTruthy();
     expect(result.order.orderStatus).toBe('processing');
-    expect(result.order.paymentStatus).toBe('paid');
+    expect(result.order.paymentStatus).toBe('pending');
+    expect(result.order.paymentMethod).toBe('COD');
     expect(result.order.shippingInfo.email).toBe(shippingInfo.email);
     expect(result.order.finalTotal).toBe(750);
 
@@ -178,7 +179,7 @@ describe('seller accept bid endpoint', () => {
     expect(rejected.body.message).toContain('Cannot accept bid below reserve price');
   });
 
-  test('accept bid fails when payment authorization has expired', async () => {
+  test('accept bid fails when payment window has expired', async () => {
     const seller = await createSeller();
     const buyer = await createBuyer();
     const product = await createProduct(seller, { price: 1100, stock: 2 });
@@ -200,10 +201,7 @@ describe('seller accept bid endpoint', () => {
       .expect(201);
 
     const bid = await Bid.findOne({ productId: product._id, buyerId: buyer._id });
-    bid.razorpay = {
-      ...(bid.razorpay || {}),
-      authorizationExpiresAt: new Date(Date.now() - 60 * 1000)
-    };
+    bid.paymentWindowEndsAt = new Date(Date.now() - 60 * 1000);
     await bid.save();
 
     const rejected = await api()
@@ -212,7 +210,7 @@ describe('seller accept bid endpoint', () => {
       .send({})
       .expect(409);
 
-    expect(rejected.body.message).toContain('Bid payment authorization has expired');
+    expect(rejected.body.message).toContain('Bid payment window has expired');
   });
 });
 

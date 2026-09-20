@@ -15,7 +15,11 @@ const buyerSignupValidation = [
   body('email').trim().isEmail().withMessage('A valid email is required').normalizeEmail(),
   createPasswordValidation(),
   body('phone').trim().notEmpty().withMessage('Phone is required'),
-  body('address').trim().notEmpty().withMessage('Address is required')
+  body('address').trim().notEmpty().withMessage('Address is required'),
+  body('locality').optional({ checkFalsy: true }).trim().isLength({ max: 120 }).withMessage('Locality must be 120 characters or fewer'),
+  body('city').trim().notEmpty().withMessage('City is required'),
+  body('state').trim().notEmpty().withMessage('State is required'),
+  body('pincode').trim().matches(/^\d{6}$/).withMessage('Pincode must be a 6-digit number')
 ];
 
 const sellerSignupValidation = [

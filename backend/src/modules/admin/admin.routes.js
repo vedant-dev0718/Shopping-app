@@ -15,7 +15,6 @@ const { successResponse } = require('../../utils/apiResponse');
 const AppError = require('../../utils/AppError');
 const asyncHandler = require('../../utils/asyncHandler');
 const SellerProfile = require('../sellers/sellerProfile.model');
-const { activateSellerLinkedAccount, onboardSellerToRazorpay } = require('../sellers/sellerPayout.service');
 const financeService = require('../finance/finance.service');
 const postOrderService = require('../orders/postOrder.service');
 const sellerOrderService = require('../sellerOrders/sellerOrder.service');
@@ -360,7 +359,7 @@ router.patch(
   [param('refundId').isMongoId().withMessage('A valid refund id is required')],
   validate,
   asyncHandler(async (req, res) => {
-    const refund = await postOrderService.markRefund(req.params.refundId, 'refunded');
+    const refund = await postOrderService.markRefund(req.params.refundId, 'refunded', '', req.body.manualReference);
 
     return successResponse(res, {
       message: 'Refund marked refunded',
@@ -407,7 +406,6 @@ router.get('/sellers/kyc/pending', asyncHandler(async (_req, res) => {
       panNumber: p.panNumber,
       gstNumber: p.gstNumber,
       bankAccount: p.bankAccount,
-      razorpayLinkedAccountStatus: p.razorpayLinkedAccountStatus,
       submittedAt: p.updatedAt || p.createdAt
     }))
   });
@@ -430,19 +428,11 @@ router.patch('/sellers/:sellerId/kyc/approve', asyncHandler(async (req, res) => 
   profile.bankAccount.isVerified = true;
   await profile.save();
 
-  try {
-    await onboardSellerToRazorpay(sellerId);
-    await activateSellerLinkedAccount(sellerId);
-  } catch (error) {
-    console.error(`Razorpay onboarding failed for seller ${sellerId}:`, error.message);
-  }
-
   return successResponse(res, {
-    message: 'Seller KYC approved and Razorpay account activated',
+    message: 'Seller KYC approved',
     data: {
       sellerId,
-      kycStatus: profile.kycStatus,
-      razorpayLinkedAccountStatus: profile.razorpayLinkedAccountStatus
+      kycStatus: profile.kycStatus
     }
   });
 }));

@@ -26,7 +26,7 @@ const createOrder = async ({ buyer, seller, product, overrides = {} }) => {
   totalShippingAmount: overrides.shipping ?? 99,
   totalPlatformCommission: overrides.totalPlatformCommission || 0,
   totalSellerEarnings: overrides.totalSellerEarnings || 0,
-  paymentMethod: overrides.paymentMethod || 'UPI',
+  paymentMethod: overrides.paymentMethod || 'UPI_QR',
   paymentStatus: overrides.paymentStatus || 'paid',
   orderStatus,
   shippingInfo: overrides.shippingInfo || {

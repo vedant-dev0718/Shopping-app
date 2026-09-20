@@ -1,13 +1,13 @@
 const Order = require('../../src/modules/orders/order.model');
 const Refund = require('../../src/modules/refunds/refund.model');
-const { razorpay } = require('../../src/utils/razorpay');
+const Refund = require('../../src/modules/refunds/refund.model');
 const { api } = require('../helpers/testServer.helper');
 const { authHeader, createAdmin, createBuyer, createSeller } = require('../helpers/auth.helper');
 const { createProduct } = require('../helpers/mockData.helper');
 const { createOrder } = require('../helpers/order.helper');
 
 describe('COD cancellation and refund gateway safety', () => {
-    test('buyer cancellation for COD does not trigger Razorpay refund', async () => {
+    test('buyer cancellation for unpaid COD does not create a refund', async () => {
         const buyer = await createBuyer({ email: 'cod-cancel-buyer@example.com' });
         const seller = await createSeller({ email: 'cod-cancel-seller@example.com' });
         const product = await createProduct(seller, { stock: 5, price: 799 });
@@ -43,10 +43,10 @@ describe('COD cancellation and refund gateway safety', () => {
         expect(updatedOrder.paymentStatus).toBe('pending');
         expect(updatedOrder.refundStatus).toBe('none');
         expect(refundCount).toBe(0);
-        expect(razorpay.payments.refund).not.toHaveBeenCalled();
+        expect(await Refund.countDocuments()).toBe(0);
     });
 
-    test('seller rejection for COD does not trigger Razorpay refund', async () => {
+    test('seller rejection for unpaid COD does not create a refund', async () => {
         const buyer = await createBuyer({ email: 'cod-reject-buyer@example.com' });
         const seller = await createSeller({ email: 'cod-reject-seller@example.com' });
         const product = await createProduct(seller, { stock: 3, price: 899 });
@@ -85,7 +85,7 @@ describe('COD cancellation and refund gateway safety', () => {
         expect(updatedOrder.paymentStatus).toBe('pending');
         expect(updatedOrder.refundStatus).toBe('none');
         expect(refundCount).toBe(0);
-        expect(razorpay.payments.refund).not.toHaveBeenCalled();
+        expect(await Refund.countDocuments()).toBe(0);
     });
 
     test('admin refund attempt on COD order is rejected before any gateway call', async () => {
@@ -111,9 +111,9 @@ describe('COD cancellation and refund gateway safety', () => {
             .send({ amount: order.finalTotal, reason: 'Manual COD refund request' })
             .expect(400)
             .expect((res) => {
-                expect(res.body.message).toBe('Razorpay payment ID not found for this order');
+                expect(res.body.message).toBe('Only confirmed paid orders can be refunded');
             });
 
-        expect(razorpay.payments.refund).not.toHaveBeenCalled();
+        expect(await Refund.countDocuments()).toBe(0);
     });
 });

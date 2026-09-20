@@ -184,7 +184,7 @@ const getSummary = async () => {
     sellerEarnings,
     pendingPayouts,
     paidPayouts,
-    razorpayFailedAmount,
+    failedPaymentAmount,
     paymentsCaptured,
     paymentsFailed,
     refundsProcessed,
@@ -231,7 +231,7 @@ const getSummary = async () => {
     Comment.countDocuments(),
     Order.countDocuments(),
     Order.countDocuments({ paymentStatus: 'paid' }),
-    Order.countDocuments({ paymentStatus: { $in: ['pending', 'authorized'] } }),
+    Order.countDocuments({ paymentStatus: { $in: ['pending', 'pending_seller_confirmation'] } }),
     Order.countDocuments({ orderStatus: 'awaiting_seller_acceptance' }),
     Order.countDocuments({ orderStatus: 'shipped' }),
     Order.countDocuments({ orderStatus: 'delivered' }),
@@ -339,8 +339,8 @@ const getSummary = async () => {
       paidPayouts
     },
     payments: {
-      razorpayPaidAmount: grossMerchandiseValue,
-      razorpayFailedAmount,
+      paidPaymentAmount: grossMerchandiseValue,
+      failedPaymentAmount,
       paymentsCaptured,
       paymentsFailed,
       refundsProcessed,

@@ -7,11 +7,10 @@ const Product = require('../products/product.model');
 const Refund = require('../refunds/refund.model');
 const ReturnRequest = require('../returns/return.model');
 const Order = require('./order.model');
-const { createRefund } = require('../../utils/razorpay');
 
 const RETURN_WINDOW_DAYS = 7;
 const RETURN_WINDOW_MS = RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-const PRE_SHIPMENT_STATUSES = ['pending', 'placed', 'awaiting_seller_acceptance', 'confirmed', 'processing'];
+const PRE_SHIPMENT_STATUSES = ['pending', 'placed', 'payment_pending_confirmation', 'awaiting_seller_acceptance', 'confirmed', 'processing'];
 const FINAL_REFUND_STATUSES = ['refunded', 'partially_refunded', 'refund_processing'];
 
 const asString = (value) => (value ? value.toString() : '');
@@ -208,18 +207,11 @@ const applyCancellationToOrder = async (order, actorRole, reason) => {
   }
 
   if (order.paymentStatus === 'paid') {
-    try {
-      await processRefundForOrder(order._id, {
+    await processRefundForOrder(order._id, {
         reason,
         requestedBy: actorRole,
         amount: order.finalTotal
       });
-    } catch (error) {
-      order.refundStatus = 'refund_failed';
-      order.refundInfo.refundStatus = 'refund_failed';
-      order.refundInfo.refundFailureReason = error.message;
-      await order.save();
-    }
   }
 
   return Order.findById(order._id).lean();
@@ -511,12 +503,13 @@ const markReturnReceived = async (sellerId, returnId) => {
   hydrateOrderPostStatus(order);
   returnRequest.status = 'received';
   returnRequest.returnReceivedAt = now;
-  returnRequest.refundStatus = 'initiated';
+  const requiresRefund = order.paymentStatus === 'paid';
+  returnRequest.refundStatus = requiresRefund ? 'pending' : 'not_required';
   order.orderStatus = 'returned';
   order.returnInfo.returnStatus = 'received';
   order.returnInfo.returnReceivedAt = now;
-  order.refundStatus = 'refund_pending';
-  order.refundInfo.refundStatus = 'refund_pending';
+  order.refundStatus = requiresRefund ? 'refund_pending' : 'none';
+  order.refundInfo.refundStatus = order.refundStatus;
   order.refundInfo.refundReason = returnRequest.reason;
   order.items.forEach((item) => {
     if ((returnRequest.items || []).some((returnItem) => asString(returnItem.itemId) === asString(item._id))) {
@@ -536,7 +529,7 @@ const markReturnReceived = async (sellerId, returnId) => {
     reason: 'return_received'
   });
   await financeService.updateEarningsForOrderAdjustment(order, {
-    status: 'refunded',
+    status: requiresRefund ? 'held' : 'cancelled',
     refundAmount: 0,
     itemIds: getReturnItemIds(returnRequest)
   });
@@ -544,12 +537,14 @@ const markReturnReceived = async (sellerId, returnId) => {
   await order.save();
   await trackOrderItems(order, 'return_received', { returnId });
 
-  await processRefundForOrder(order._id, {
-    reason: returnRequest.reason,
-    requestedBy: 'seller',
-    amount: returnRequest.refundAmount,
-    returnId: returnRequest._id
-  });
+  if (requiresRefund) {
+    await processRefundForOrder(order._id, {
+      reason: returnRequest.reason,
+      requestedBy: 'seller',
+      amount: returnRequest.refundAmount,
+      returnId: returnRequest._id
+    });
+  }
 
   return ReturnRequest.findById(returnId).lean();
 };
@@ -563,18 +558,18 @@ const processRefundForOrder = async (orderId, { amount, reason = 'Refund', reque
 
   hydrateOrderPostStatus(order);
 
-  if (!order.razorpayPaymentId) {
-    throw new AppError('Razorpay payment ID not found for this order', 400);
+  if (!['COD', 'UPI_QR'].includes(order.paymentMethod) || order.paymentStatus !== 'paid') {
+    throw new AppError('Only confirmed paid orders can be refunded', 400);
   }
 
   if (FINAL_REFUND_STATUSES.includes(order.refundStatus) || FINAL_REFUND_STATUSES.includes(order.refundInfo.refundStatus)) {
     throw new AppError('Refund has already been processed for this order', 409);
   }
 
-  const refundAmount = Math.min(Number(amount || order.finalTotal || 0), order.finalTotal || 0);
+  const refundAmount = Number(amount === undefined ? order.finalTotal : amount);
 
-  if (refundAmount <= 0) {
-    throw new AppError('Refund amount must be greater than zero', 400);
+  if (!Number.isFinite(refundAmount) || refundAmount <= 0 || refundAmount > order.finalTotal) {
+    throw new AppError('Refund amount must be greater than zero and no more than the order total', 400);
   }
 
   let refund = await Refund.findOne({
@@ -590,71 +585,28 @@ const processRefundForOrder = async (orderId, { amount, reason = 'Refund', reque
     orderId,
     buyerId: order.buyerId,
     sellerId: getPrimarySellerId(order),
-    razorpayPaymentId: order.razorpayPaymentId,
     amount: refundAmount,
     currency: 'INR',
     reason,
     status: 'pending',
+    manualHandlingRequired: true,
     metadata: {
       requestedBy,
-      returnId
+      returnId,
+      instructions: 'Seller must refund the buyer manually and retain proof. No funds have been moved.'
     }
   });
 
-  order.refundStatus = 'refund_processing';
+  order.refundStatus = 'refund_pending';
   order.refundInfo.refundId = refund._id;
   order.refundInfo.refundAmount = refundAmount;
   order.refundInfo.refundReason = reason;
-  order.refundInfo.refundStatus = 'refund_processing';
+  order.refundInfo.refundStatus = 'refund_pending';
+  order.refundInfo.refundMetadata = { manualHandlingRequired: true, ...refund.metadata };
   await order.save();
   await trackOrderItems(order, 'refund_requested', { refundId: refund._id, amount: refundAmount, reason });
 
-  try {
-    const razorpayRefund = await createRefund(order.razorpayPaymentId, refundAmount * 100, {
-      orderId: order._id.toString(),
-      refundId: refund._id.toString(),
-      reason
-    });
-
-    refund.razorpayRefundId = razorpayRefund.id || '';
-    refund.status = razorpayRefund.mode === 'simulated' ? 'refunded' : 'processing';
-    refund.metadata = {
-      ...(refund.metadata || {}),
-      razorpayRefund
-    };
-    await refund.save();
-
-    order.refundInfo.razorpayRefundId = refund.razorpayRefundId;
-    order.refundInfo.refundMetadata = refund.metadata;
-    if (refund.status === 'refunded') {
-      order.refundStatus = refundAmount < order.finalTotal ? 'partially_refunded' : 'refunded';
-      order.paymentStatus = refundAmount < order.finalTotal ? 'partially_refunded' : 'refunded';
-      order.orderStatus = ['cancelled', 'cancelled_unavailable', 'seller_rejected'].includes(order.orderStatus)
-        ? order.orderStatus
-        : 'refunded';
-      order.refundInfo.refundStatus = order.refundStatus;
-      order.refundInfo.refundedAt = new Date();
-      await trackOrderItems(order, 'refund_processed', { refundId: refund._id, amount: refundAmount });
-    } else {
-      order.refundStatus = 'refund_processing';
-      order.refundInfo.refundStatus = 'refund_processing';
-    }
-    await order.save();
-
-    return refund;
-  } catch (error) {
-    refund.status = 'failed';
-    refund.failureReason = error.message;
-    await refund.save();
-
-    order.refundStatus = 'refund_failed';
-    order.refundInfo.refundStatus = 'refund_failed';
-    order.refundInfo.refundFailureReason = error.message;
-    await order.save();
-    await trackOrderItems(order, 'refund_failed', { refundId: refund._id, amount: refundAmount, failureReason: error.message });
-
-    throw error;
-  }
+  return refund;
 };
 
 const getRefundStatus = async (buyerId, orderId) => {
@@ -708,13 +660,27 @@ const listRefunds = async () => Refund.find()
   .sort({ createdAt: -1 })
   .lean();
 
-const markRefund = async (refundId, status, failureReason = '') => {
+const markRefund = async (refundId, status, failureReason = '', manualReference = '') => {
   const refund = await Refund.findById(refundId);
 
   if (!refund) {
     throw new AppError('Refund not found', 404);
   }
 
+  if (!['processing', 'refunded', 'failed'].includes(status)) {
+    throw new AppError('Invalid refund status', 400);
+  }
+  if (refund.status === 'refunded') {
+    throw new AppError('Refund has already been processed', 409);
+  }
+  if (status === 'refunded' && (typeof manualReference !== 'string' || !manualReference.trim())) {
+    throw new AppError('Manual refund reference is required to confirm funds were returned', 400);
+  }
+
+  if (status === 'refunded') {
+    refund.manualHandlingRequired = false;
+    refund.metadata = { ...refund.metadata, manualReference: manualReference.trim() };
+  }
   refund.status = status;
   refund.failureReason = status === 'failed' ? failureReason : '';
   await refund.save();
@@ -727,7 +693,7 @@ const markRefund = async (refundId, status, failureReason = '') => {
       order.refundStatus = refund.amount < order.finalTotal ? 'partially_refunded' : 'refunded';
       order.paymentStatus = refund.amount < order.finalTotal ? 'partially_refunded' : 'refunded';
       order.refundInfo.refundStatus = order.refundStatus;
-      order.refundInfo.razorpayRefundId = refund.razorpayRefundId;
+      order.refundInfo.refundMetadata = refund.metadata;
       order.refundInfo.refundedAt = new Date();
       await trackOrderItems(order, 'refund_processed', { refundId: refund._id, amount: refund.amount });
     } else if (status === 'failed') {

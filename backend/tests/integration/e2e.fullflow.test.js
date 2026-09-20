@@ -1,19 +1,14 @@
 /**
  * End-to-end backend flow: Seller product -> Reel -> Buyer discovery -> Cart -> COD order
- * -> Seller accept -> Ship -> Deliver, with online Razorpay path verified in parallel.
+ * -> Seller accept -> Ship -> Deliver, with direct seller UPI verified in parallel.
  */
-
-const crypto = require('crypto');
 
 const Order = require('../../src/modules/orders/order.model');
 const Product = require('../../src/modules/products/product.model');
 const env = require('../../src/config/env');
-const { razorpay } = require('../../src/utils/razorpay');
+const Refund = require('../../src/modules/refunds/refund.model');
 const { api } = require('../helpers/testServer.helper');
 const { authHeader, createBuyer, createSeller } = require('../helpers/auth.helper');
-
-const signPayment = (orderId, paymentId) =>
-    crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(`${orderId}|${paymentId}`).digest('hex');
 
 const shippingInfo = {
     name: 'E2E Buyer',
@@ -29,7 +24,7 @@ describe('Full backend E2E flow', () => {
     let seller, buyer, productId, reelId;
 
     beforeEach(async () => {
-        seller = await createSeller({ email: `e2e-seller-${Date.now()}@example.com` });
+        seller = await createSeller({ email: `e2e-seller-${Date.now()}@example.com`, upiId: 'seller@upi' });
         buyer = await createBuyer({ email: `e2e-buyer-${Date.now()}@example.com` });
     });
 
@@ -171,7 +166,7 @@ describe('Full backend E2E flow', () => {
 
         const start = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
         expect(start.body.data.paymentMethods).toBeTruthy();
-        expect(start.body.data.razorpayOrderId).toBeTruthy();
+        expect(start.body.data.paymentMethods).toEqual(['UPI_QR', 'COD']);
     });
 
     // ── Phase 5+6: COD golden path ─────────────────────────────────────────────
@@ -265,20 +260,14 @@ describe('Full backend E2E flow', () => {
             expect(order.paymentMethod).toBe('COD');
             expect(order.paymentStatus).toBe('pending');
             expect(order.orderStatus).toBe('delivered');
-            expect(order.razorpayOrderId).toBeFalsy();
-            expect(order.razorpayPaymentId).toBeFalsy();
         } finally {
             env.enableCodCheckout = originalCod;
         }
     });
 
-    // ── Phase 5+6: Online Razorpay path regression ─────────────────────────────
+    // ── Phase 5+6: Direct UPI path regression ─────────────────────────────────
 
-    test('Phase 5+6 — Online path: cart -> start -> verify -> accept -> ship -> deliver', async () => {
-        const originalManual = env.razorpayManualCaptureEnabled;
-        env.razorpayManualCaptureEnabled = true;
-
-        try {
+    test('Phase 5+6 — UPI: cart -> seller confirms payment -> accept -> ship -> deliver', async () => {
             const p = await api()
                 .post('/api/seller/products')
                 .set('Authorization', authHeader(seller))
@@ -300,37 +289,21 @@ describe('Full backend E2E flow', () => {
                 .send({ productId: pid, quantity: 1 })
                 .expect(201);
 
-            const start = await api().post('/api/checkout/start').set('Authorization', authHeader(buyer)).expect(200);
-            const rzpOrderId = start.body.data.razorpayOrderId;
-            const rzpOrderAmount = start.body.data.razorpayOrderAmount;
-            const rzpPaymentId = 'pay_e2e_online_001';
-
-            razorpay.payments.fetch.mockResolvedValueOnce({
-                id: rzpPaymentId,
-                order_id: rzpOrderId,
-                status: 'authorized',
-                amount: rzpOrderAmount, // mirrors what checkout/start returned
-                currency: 'INR',
-                method: 'UPI',
-            });
-
             const placed = await api()
-                .post('/api/checkout/verify')
+                .post('/api/checkout/place-qr-payment')
                 .set('Authorization', authHeader(buyer))
                 .send({
-                    paymentMethod: 'UPI',
-                    razorpayOrderId: rzpOrderId,
-                    razorpayPaymentId: rzpPaymentId,
-                    razorpaySignature: signPayment(rzpOrderId, rzpPaymentId),
+                    paymentMethod: 'UPI_QR',
                     shippingInfo,
                 })
                 .expect(201);
 
-            expect(placed.body.data.paymentStatus).toBe('authorized');
-            expect(placed.body.data.orderStatus).toBe('awaiting_seller_acceptance');
+            expect(placed.body.data.paymentStatus).toBe('pending_seller_confirmation');
+            expect(placed.body.data.orderStatus).toBe('payment_pending_confirmation');
             const orderId = placed.body.data.orderId;
 
-            // seller accept triggers capture for manual-capture mode
+            await api().post(`/api/seller/orders/${orderId}/confirm-payment`)
+                .set('Authorization', authHeader(seller)).send({}).expect(200);
             const accepted = await api()
                 .post(`/api/seller/orders/${orderId}/accept`)
                 .set('Authorization', authHeader(seller))
@@ -357,12 +330,9 @@ describe('Full backend E2E flow', () => {
                 .expect((res) => expect(res.body.data.orderStatus).toBe('delivered'));
 
             const order = await Order.findById(orderId).lean();
-            expect(order.paymentMethod).toBe('UPI');
+            expect(order.paymentMethod).toBe('UPI_QR');
             expect(order.paymentStatus).toBe('paid');
             expect(order.orderStatus).toBe('delivered');
-        } finally {
-            env.razorpayManualCaptureEnabled = originalManual;
-        }
     });
 
     // ── Phase 7: Buyer cancel and return ──────────────────────────────────────
@@ -409,7 +379,7 @@ describe('Full backend E2E flow', () => {
                     expect(res.body.data.orderStatus).toBe('cancelled');
                 });
 
-            expect(razorpay.payments.refund).not.toHaveBeenCalled();
+            expect(await Refund.countDocuments()).toBe(0);
         } finally {
             env.enableCodCheckout = originalCod;
         }

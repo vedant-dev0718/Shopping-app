@@ -1,6 +1,4 @@
 const Order = require('../../src/modules/orders/order.model');
-const env = require('../../src/config/env');
-const { razorpay } = require('../../src/utils/razorpay');
 const { api } = require('../helpers/testServer.helper');
 const { authHeader, createBuyer, createSeller } = require('../helpers/auth.helper');
 const { createProduct } = require('../helpers/mockData.helper');
@@ -15,16 +13,6 @@ const {
 } = require('../helpers/shiprocket.mock');
 
 describe('seller order management API', () => {
-  let originalManualCaptureEnabled;
-
-  beforeEach(() => {
-    originalManualCaptureEnabled = env.razorpayManualCaptureEnabled;
-  });
-
-  afterEach(() => {
-    env.razorpayManualCaptureEnabled = originalManualCaptureEnabled;
-  });
-
   test('seller can ship their own items while a co-seller has not accepted yet', async () => {
     const buyer = await createBuyer({ email: 'multi-seller-ship-buyer@example.com' });
     const sellerA = await createSeller({ email: 'multi-seller-ship-a@example.com' });
@@ -198,7 +186,6 @@ describe('seller order management API', () => {
         itemStatus: 'awaiting_seller_acceptance'
       }
     });
-    order.razorpayPaymentId = 'pay_accept_test';
     await order.save();
 
     await api()
@@ -232,8 +219,7 @@ describe('seller order management API', () => {
     expect(updatedProduct.stock).toBe(1);
   });
 
-  test('seller acceptance captures an authorized manual-capture payment once', async () => {
-    env.razorpayManualCaptureEnabled = true;
+  test('seller acceptance cannot invent a payment for an unpaid UPI order', async () => {
     const buyer = await createBuyer();
     const seller = await createSeller();
     const product = await createProduct(seller, { stock: 2 });
@@ -242,36 +228,22 @@ describe('seller order management API', () => {
       seller,
       product,
       overrides: {
-        paymentStatus: 'authorized',
+        paymentStatus: 'pending',
         orderStatus: 'awaiting_seller_acceptance',
         itemStatus: 'awaiting_seller_acceptance'
       }
     });
-    order.paymentCaptureMode = 'manual';
-    order.razorpayOrderId = 'order_manual_accept';
-    order.razorpayPaymentId = 'pay_accept_test';
-    order.paymentFlow = {
-      captureAfterSellerAcceptance: true,
-      razorpayOrderId: 'order_manual_accept',
-      razorpayPaymentId: 'pay_accept_test',
-      authorizedAt: new Date()
-    };
     await order.save();
 
     await api()
       .post(`/api/seller/orders/${order._id}/accept`)
       .set('Authorization', authHeader(seller))
       .send({ message: 'Available' })
-      .expect(200)
-      .expect((res) => {
-        expect(res.body.data.orderStatus).toBe('processing');
-        expect(res.body.data.paymentStatus).toBe('paid');
-      });
+      .expect(409);
 
     const updatedOrder = await Order.findById(order._id).lean();
-    expect(updatedOrder.paymentStatus).toBe('paid');
-    expect(updatedOrder.paymentFlow.capturedAt).toBeTruthy();
-    expect(updatedOrder.paymentFlow.captureResponseSafeSummary.status).toBe('captured');
+    expect(updatedOrder.paymentStatus).toBe('pending');
+    expect(updatedOrder.items[0].itemAcceptanceStatus).toBe('pending');
   });
 
   test('seller can create a Shiprocket shipment label from an accepted order', async () => {
@@ -332,7 +304,6 @@ describe('seller order management API', () => {
         itemStatus: 'awaiting_seller_acceptance'
       }
     });
-    order.razorpayPaymentId = 'pay_reject_test';
     await order.save();
 
     await api()
@@ -365,18 +336,11 @@ describe('seller order management API', () => {
 
     const updatedOrder = await Order.findById(order._id).lean();
     expect(updatedOrder.sellerAcceptance.status).toBe('rejected');
-    expect(['refunded', 'refund_processing', 'refund_pending']).toContain(updatedOrder.refundStatus);
+    expect(updatedOrder.refundStatus).toBe('refund_pending');
+    expect(updatedOrder.refundInfo.refundMetadata.manualHandlingRequired).toBe(true);
   });
 
-  test('seller rejection checks Razorpay before marking authorized manual-capture money pending release', async () => {
-    env.razorpayManualCaptureEnabled = true;
-    razorpay.payments.fetch.mockResolvedValueOnce({
-      id: 'pay_reject_authorized_test',
-      order_id: 'order_manual_reject',
-      status: 'authorized',
-      amount: 50000,
-      currency: 'INR'
-    });
+  test('seller rejection of unpaid COD does not invent a refund', async () => {
     const buyer = await createBuyer();
     const seller = await createSeller();
     const product = await createProduct(seller, { stock: 2 });
@@ -385,20 +349,12 @@ describe('seller order management API', () => {
       seller,
       product,
       overrides: {
-        paymentStatus: 'authorized',
+        paymentMethod: 'COD',
+        paymentStatus: 'pending',
         orderStatus: 'awaiting_seller_acceptance',
         itemStatus: 'awaiting_seller_acceptance'
       }
     });
-    order.paymentCaptureMode = 'manual';
-    order.razorpayOrderId = 'order_manual_reject';
-    order.razorpayPaymentId = 'pay_reject_authorized_test';
-    order.paymentFlow = {
-      captureAfterSellerAcceptance: true,
-      razorpayOrderId: 'order_manual_reject',
-      razorpayPaymentId: 'pay_reject_authorized_test',
-      authorizedAt: new Date()
-    };
     await order.save();
 
     await api()
@@ -406,18 +362,15 @@ describe('seller order management API', () => {
       .set('Authorization', authHeader(seller))
       .send({
         reason: 'Product unavailable',
-        messageToBuyer: 'Sorry, this item is no longer available. Your authorization will be released.'
+        messageToBuyer: 'Sorry, this item is no longer available. No payment was collected.'
       })
       .expect(200);
 
     const updatedOrder = await Order.findById(order._id).lean();
     expect(updatedOrder.orderStatus).toBe('cancelled_unavailable');
-    expect(updatedOrder.paymentStatus).toBe('auto_refund_pending');
-    expect(updatedOrder.refundStatus).toBe('refund_pending');
-    expect(updatedOrder.refundInfo.refundFailureReason).toContain('auto-refund after the manual capture timeout');
+    expect(updatedOrder.paymentStatus).toBe('pending');
+    expect(updatedOrder.refundStatus).toBe('none');
     expect(updatedOrder.inventoryReservation.status).toBe('released');
-    expect(razorpay.payments.fetch).toHaveBeenCalledWith('pay_reject_authorized_test');
-    expect(razorpay.payments.refund).not.toHaveBeenCalled();
   });
 
   test('acceptance fails when stock is no longer available', async () => {

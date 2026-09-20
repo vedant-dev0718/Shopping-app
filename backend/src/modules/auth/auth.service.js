@@ -23,6 +23,7 @@ const Cart = require('../cart/cart.model');
 const Like = require('../likes/like.model');
 const Comment = require('../comments/comment.model');
 const AnalyticsEvent = require('../analytics/analyticsEvent.model');
+const addressService = require('../addresses/address.service');
 const PendingSignup = require('./pendingSignup.model');
 const PasswordResetOtp = require('./passwordResetOtp.model');
 const TokenBlacklist = require('./tokenBlacklist.model');
@@ -197,7 +198,7 @@ const linkGoogleProvider = (user, { providerUserId, email }) => {
   user.googleId = providerUserId;
 };
 
-const createBuyerAccount = async ({ name, email, passwordHash, phone, address }, session) => {
+const createBuyerAccount = async ({ name, email, passwordHash, phone, address, locality, city, state, pincode }, session) => {
   const normalizedEmail = normalizeEmail(email);
 
   const [user] = await User.create([{
@@ -225,6 +226,24 @@ const createBuyerAccount = async ({ name, email, passwordHash, phone, address },
     preferredRegions: [],
     preferredCategories: []
   }], { session });
+
+  if (city && state && pincode) {
+    try {
+      await addressService.createDeliveryAddress(user._id, {
+        contactName: name,
+        contactPhone: phone,
+        addressLine1: address,
+        locality,
+        city,
+        state,
+        postalCode: pincode,
+        isDefault: true
+      });
+    } catch (_err) {
+      // Best-effort: a malformed address at signup should never block account creation.
+      // The buyer can still add/edit their address from the Addresses screen.
+    }
+  }
 
   return createAuthPayload(user, { buyerProfile });
 };
@@ -1111,9 +1130,7 @@ const scrubSellerData = async (userId, session) => {
           upiId: '',
           panNumber: '',
           gstNumber: '',
-          kycStatus: 'not_submitted',
-          razorpayLinkedAccountId: '',
-          razorpayLinkedAccountStatus: 'not_created'
+          kycStatus: 'not_submitted'
         }
       }
     ), session),
@@ -1127,7 +1144,8 @@ const scrubSellerData = async (userId, session) => {
           profileImageUrl: '',
           bannerImageUrl: '',
           verified: false,
-          featuredCategories: []
+          featuredCategories: [],
+          status: 'hidden'
         },
         $pull: { savedBy: userId }
       }

@@ -94,7 +94,7 @@ const orderItemSchema = new mongoose.Schema({
   },
   sellerPayoutStatus: {
     type: String,
-    enum: ['pending', 'route_transfer_initiated', 'route_transfer_failed', 'released', 'failed'],
+    enum: ['pending', 'released', 'failed'],
     default: 'pending'
   },
   itemStatus: {
@@ -161,10 +161,6 @@ const orderItemSchema = new mongoose.Schema({
     default: null
   },
   shippingLabelUrl: {
-    type: String,
-    default: ''
-  },
-  razorpayTransferId: {
     type: String,
     default: ''
   }
@@ -258,11 +254,6 @@ const refundInfoSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Refund',
     default: null
-  },
-  razorpayRefundId: {
-    type: String,
-    trim: true,
-    default: ''
   },
   refundAmount: {
     type: Number,
@@ -395,117 +386,6 @@ const manualPaymentConfirmationSchema = new mongoose.Schema({
   upiId: { type: String, trim: true, default: '' },
   qrCode: { type: String, trim: true, default: '' },
   amount: { type: Number, min: 0, default: 0 }
-}, { _id: false });
-
-const paymentFlowSchema = new mongoose.Schema({
-  captureAfterSellerAcceptance: {
-    type: Boolean,
-    default: false
-  },
-  razorpayOrderId: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  razorpayPaymentId: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  razorpayRefundId: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  authorizedAt: {
-    type: Date,
-    default: null
-  },
-  capturedAt: {
-    type: Date,
-    default: null
-  },
-  signatureVerified: {
-    type: Boolean,
-    default: false
-  },
-  captureAmount: {
-    type: Number,
-    min: 0,
-    default: 0
-  },
-  captureResponseSafeSummary: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
-  },
-  captureFailureReason: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  authorizationExpiresAt: {
-    type: Date,
-    default: null,
-    index: true
-  },
-  razorpayFees: {
-    type: Number,
-    min: 0,
-    default: 0
-  },
-  razorpayTax: {
-    type: Number,
-    min: 0,
-    default: 0
-  },
-  refundedAt: {
-    type: Date,
-    default: null
-  }
-}, { _id: false });
-
-const razorpayPaymentSchema = new mongoose.Schema({
-  orderId: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  paymentId: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  signatureVerified: {
-    type: Boolean,
-    default: false
-  },
-  authorizedAt: {
-    type: Date,
-    default: null
-  },
-  capturedAt: {
-    type: Date,
-    default: null
-  },
-  captureAmount: {
-    type: Number,
-    min: 0,
-    default: 0
-  },
-  captureResponseSafeSummary: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
-  },
-  captureFailureReason: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  authorizationExpiresAt: {
-    type: Date,
-    default: null,
-    index: true
-  }
 }, { _id: false });
 
 const inventoryReservationSchema = new mongoose.Schema({
@@ -645,34 +525,20 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['RAZORPAY', 'UPI', 'UPI_QR', 'card', 'netbanking', 'wallet', 'COD'],
+    enum: ['UPI_QR', 'COD'],
     required: true
-  },
-  paymentCaptureMode: {
-    type: String,
-    enum: ['automatic', 'manual'],
-    default: 'automatic',
-    index: true
   },
   paymentStatus: {
     type: String,
     enum: [
       'created',
       'pending',
-      'pending_authorization',
       'pending_seller_confirmation',
-      'authorized',
-      'capture_pending',
-      'captured',
       'paid',
       'failed',
-      'authorization_released',
-      'authorization_expired',
-      'auto_refund_pending',
       'refunded',
       'refund_pending',
-      'partially_refunded',
-      'capture_failed'
+      'partially_refunded'
     ],
     default: 'pending'
   },
@@ -682,7 +548,6 @@ const orderSchema = new mongoose.Schema({
       'created',
       'pending',
       'payment_pending',
-      'payment_authorization_pending',
       'placed',
       'payment_pending_confirmation',
       'awaiting_seller_acceptance',
@@ -709,17 +574,6 @@ const orderSchema = new mongoose.Schema({
     enum: ['none', 'refund_pending', 'refund_processing', 'refunded', 'refund_failed', 'partially_refunded'],
     default: 'none',
     index: true
-  },
-  razorpayOrderId: {
-    type: String,
-    trim: true,
-    default: '',
-    index: true
-  },
-  razorpayPaymentId: {
-    type: String,
-    trim: true,
-    default: ''
   },
   trackingNumber: {
     type: String,
@@ -792,14 +646,6 @@ const orderSchema = new mongoose.Schema({
   },
   manualPaymentConfirmation: {
     type: manualPaymentConfirmationSchema,
-    default: () => ({})
-  },
-  paymentFlow: {
-    type: paymentFlowSchema,
-    default: () => ({})
-  },
-  razorpay: {
-    type: razorpayPaymentSchema,
     default: () => ({})
   },
   inventoryConfirmation: {
@@ -877,7 +723,7 @@ const orderSchema = new mongoose.Schema({
   },
   payoutStatus: {
     type: String,
-    enum: ['pending', 'scheduled', 'paid', 'failed', 'route_transfer_initiated', 'route_transfer_failed', 'released'],
+    enum: ['pending', 'scheduled', 'paid', 'failed', 'released'],
     default: 'pending'
   },
   payoutDate: {
@@ -893,26 +739,6 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0.18
   },
-  razorpayTransfers: [{
-    sellerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    transferId: {
-      type: String,
-      default: ''
-    },
-    amount: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
-    status: {
-      type: String,
-      enum: ['on_hold', 'released', 'failed'],
-      default: 'on_hold'
-    }
-  }],
   emailSent: {
     type: Boolean,
     default: false

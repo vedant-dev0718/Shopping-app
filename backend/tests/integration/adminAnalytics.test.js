@@ -33,7 +33,7 @@ describe('admin analytics API', () => {
       product,
       overrides: {
         orderNumber: 'NW-ANALYTICS-PAID',
-        paymentMethod: 'card',
+        paymentMethod: 'UPI_QR',
         paymentStatus: 'paid',
         orderStatus: 'delivered',
         shipping: 50,
@@ -51,7 +51,7 @@ describe('admin analytics API', () => {
       product,
       overrides: {
         orderNumber: 'NW-ANALYTICS-FAILED',
-        paymentMethod: 'wallet',
+        paymentMethod: 'COD',
         paymentStatus: 'failed',
         orderStatus: 'payment_pending',
         shipping: 25
@@ -169,7 +169,7 @@ describe('admin analytics API', () => {
       product,
       overrides: {
         orderNumber: 'NW-ANALYTICS-BREAKDOWN',
-        paymentMethod: 'UPI',
+        paymentMethod: 'UPI_QR',
         paymentStatus: 'paid',
         totalPlatformCommission: 30,
         totalSellerEarnings: 270,
@@ -220,7 +220,7 @@ describe('admin analytics API', () => {
       .set('Authorization', authHeader(admin))
       .expect(200)
       .expect((res) => {
-        expect(res.body.data[0].method).toBe('UPI');
+        expect(res.body.data[0].method).toBe('UPI_QR');
         expect(res.body.data[0].amount).toBe(399);
       });
 

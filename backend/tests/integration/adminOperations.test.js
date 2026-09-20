@@ -19,14 +19,12 @@ describe('admin operations API', () => {
       product,
       overrides: {
         orderNumber: 'NW-OPS-SEARCH',
-        paymentMethod: 'card',
+        paymentMethod: 'UPI_QR',
         paymentStatus: 'paid',
         totalPlatformCommission: 25,
         totalSellerEarnings: 225
       }
     });
-    order.razorpayPaymentId = 'pay_ops_search';
-    order.razorpayOrderId = 'order_ops_search';
     order.trackingNumber = 'AWBOPS123';
     order.trackingCarrier = 'Shiprocket QA';
     order.trackingStatus = 'Shipped';
@@ -39,7 +37,7 @@ describe('admin operations API', () => {
       .expect(403);
 
     const list = await api()
-      .get('/api/admin/orders?q=pay_ops_search&paymentStatus=paid')
+      .get('/api/admin/orders?q=NW-OPS-SEARCH&paymentStatus=paid')
       .set('Authorization', authHeader(admin))
       .expect(200);
 
@@ -51,11 +49,11 @@ describe('admin operations API', () => {
       .expect(200);
 
     expect(detail.body.data.moneyBreakdown.platformCommission).toBe(25);
-    expect(detail.body.data.payment.razorpayPaymentId).toBe('pay_ops_search');
+    expect(detail.body.data.payment.paymentMethod).toBe('UPI_QR');
     expect(detail.body.data.shipping.awb).toBe('AWBOPS123');
 
     await api()
-      .get('/api/admin/payments/razorpay/pay_ops_search')
+      .get(`/api/admin/payments/${order._id}`)
       .set('Authorization', authHeader(admin))
       .expect(200)
       .expect((res) => {
@@ -97,14 +95,12 @@ describe('admin operations API', () => {
         paymentStatus: 'paid'
       }
     });
-    order.razorpayPaymentId = 'pay_ops_actions';
     await order.save();
 
     const refund = await Refund.create({
       orderId: order._id,
       buyerId: buyer._id,
       sellerId: seller._id,
-      razorpayPaymentId: 'pay_ops_actions',
       amount: 50,
       reason: 'Ops refund test'
     });
@@ -145,7 +141,7 @@ describe('admin operations API', () => {
     await api()
       .patch(`/api/admin/refunds/${refund._id}/mark-success`)
       .set('Authorization', authHeader(admin))
-      .send({ reason: 'Ops refund success' })
+      .send({ reason: 'Ops refund success', manualReference: 'manual-refund-001' })
       .expect(200)
       .expect((res) => {
         expect(res.body.data.status).toBe('refunded');

@@ -5,7 +5,6 @@ const Order = require('../src/modules/orders/order.model');
 const Product = require('../src/modules/products/product.model');
 const Store = require('../src/modules/stores/store.model');
 const User = require('../src/modules/users/user.model');
-const { razorpay } = require('../src/utils/razorpay');
 
 const createUser = (role, email) => User.create({
   name: `${role} user`,
@@ -62,15 +61,8 @@ const createBargainFixture = async () => {
       state: 'Maharashtra',
       postalCode: '400001'
     },
-    razorpayOrderId: 'dev_bid_order_123',
-    razorpayPaymentId: 'dev_bid_payment_123',
-    paymentStatus: 'authorized',
-    bidStatus: 'pending_seller_decision',
-    razorpay: {
-      orderId: 'dev_bid_order_123',
-      paymentId: 'dev_bid_payment_123',
-      authorizedAt: new Date()
-    }
+    paymentStatus: 'not_required',
+    bidStatus: 'pending_seller_decision'
   });
 
   return { buyer, seller, product, bid };
@@ -139,15 +131,8 @@ describe('bargainService.closeBargain', () => {
         state: 'Maharashtra',
         postalCode: '400001'
       },
-      razorpayOrderId: 'dev_losing_bid_order_123',
-      razorpayPaymentId: 'dev_losing_bid_payment_123',
-      paymentStatus: 'authorized',
-      bidStatus: 'pending_seller_decision',
-      razorpay: {
-        orderId: 'dev_losing_bid_order_123',
-        paymentId: 'dev_losing_bid_payment_123',
-        authorizedAt: new Date()
-      }
+      paymentStatus: 'not_required',
+      bidStatus: 'pending_seller_decision'
     });
 
     const result = await bargainService.closeBargain({ id: seller._id }, product._id);
@@ -157,8 +142,8 @@ describe('bargainService.closeBargain', () => {
     expect(result.order.items).toHaveLength(1);
     expect(result.order.items[0].productId.toString()).toBe(product._id.toString());
     expect(result.order.finalTotal).toBe(900);
-    expect(result.order.paymentStatus).toBe('paid');
-    expect(result.order.razorpayPaymentId).toBe('dev_bid_payment_123');
+    expect(result.order.paymentStatus).toBe('pending');
+    expect(result.order.paymentMethod).toBe('COD');
 
     const [persistedBid, persistedLosingBid, persistedOrder, persistedProduct] = await Promise.all([
       Bid.findById(bid._id),
@@ -171,41 +156,28 @@ describe('bargainService.closeBargain', () => {
     expect(persistedOrder.emailSent).toBe(true);
     expect(persistedBid.orderId.toString()).toBe(persistedOrder._id.toString());
     expect(persistedBid.bidStatus).toBe('won');
-    expect(persistedBid.paymentStatus).toBe('captured');
+    expect(persistedBid.paymentStatus).toBe('not_required');
     expect(persistedLosingBid.bidStatus).toBe('lost');
-    expect(persistedLosingBid.paymentStatus).toBe('authorized');
+    expect(persistedLosingBid.paymentStatus).toBe('not_required');
     expect(persistedProduct.stock).toBe(0);
     expect(persistedProduct.status).toBe('sold_out');
   });
 
-  it('does not confirm the winning bid order when the captured amount mismatches the order total', async () => {
+  it('does not create the winning bid order without complete shipping details', async () => {
     const { seller, product, bid } = await createBargainFixture();
 
-    bid.razorpayPaymentId = 'pay_underpaid_bid_123';
-    bid.razorpay.paymentId = 'pay_underpaid_bid_123';
+    bid.shippingInfo.address = '';
     await bid.save();
-
-    razorpay.payments.fetch.mockResolvedValueOnce({
-      id: 'pay_underpaid_bid_123',
-      order_id: 'dev_bid_order_123',
-      status: 'captured',
-      amount: 80000,
-      currency: 'INR',
-      method: 'card'
-    });
 
     await expect(
       bargainService.closeBargain({ id: seller._id }, product._id)
-    ).rejects.toThrow('Captured payment amount mismatch');
+    ).rejects.toThrow('Winning bid is missing shipping info');
 
     const persistedBid = await Bid.findById(bid._id);
     const persistedOrder = await Order.findById(persistedBid.orderId);
     const persistedProduct = await Product.findById(product._id);
 
-    expect(persistedOrder).toBeTruthy();
-    expect(persistedOrder.finalTotal).toBe(900);
-    expect(persistedOrder.paymentStatus).toBe('capture_failed');
-    expect(persistedOrder.paymentFlow.captureFailureReason).toContain('expected 90000 paise but received 80000 paise');
+    expect(persistedOrder).toBeNull();
     expect(persistedBid.bidStatus).toBe('pending_seller_decision');
     expect(persistedProduct.stock).toBe(1);
     expect(persistedProduct.status).toBe('active');

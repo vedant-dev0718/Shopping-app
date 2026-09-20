@@ -79,7 +79,7 @@ const buildNewOrderAlertEmail = (order, sellerEmail, sellerItems, sellerSubtotal
       <p>Your Items Total: <strong>${formatCurrency(sellerSubtotal)}</strong></p>
       <p>Platform Commission: <strong>${formatCurrency(commissionAmount)}</strong> (${Math.round(commissionRate * 100)}%)</p>
       <p>Your Earnings: <strong>${formatCurrency(sellerEarnings)}</strong></p>
-      <p>Your earnings are held in your Razorpay account and will be released 7 days after delivery confirmation.</p>
+      <p>Payments are collected directly by the seller. Earnings become eligible in the ledger after the 7-day return window; no funds are transferred automatically.</p>
       <h2>Buyer shipping address</h2>
       ${buildAddressHtml(order.shippingInfo)}
     `
@@ -93,7 +93,7 @@ const buildBidWonEmail = (bid, product, buyerEmail) => ({
     <h1>You won the Bargain!</h1>
     <p>Product: <strong>${escapeHtml(product.title)}</strong></p>
     <p>Winning bid amount: <strong>${formatCurrency(bid.amount)}</strong></p>
-    <p>Your payment has been captured.</p>
+    <p>Your order will use Cash on Delivery. No payment has been collected yet.</p>
   `
 });
 
@@ -104,7 +104,7 @@ const buildBidLostEmail = (bid, product, buyerEmail) => ({
     <h1>Your bid was not selected</h1>
     <p>Product: <strong>${escapeHtml(product.title)}</strong></p>
     <p>Bid amount: <strong>${formatCurrency(bid.amount)}</strong></p>
-    <p>No charge was captured. The blocked amount will unblock automatically within 5 days.</p>
+    <p>No payment was collected for this bid.</p>
   `
 });
 

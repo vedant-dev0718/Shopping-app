@@ -1,5 +1,5 @@
 const AppError = require('../../utils/AppError');
-const { razorpay } = require('../../utils/razorpay');
+const postOrderService = require('../orders/postOrder.service');
 const Order = require('../orders/order.model');
 const ReturnRequest = require('./return.model');
 
@@ -99,28 +99,18 @@ const processRefund = async (returnId) => {
 
   const order = await Order.findById(returnRequest.orderId);
 
-  if (!order || !order.razorpayPaymentId) {
-    throw new AppError('Razorpay payment not found for this order', 400);
+  if (!order) {
+    throw new AppError('Order not found', 404);
   }
 
-  try {
-    await razorpay.payments.refund(order.razorpayPaymentId, {
-      amount: Math.round(returnRequest.refundAmount * 100),
-      speed: 'normal',
-      notes: {
-        returnId: returnRequest._id.toString(),
-        orderId: order._id.toString()
-      }
-    });
-
-    returnRequest.refundStatus = 'initiated';
-    await returnRequest.save();
-    return returnRequest;
-  } catch (error) {
-    returnRequest.refundStatus = 'failed';
-    await returnRequest.save();
-    throw error;
-  }
+  await postOrderService.processRefundForOrder(order._id, {
+    amount: returnRequest.refundAmount,
+    reason: returnRequest.reason,
+    returnId: returnRequest._id
+  });
+  returnRequest.refundStatus = 'pending';
+  await returnRequest.save();
+  return returnRequest;
 };
 
 module.exports = {

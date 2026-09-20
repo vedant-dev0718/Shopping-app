@@ -1,6 +1,5 @@
 const AppError = require('../../utils/AppError');
 const env = require('../../config/env');
-const { releaseAuthorization, safeCapturePaymentOnce } = require('../../utils/razorpay');
 const Order = require('../orders/order.model');
 const mongoose = require('mongoose');
 const postOrderService = require('../orders/postOrder.service');
@@ -13,7 +12,6 @@ const Store = require('../stores/store.model');
 const User = require('../users/user.model');
 const shiprocket = require('../../utils/shiprocket');
 const addressService = require('../addresses/address.service');
-const { splitPaymentToSellers } = require('../checkout/webhook.controller');
 
 const sellerOrderBaseQuery = (sellerId) => ({
   'items.sellerId': sellerId
@@ -203,7 +201,6 @@ const hasShiprocketShipment = (order, items = []) => Boolean(
 
 const ensureSellerAcceptanceContainers = (order) => {
   order.sellerAcceptance = order.sellerAcceptance || {};
-  order.paymentFlow = order.paymentFlow || {};
   order.inventoryConfirmation = order.inventoryConfirmation || {};
 };
 
@@ -398,31 +395,7 @@ const maybeFinalizeAcceptedOrder = async (order) => {
   order.orderStatus = order.paymentStatus === 'paid' ? 'processing' : 'confirmed';
   order.trackingStatus = 'Order confirmed by seller';
 
-  let capture;
-
-  if (env.razorpayManualCaptureEnabled && ['authorized', 'capture_pending', 'capture_failed'].includes(order.paymentStatus)) {
-    const captureResult = await safeCapturePaymentOnce(order);
-
-    if (!captureResult.captured) {
-      throw new AppError(captureResult.reason || 'Payment capture failed', 409);
-    }
-
-    capture = captureResult.payment;
-    order.orderStatus = 'processing';
-  } else if (order.paymentStatus === 'paid') {
-    order.orderStatus = 'processing';
-  }
-
   await financeService.createEarningsForOrder(order);
-
-  if (order.paymentStatus === 'paid' && order.razorpayPaymentId) {
-    try {
-      await splitPaymentToSellers(order, order.razorpayPaymentId, capture);
-    } catch (error) {
-      console.error(`Failed to initiate Route transfer for accepted order ${order._id}:`, error.message);
-      order.payoutStatus = 'route_transfer_failed';
-    }
-  }
 };
 
 const normalizeTrackingUrl = (value = '') => {
@@ -625,6 +598,13 @@ const acceptSellerOrder = async (sellerId, orderId, message = '') => {
     throw new AppError('This order is not awaiting seller acceptance', 400);
   }
 
+  if (!(
+    (order.paymentMethod === 'COD' && ['pending', 'paid'].includes(order.paymentStatus))
+    || (order.paymentMethod === 'UPI_QR' && order.paymentStatus === 'paid')
+  )) {
+    throw new AppError('Payment must be confirmed before seller acceptance', 409);
+  }
+
   const acceptedAt = new Date();
 
   await deductSellerItemStock(sellerItems);
@@ -674,11 +654,17 @@ const confirmSellerOrderPayment = async (sellerId, orderId) => {
     throw new AppError('Only UPI QR payments require seller confirmation', 400);
   }
 
+  if (isFinalOrderStatus(order.orderStatus) || sellerItems.length !== order.items.length) {
+    throw new AppError('This order cannot receive payment confirmation', 409);
+  }
+
   if (order.manualPaymentConfirmation?.status === 'seller_confirmed') {
     return getSellerOrderById(sellerId, order._id);
   }
 
-  if (order.manualPaymentConfirmation?.status !== 'buyer_submitted') {
+  if (order.manualPaymentConfirmation?.status !== 'buyer_submitted'
+    || order.paymentStatus !== 'pending_seller_confirmation'
+    || order.orderStatus !== 'payment_pending_confirmation') {
     throw new AppError('This order is not awaiting payment confirmation', 400);
   }
 
@@ -776,7 +762,7 @@ const rejectSellerOrder = async (sellerId, orderId, { reason, messageToBuyer }) 
   await markRejectedProductsUnavailable(sellerItems, cleanReason);
   await financeService.updateEarningsForOrderAdjustment(order, {
     status: 'cancelled',
-    refundAmount: ['paid', 'authorized'].includes(order.paymentStatus) ? order.finalTotal : 0
+    refundAmount: order.paymentStatus === 'paid' ? order.finalTotal : 0
   });
   await order.save();
   await trackSellerItems(order, sellerId, 'order_seller_rejected', {
@@ -784,31 +770,7 @@ const rejectSellerOrder = async (sellerId, orderId, { reason, messageToBuyer }) 
     messageToBuyer: cleanMessage
   });
 
-  if (order.paymentStatus === 'authorized') {
-    try {
-      await releaseAuthorization(order.razorpayPaymentId, {
-        orderId: order._id.toString(),
-        orderNumber: order.orderNumber,
-        reason: cleanReason || 'seller_rejected'
-      });
-      order.paymentStatus = 'authorization_released';
-      order.paymentFlow = order.paymentFlow || {};
-      order.paymentFlow.refundedAt = new Date();
-      order.refundStatus = 'none';
-      order.refundInfo = order.refundInfo || {};
-      order.refundInfo.refundStatus = 'none';
-      order.refundInfo.refundReason = cleanReason;
-      await order.save();
-    } catch (error) {
-      order.paymentStatus = 'auto_refund_pending';
-      order.refundStatus = 'refund_pending';
-      order.refundInfo = order.refundInfo || {};
-      order.refundInfo.refundStatus = 'refund_pending';
-      order.refundInfo.refundFailureReason = error.message;
-      await order.save();
-    }
-  } else if (order.paymentStatus === 'paid') {
-    order.paymentStatus = 'refund_pending';
+  if (order.paymentStatus === 'paid') {
     order.refundStatus = 'refund_pending';
     order.refundInfo = order.refundInfo || {};
     order.refundInfo.refundStatus = 'refund_pending';
@@ -816,25 +778,11 @@ const rejectSellerOrder = async (sellerId, orderId, { reason, messageToBuyer }) 
     await order.save();
     await trackSellerItems(order, sellerId, 'refund_triggered_due_to_unavailable', { reason: cleanReason });
 
-    try {
-      const refund = await postOrderService.processRefundForOrder(order._id, {
+    await postOrderService.processRefundForOrder(order._id, {
         amount: order.finalTotal,
         reason: cleanReason,
         requestedBy: 'seller'
       });
-
-      if (refund?.razorpayRefundId) {
-        const refreshed = await Order.findById(order._id);
-        if (refreshed) {
-          refreshed.paymentFlow = refreshed.paymentFlow || {};
-          refreshed.paymentFlow.razorpayRefundId = refund.razorpayRefundId;
-          refreshed.paymentFlow.refundedAt = refund.status === 'refunded' ? new Date() : refreshed.paymentFlow.refundedAt;
-          await refreshed.save();
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to create seller rejection refund for order ${order._id}:`, error.message);
-    }
   }
 
   await notificationService.sendToUser(order.buyerId, {
@@ -947,7 +895,7 @@ const forceCancelOrder = async (adminId, orderId, reason = 'Order cancelled by a
   await restoreAcceptedStockForCancelledItems(acceptedItemsToRestore);
   await financeService.updateEarningsForOrderAdjustment(order, {
     status: 'cancelled',
-    refundAmount: ['paid', 'authorized'].includes(order.paymentStatus) ? order.finalTotal : 0
+    refundAmount: order.paymentStatus === 'paid' ? order.finalTotal : 0
   });
   await order.save();
 
@@ -964,40 +912,12 @@ const forceCancelOrder = async (adminId, orderId, reason = 'Order cancelled by a
     }
   })));
 
-  if (order.paymentStatus === 'authorized') {
-    try {
-      await releaseAuthorization(order.razorpayPaymentId, {
-        orderId: order._id.toString(),
-        orderNumber: order.orderNumber,
-        reason: reason || 'admin_cancelled'
-      });
-      order.paymentStatus = 'authorization_released';
-      order.refundStatus = 'none';
-      order.refundInfo = order.refundInfo || {};
-      order.refundInfo.refundStatus = 'none';
-      order.refundInfo.refundReason = reason;
-      order.paymentFlow = order.paymentFlow || {};
-      order.paymentFlow.refundedAt = new Date();
-      await order.save();
-    } catch (error) {
-      order.paymentStatus = 'auto_refund_pending';
-      order.refundStatus = 'refund_pending';
-      order.refundInfo = order.refundInfo || {};
-      order.refundInfo.refundStatus = 'refund_pending';
-      order.refundInfo.refundReason = reason;
-      order.refundInfo.refundFailureReason = error.message;
-      await order.save();
-    }
-  } else if (order.paymentStatus === 'paid') {
-    try {
-      await postOrderService.processRefundForOrder(order._id, {
+  if (order.paymentStatus === 'paid') {
+    await postOrderService.processRefundForOrder(order._id, {
         amount: order.finalTotal,
         reason,
         requestedBy: 'admin'
       });
-    } catch (error) {
-      console.error(`Failed to create admin cancellation refund for order ${order._id}:`, error.message);
-    }
   }
 
   return Order.findById(orderId).lean();
@@ -1071,8 +991,7 @@ const markOrderDelivered = async (sellerId, orderId, options = {}) => {
   );
   order.shiprocketRawData = options.rawWebhookPayload || order.shiprocketRawData || {};
 
-  // Razorpay transfer holds are released by the earnings eligibility job
-  // once the return window closes, not at delivery time.
+  // Earnings become eligible after the return window, not at delivery time.
   await order.save();
 
   const deliveredStoreIds = [

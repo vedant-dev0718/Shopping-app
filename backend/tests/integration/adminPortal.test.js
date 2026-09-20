@@ -102,8 +102,6 @@ describe('admin portal foundation API', () => {
         paymentStatus: 'paid'
       }
     });
-    order.razorpayPaymentId = 'pay_admin_search';
-    order.razorpayOrderId = 'order_admin_search';
     order.shiprocketOrderId = 900123;
     order.shiprocketShipmentId = 800123;
     order.trackingNumber = 'AWBADMINSEARCH';
@@ -163,11 +161,11 @@ describe('admin portal foundation API', () => {
     expect(orderSearch.body.data.results.orders[0].orderNumber).toBe('NW-ADMIN-SEARCH');
 
     await api()
-      .get('/api/admin/search?q=pay_admin_search&type=payments')
+      .get('/api/admin/search?q=NW-ADMIN-SEARCH&type=payments')
       .set('Authorization', authHeader(admin))
       .expect(200)
       .expect((res) => {
-        expect(res.body.data.results.payments[0].razorpayPaymentId).toBe('pay_admin_search');
+        expect(res.body.data.results.payments[0].orderNumber).toBe('NW-ADMIN-SEARCH');
       });
 
     await api()

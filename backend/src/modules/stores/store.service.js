@@ -15,7 +15,7 @@ const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const exactTextFilter = (value) => new RegExp(`^${escapeRegExp(value)}$`, 'i');
 
 const buildStoreQuery = (filters = {}) => {
-  const query = {};
+  const query = { status: 'active' };
 
   if (filters.category) {
     query.category = exactTextFilter(filters.category);

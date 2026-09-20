@@ -194,9 +194,7 @@ test('deleteAccount anonymizes a seller and safely disables seller dependencies'
     upiId: '',
     panNumber: '',
     gstNumber: '',
-    kycStatus: 'not_submitted',
-    razorpayLinkedAccountId: '',
-    razorpayLinkedAccountStatus: 'not_created'
+    kycStatus: 'not_submitted'
   });
 
   const storeCall = calls.find((call) => call.model === 'Store' && call.method === 'updateOne');

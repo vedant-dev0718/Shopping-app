@@ -7,13 +7,12 @@ const Order = require('../../src/modules/orders/order.model');
 const ReturnRequest = require('../../src/modules/returns/return.model');
 const Refund = require('../../src/modules/refunds/refund.model');
 const env = require('../../src/config/env');
-const { razorpay } = require('../../src/utils/razorpay');
 const { api } = require('../helpers/testServer.helper');
 const { authHeader, createBuyer, createSeller } = require('../helpers/auth.helper');
 const { createProduct } = require('../helpers/mockData.helper');
 const { createOrder } = require('../helpers/order.helper');
 
-const makeDeliveredOrder = async ({ buyer, seller, product, paymentMethod = 'UPI', paymentStatus = 'paid' }) => {
+const makeDeliveredOrder = async ({ buyer, seller, product, paymentMethod = 'UPI_QR', paymentStatus = 'paid' }) => {
     const order = await createOrder({
         buyer,
         seller,
@@ -91,7 +90,7 @@ describe('Return lifecycle — COD and online parity', () => {
             seller,
             product,
             overrides: {
-                paymentMethod: 'UPI',
+                paymentMethod: 'UPI_QR',
                 paymentStatus: 'paid',
                 orderStatus: 'delivered',
                 itemStatus: 'delivered',
@@ -179,14 +178,11 @@ describe('Return lifecycle — COD and online parity', () => {
 
     // ── R4+R5: Seller mark-received, refund parity ─────────────────────────────
 
-    test('R4+R5 — seller marks return received (online): refund is attempted via gateway', async () => {
+    test('R4+R5 — seller marks return received: direct UPI refund requires manual handling', async () => {
         const buyer = await createBuyer({ email: 'return-received-online-buyer@example.com' });
         const seller = await createSeller({ email: 'return-received-online-seller@example.com' });
         const product = await createProduct(seller, { stock: 3, price: 800 });
-        const order = await makeDeliveredOrder({ buyer, seller, product, paymentMethod: 'UPI', paymentStatus: 'paid' });
-
-        // set razorpayPaymentId so refund path is reachable
-        order.razorpayPaymentId = 'pay_return_online_001';
+        const order = await makeDeliveredOrder({ buyer, seller, product, paymentMethod: 'UPI_QR', paymentStatus: 'paid' });
         await order.save();
 
         const returnReq = await api()
@@ -209,18 +205,18 @@ describe('Return lifecycle — COD and online parity', () => {
             .expect((res) => expect(res.body.data.status).toBe('received'));
 
         const updatedOrder = await Order.findById(order._id).lean();
-        // service moves to 'returned' then immediately 'refunded' when the mock refund is simulated
-        expect(['returned', 'refunded']).toContain(updatedOrder.orderStatus);
-        expect(['refund_pending', 'refund_processing', 'refunded', 'partially_refunded']).toContain(
-            updatedOrder.refundStatus
-        );
+        expect(updatedOrder.orderStatus).toBe('returned');
+        expect(updatedOrder.paymentStatus).toBe('paid');
+        expect(updatedOrder.refundStatus).toBe('refund_pending');
 
         const refundRecord = await Refund.findOne({ orderId: order._id }).lean();
         expect(refundRecord).toBeTruthy();
         expect(refundRecord.amount).toBeGreaterThan(0);
+        expect(refundRecord.status).toBe('pending');
+        expect(refundRecord.manualHandlingRequired).toBe(true);
     });
 
-    test('R4+R5 — seller marks return received (COD): order moves to returned, no Razorpay refund call', async () => {
+    test('R4+R5 — seller marks return received (unpaid COD): no refund is required', async () => {
         const buyer = await createBuyer({ email: 'return-received-cod-buyer@example.com' });
         const seller = await createSeller({ email: 'return-received-cod-seller@example.com' });
         const product = await createProduct(seller, { stock: 3, price: 750 });
@@ -239,16 +235,13 @@ describe('Return lifecycle — COD and online parity', () => {
             .set('Authorization', authHeader(seller))
             .expect(200);
 
-        // mark-received on a COD order: no razorpayPaymentId, so refund path throws 400
-        // but return state should still progress or gracefully surface the COD-specific error
         const response = await api()
             .patch(`/api/seller/returns/${returnId}/mark-received`)
             .set('Authorization', authHeader(seller));
 
-        // acceptable: 200 with returned state (if service handles COD gracefully) or
-        // 400 with explicit COD-incompatible refund message — never a 500
-        expect([200, 400]).toContain(response.status);
-        expect(razorpay.payments.refund).not.toHaveBeenCalled();
+        expect(response.status).toBe(200);
+        expect(response.body.data.refundStatus).toBe('not_required');
+        expect(await Refund.countDocuments()).toBe(0);
 
         if (response.status === 200) {
             const updatedOrder = await Order.findById(order._id).lean();

@@ -87,7 +87,7 @@ const returnRequestSchema = new mongoose.Schema({
   },
   refundStatus: {
     type: String,
-    enum: ['pending', 'initiated', 'completed', 'failed'],
+    enum: ['not_required', 'pending', 'initiated', 'completed', 'failed'],
     default: 'pending',
     index: true
   },

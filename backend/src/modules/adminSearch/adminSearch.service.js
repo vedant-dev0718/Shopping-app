@@ -130,7 +130,7 @@ const search = async ({ q = '', type = 'all', status = '', fromDate, toDate } = 
     if (maybeObjectId) query.$or = [...(query.$or || []), { _id: maybeObjectId }, { userId: maybeObjectId }, { storeId: maybeObjectId }];
 
     tasks.push(SellerProfile.find(query)
-      .select('userId storeId storeName storeCategory city state specialtyRegion kycStatus razorpayLinkedAccountStatus createdAt updatedAt')
+      .select('userId storeId storeName storeCategory city state specialtyRegion kycStatus createdAt updatedAt')
       .populate('userId', 'name email phone accountStatus')
       .sort({ createdAt: -1 })
       .limit(LIMIT)
@@ -216,8 +216,6 @@ const search = async ({ q = '', type = 'all', status = '', fromDate, toDate } = 
   if (shouldRun(requestedType, 'orders') || shouldRun(requestedType, 'payments') || shouldRun(requestedType, 'shipments')) {
     const orderOr = regex ? [
       { orderNumber: regex },
-      { razorpayOrderId: regex },
-      { razorpayPaymentId: regex },
       { trackingNumber: regex },
       { trackingCarrier: regex },
       { 'shippingInfo.name': regex },
@@ -256,7 +254,7 @@ const search = async ({ q = '', type = 'all', status = '', fromDate, toDate } = 
         ...baseOrderQuery,
         ...maybeStatus('orderStatus', status)
       })
-        .select('orderNumber buyerId sellerIds paymentStatus orderStatus finalTotal razorpayOrderId razorpayPaymentId trackingNumber trackingCarrier shiprocketShipmentId createdAt')
+        .select('orderNumber buyerId sellerIds paymentStatus orderStatus finalTotal trackingNumber trackingCarrier shiprocketShipmentId createdAt')
         .sort({ createdAt: -1 })
         .limit(LIMIT)
         .lean()
@@ -266,20 +264,11 @@ const search = async ({ q = '', type = 'all', status = '', fromDate, toDate } = 
     }
 
     if (shouldRun(requestedType, 'payments')) {
-      const paymentOr = baseOrderQuery.$or?.length
-        ? baseOrderQuery.$or
-        : [
-          { razorpayOrderId: { $ne: '' } },
-          { razorpayPaymentId: { $ne: '' } },
-          { 'paymentFlow.razorpayOrderId': { $ne: '' } },
-          { 'paymentFlow.razorpayPaymentId': { $ne: '' } }
-        ];
       tasks.push(Order.find({
         ...baseOrderQuery,
-        ...(status ? { paymentStatus: status } : {}),
-        $or: paymentOr
+        ...(status ? { paymentStatus: status } : {})
       })
-        .select('orderNumber paymentStatus finalTotal razorpayOrderId razorpayPaymentId paymentFlow.razorpayOrderId paymentFlow.razorpayPaymentId refundStatus createdAt')
+        .select('orderNumber paymentMethod paymentStatus finalTotal manualPaymentConfirmation refundStatus createdAt')
         .sort({ createdAt: -1 })
         .limit(LIMIT)
         .lean()
@@ -317,11 +306,11 @@ const search = async ({ q = '', type = 'all', status = '', fromDate, toDate } = 
     const query = {
       ...dates,
       ...maybeStatus('status', status),
-      ...(regex ? { $or: [{ razorpayPaymentId: regex }, { razorpayRefundId: regex }, { reason: regex }, { failureReason: regex }] } : {})
+      ...(regex ? { $or: [{ reason: regex }, { failureReason: regex }] } : {})
     };
     if (maybeObjectId) query.$or = [...(query.$or || []), { _id: maybeObjectId }, { orderId: maybeObjectId }, { buyerId: maybeObjectId }, { sellerId: maybeObjectId }];
     tasks.push(Refund.find(query)
-      .select('orderId buyerId sellerId razorpayPaymentId razorpayRefundId amount currency reason status failureReason createdAt updatedAt')
+      .select('orderId buyerId sellerId manualHandlingRequired amount currency reason status failureReason createdAt updatedAt')
       .sort({ createdAt: -1 })
       .limit(LIMIT)
       .lean()

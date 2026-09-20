@@ -6,12 +6,22 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { createReadStream } = require('fs');
 const env = require('../config/env');
 
-const getS3Client = () => new S3Client({
-    region: env.awsRegion,
-    endpoint: env.awsS3Endpoint || undefined,
-    forcePathStyle: env.awsS3ForcePathStyle || false,
-    credentials: { accessKeyId: env.awsAccessKeyId, secretAccessKey: env.awsSecretAccessKey }
-});
+const getS3Client = () => {
+    const options = {
+        region: env.awsRegion,
+        endpoint: env.awsS3Endpoint || undefined,
+        forcePathStyle: env.awsS3ForcePathStyle || false
+    };
+
+    // Only override the default credential provider chain when explicit keys are
+    // supplied (e.g. local dev); on EC2, omitting this lets the SDK pick up the
+    // instance's IAM role automatically.
+    if (env.awsAccessKeyId && env.awsSecretAccessKey) {
+        options.credentials = { accessKeyId: env.awsAccessKeyId, secretAccessKey: env.awsSecretAccessKey };
+    }
+
+    return new S3Client(options);
+};
 
 const toPublicS3Url = (key) => {
     if (env.awsS3PublicBaseUrl) return `${env.awsS3PublicBaseUrl.replace(/\/$/, '')}/${key}`;

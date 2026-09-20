@@ -15,7 +15,6 @@ const getOrderTimeline = asyncHandler(async (req, res) => send(res, 'Order timel
 
 const listPayments = asyncHandler(async (req, res) => sendList(res, 'Payments fetched', await service.listPayments(req.query)));
 const getPayment = asyncHandler(async (req, res) => send(res, 'Payment detail fetched', await service.getPaymentByOrder(req.params.paymentId)));
-const getPaymentByRazorpay = asyncHandler(async (req, res) => send(res, 'Payment detail fetched', await service.getPaymentByRazorpay(req.params.razorpayPaymentId)));
 
 const listRefunds = asyncHandler(async (req, res) => sendList(res, 'Refunds fetched', await service.listRefunds(req.query)));
 const getRefund = asyncHandler(async (req, res) => send(res, 'Refund detail fetched', await service.getRefund(req.params.refundId)));
@@ -51,7 +50,6 @@ module.exports = {
   getOrderTimeline,
   listPayments,
   getPayment,
-  getPaymentByRazorpay,
   listRefunds,
   getRefund,
   processRefund,

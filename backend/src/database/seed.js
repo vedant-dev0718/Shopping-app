@@ -161,6 +161,7 @@ const seed = async () => {
     },
     store: {
       storeName: 'Jaipur Heritage House',
+      profileImageUrl: 'https://images.unsplash.com/photo-1596993100471-c3905dafa78e?w=400&q=80',
       category: 'Regional Wear',
       city: 'Jaipur',
       state: 'Rajasthan',
@@ -182,6 +183,7 @@ const seed = async () => {
     },
     store: {
       storeName: 'Mumbai Street Market',
+      profileImageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80',
       category: 'Streetwear',
       city: 'Mumbai',
       state: 'Maharashtra',
@@ -203,6 +205,7 @@ const seed = async () => {
     },
     store: {
       storeName: 'Chennai Bridal Atelier',
+      profileImageUrl: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&q=80',
       category: 'Bridal',
       city: 'Chennai',
       state: 'Tamil Nadu',
@@ -226,7 +229,9 @@ const seed = async () => {
       price: 189.99,
       stock: 8,
       tags: ['silk', 'festive', 'banarasi'],
-      imageUrls: ['https://example.com/images/banarasi-silk-saree.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1596993100471-c3905dafa78e?w=1200&q=80'],
+      originalPrice: 239.99,
+      discountPercent: 21,
       featured: true
     },
     {
@@ -240,7 +245,10 @@ const seed = async () => {
       price: 119.99,
       stock: 12,
       tags: ['bandhani', 'rajasthan', 'colorful'],
-      imageUrls: ['https://example.com/images/rajasthani-bandhani-saree.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80'],
+      originalPrice: 159.99,
+      discountPercent: 25,
+      bargainEnabled: true,
       featured: true
     },
     {
@@ -254,7 +262,8 @@ const seed = async () => {
       price: 94.5,
       stock: 10,
       tags: ['phulkari', 'cotton', 'embroidered'],
-      imageUrls: ['https://example.com/images/phulkari-suit-set.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=1200&q=80'],
+      bargainEnabled: true,
       featured: false
     },
     {
@@ -268,7 +277,7 @@ const seed = async () => {
       price: 78,
       stock: 0,
       tags: ['kutch', 'mirror-work', 'jacket'],
-      imageUrls: ['https://example.com/images/kutch-embroidered-jacket.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=1200&q=80'],
       featured: false
     },
     {
@@ -282,7 +291,9 @@ const seed = async () => {
       price: 32,
       stock: 30,
       tags: ['lac', 'bangles', 'handmade'],
-      imageUrls: ['https://example.com/images/jaipur-lac-bangles.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200&q=80'],
+      originalPrice: 42,
+      discountPercent: 24,
       featured: false
     },
     {
@@ -296,7 +307,10 @@ const seed = async () => {
       price: 46,
       stock: 22,
       tags: ['streetwear', 'graphic', 'mumbai'],
-      imageUrls: ['https://example.com/images/mumbai-graphic-kurta-tee.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80'],
+      originalPrice: 69,
+      discountPercent: 33,
+      bargainEnabled: true,
       featured: true
     },
     {
@@ -310,7 +324,9 @@ const seed = async () => {
       price: 88,
       stock: 14,
       tags: ['bandra', 'jacket', 'oversized'],
-      imageUrls: ['https://example.com/images/bandra-oversized-jacket.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1529068755536-a5ade0dcb4e8?w=1200&q=80'],
+      originalPrice: 120,
+      discountPercent: 27,
       featured: true
     },
     {
@@ -324,7 +340,10 @@ const seed = async () => {
       price: 52,
       stock: 18,
       tags: ['kolhapuri', 'leather', 'sandals'],
-      imageUrls: ['https://example.com/images/kolhapuri-leather-sandals.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=1200&q=80'],
+      originalPrice: 78,
+      discountPercent: 33,
+      bargainEnabled: true,
       featured: false
     },
     {
@@ -338,7 +357,10 @@ const seed = async () => {
       price: 28,
       stock: 40,
       tags: ['tote', 'block-print', 'cotton'],
-      imageUrls: ['https://example.com/images/block-print-tote.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1547949003-9792a18a2601?w=1200&q=80'],
+      originalPrice: 40,
+      discountPercent: 30,
+      bargainEnabled: true,
       featured: false
     },
     {
@@ -352,7 +374,9 @@ const seed = async () => {
       price: 24,
       stock: 35,
       tags: ['oxidized', 'hoops', 'silver-tone'],
-      imageUrls: ['https://example.com/images/silver-oxidized-hoops.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200&q=80'],
+      originalPrice: 36,
+      discountPercent: 33,
       featured: false
     },
     {
@@ -366,7 +390,8 @@ const seed = async () => {
       price: 349,
       stock: 5,
       tags: ['kanjivaram', 'bridal', 'silk'],
-      imageUrls: ['https://example.com/images/kanjivaram-bridal-saree.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&q=80'],
+      bargainEnabled: true,
       featured: true
     },
     {
@@ -380,7 +405,8 @@ const seed = async () => {
       price: 135,
       stock: 11,
       tags: ['temple', 'necklace', 'wedding'],
-      imageUrls: ['https://example.com/images/temple-jewelry-necklace-set.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&q=80'],
+      bargainEnabled: true,
       featured: true
     },
     {
@@ -394,7 +420,10 @@ const seed = async () => {
       price: 72,
       stock: 16,
       tags: ['madurai', 'cotton', 'daily-wear'],
-      imageUrls: ['https://example.com/images/madurai-cotton-saree.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&q=80'],
+      originalPrice: 96,
+      discountPercent: 25,
+      bargainEnabled: true,
       featured: false
     },
     {
@@ -408,7 +437,8 @@ const seed = async () => {
       price: 44,
       stock: 20,
       tags: ['kasavu', 'dupatta', 'festive'],
-      imageUrls: ['https://example.com/images/kerala-kasavu-dupatta.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=1200&q=80'],
+      bargainEnabled: true,
       featured: false
     },
     {
@@ -422,7 +452,7 @@ const seed = async () => {
       price: 128,
       stock: 7,
       tags: ['mysore', 'silk', 'suit'],
-      imageUrls: ['https://example.com/images/mysore-silk-suit.jpg'],
+      imageUrls: ['https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&q=80'],
       featured: false
     }
   ];
@@ -523,7 +553,7 @@ const seed = async () => {
     buyerId: buyer._id,
     productId: bargainProduct._id,
     amount: 155,
-    paymentStatus: 'authorized',
+    paymentStatus: 'not_required',
     bidStatus: 'active'
   });
 
@@ -558,7 +588,7 @@ const seed = async () => {
       sellerId: jaipur.seller._id,
       storeId: jaipur.store._id,
       videoUrl: 'https://example.com/videos/phulkari-suit-edit.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1614093302611-8efc4de12407?w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1596993100471-c3905dafa78e?w=800',
       caption: 'A soft Phulkari suit with handmade jewelry accents.',
       hashtags: ['suits', 'phulkari', 'northindia'],
       region: 'North India',
@@ -636,7 +666,7 @@ const seed = async () => {
       sellerId: chennai.seller._id,
       storeId: chennai.store._id,
       videoUrl: 'https://example.com/videos/kasavu-festive-detail.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1591130901921-3f0652bb3c0c?w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800',
       caption: 'Kasavu gold details for festive layering.',
       hashtags: ['kasavu', 'accessories', 'southindia'],
       region: 'South India',
@@ -649,7 +679,7 @@ const seed = async () => {
       sellerId: jaipur.seller._id,
       storeId: jaipur.store._id,
       videoUrl: 'https://example.com/videos/regional-layering-mix.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1595777216528-071e0127ccbf?w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800',
       caption: 'Regional layering with one sold-out piece and one shoppable accessory.',
       hashtags: ['regionalwear', 'layering', 'jaipur'],
       region: 'North India',

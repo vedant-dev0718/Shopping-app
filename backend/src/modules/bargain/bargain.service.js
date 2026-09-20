@@ -254,6 +254,7 @@ const placeBid = async (buyer, productId, { amount, quantity = 1, shippingInfo }
     existingBid.quantity = quantity;
     existingBid.shippingInfo = cleanedShippingInfo;
     existingBid.paymentStatus = 'not_required';
+    existingBid.paymentWindowEndsAt = null;
     existingBid.bidStatus = 'pending_seller_decision';
     await existingBid.save();
 
@@ -286,7 +287,24 @@ const placeBid = async (buyer, productId, { amount, quantity = 1, shippingInfo }
   return newBid;
 };
 
-const releaseBidAuthorizations = async (bids, status = 'lost') => {
+const notifyBidRejection = async (bid, product, status) => {
+  const isExpired = status === 'expired';
+  const isRejected = status === 'rejected';
+  const title = isRejected ? 'Your bid was rejected' : 'Your bargain bid was not selected';
+  const reason = bid.sellerDecision?.rejectionReason || (isExpired ? 'Bargain expired' : 'Another bid was selected');
+
+  await notificationService.sendToUser(bid.buyerId, {
+    title,
+    subtitle: `${product.title}: ${reason}`,
+    data: {
+      type: 'bargain_bid_rejected',
+      productId: product._id.toString(),
+      bidId: bid._id.toString()
+    }
+  });
+};
+
+const closeBids = async (bids, status = 'lost', product) => {
   await Promise.all(bids.map(async (bid) => {
     bid.bidStatus = status;
     bid.sellerDecision = {
@@ -296,6 +314,10 @@ const releaseBidAuthorizations = async (bids, status = 'lost') => {
       rejectionReason: status === 'expired' ? 'Bargain expired' : 'Bid was not selected'
     };
     await bid.save();
+
+    if (product) {
+      await notifyBidRejection(bid, product, status);
+    }
   }));
 };
 
@@ -342,7 +364,6 @@ const createOrderFromWinningBid = async ({ winningBid, product, schedule }) => {
     items: [financialItem],
     shippingInfo: cleanShippingInfo(winningBid.shippingInfo),
     paymentMethod: 'COD',
-    paymentCaptureMode: 'automatic',
     paymentStatus: 'pending',
     orderStatus: 'processing',
     trackingStatus: 'Order confirmed from winning bid',
@@ -350,13 +371,6 @@ const createOrderFromWinningBid = async ({ winningBid, product, schedule }) => {
       status: 'accepted',
       acceptedBy: product.sellerId,
       acceptedAt: now
-    },
-    paymentFlow: {
-      captureAfterSellerAcceptance: false,
-      signatureVerified: false
-    },
-    razorpay: {
-      signatureVerified: false
     },
     inventoryConfirmation: {
       confirmedAvailable: true,
@@ -386,13 +400,38 @@ const createOrderFromWinningBid = async ({ winningBid, product, schedule }) => {
   return order;
 };
 
+const withBidPaymentState = async (bids) => {
+  const now = new Date();
+  return bids.map((bid) => {
+    const paymentWindowEndsAt = bid.paymentWindowEndsAt || null;
+    const hasOrderLinked = Boolean(bid.orderId);
+    const hasCompletedPayment = ['paid', 'refunded', 'cancelled'].includes(
+      String(bid.paymentStatus || '').toLowerCase()
+    );
+    const isAccepted = ['accepted', 'won'].includes(bid.bidStatus);
+    const isUnfinished = isAccepted || ['active', 'pending_seller_decision'].includes(bid.bidStatus);
+    const hasExpired = paymentWindowEndsAt && new Date(paymentWindowEndsAt) <= now;
+
+    return {
+      ...bid,
+      bidStatus: isUnfinished && !hasOrderLinked && !hasCompletedPayment && hasExpired
+        ? 'expired'
+        : bid.bidStatus,
+      paymentWindowEndsAt,
+      canProceedToPayment: isAccepted && !hasOrderLinked && !hasCompletedPayment && !hasExpired
+    };
+  });
+};
+
 const getProductBids = async (seller, productId) => {
   await getSellerProduct(productId, seller.id);
 
-  return Bid.find({ productId })
+  const bids = await Bid.find({ productId })
     .populate('buyerId', 'name email phone')
     .sort({ amount: -1, createdAt: 1 })
     .lean();
+
+  return withBidPaymentState(bids);
 };
 
 const toBidderLabel = (buyerId) => {
@@ -420,7 +459,13 @@ const getProductBidSummary = async (_buyer, productId) => {
 
   const summaryBidFilter = {
     productId,
-    bidStatus: { $nin: ['draft', 'cancelled', 'withdrawn'] }
+    bidStatus: { $in: ['active', 'pending_seller_decision', 'accepted', 'won'] },
+    $or: [
+      { paymentWindowEndsAt: null },
+      { paymentWindowEndsAt: { $gt: now } },
+      { orderId: { $ne: null } },
+      { paymentStatus: 'paid' }
+    ]
   };
 
   const [highestBid, recentBids, totalBids] = await Promise.all([
@@ -481,6 +526,10 @@ const acceptBid = async (seller, productId, bidId) => {
     throw new AppError('Only active or pending bids can be accepted', 400);
   }
 
+  if (bid.paymentWindowEndsAt && bid.paymentWindowEndsAt <= new Date()) {
+    throw new AppError('Bid payment window has expired', 409);
+  }
+
   if (schedule.reservePrice > 0 && bid.amount < schedule.reservePrice) {
     throw new AppError('Cannot accept bid below reserve price', 400);
   }
@@ -497,10 +546,11 @@ const acceptBid = async (seller, productId, bidId) => {
   });
 
   if (competingBids.length > 0) {
-    await releaseBidAuthorizations(competingBids, 'rejected');
+    await closeBids(competingBids, 'rejected', product);
   }
 
   bid.bidStatus = 'accepted';
+  bid.paymentWindowEndsAt = new Date(Date.now() + env.bidAcceptanceWindowMinutes * 60 * 1000);
   bid.sellerDecision = {
     ...(bid.sellerDecision || {}),
     decidedBy: seller.id,
@@ -545,7 +595,7 @@ const closeBidPaymentWindow = async (seller, productId, bidId) => {
     throw new AppError('Only accepted bids can have their payment window closed', 400);
   }
 
-  if (['captured', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())) {
+  if (['paid', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())) {
     throw new AppError('Cannot close payment window for completed payment', 400);
   }
 
@@ -562,12 +612,18 @@ const closeBidPaymentWindow = async (seller, productId, bidId) => {
   };
   await bid.save();
 
+  await notificationService.sendToUser(bid.buyerId, {
+    title: 'Your bid was cancelled',
+    subtitle: `${product.title}: Seller closed the payment window and Bargain Day.`,
+    data: { type: 'bargain_bid_rejected', productId: product._id.toString(), bidId: bid._id.toString() }
+  });
+
   const schedule = await BargainSchedule.findOne({ productId: product._id, winningBidId: bid._id });
   if (schedule) {
     schedule.winningBidId = null;
-    if (schedule.endDate > now) {
-      schedule.status = 'active';
-    }
+    schedule.status = 'closed';
+    product.bargainEnabled = false;
+    await product.save();
     await schedule.save();
   }
 
@@ -591,12 +647,13 @@ const reopenBidNegotiation = async (seller, productId, bidId) => {
     throw new AppError('Only accepted, pending, or expired bids can be reopened', 400);
   }
 
-  if (['captured', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())) {
+  if (['paid', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())) {
     throw new AppError('Cannot reopen negotiation for completed payment', 400);
   }
 
   bid.bidStatus = 'pending_seller_decision';
   bid.paymentStatus = 'not_required';
+  bid.paymentWindowEndsAt = null;
   bid.sellerDecision = {
     ...(bid.sellerDecision || {}),
     decidedBy: seller.id,
@@ -666,7 +723,7 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
       productId: product._id,
       bidStatus: { $in: ['active', 'pending_seller_decision'] }
     });
-    await releaseBidAuthorizations(bidsToRelease, 'lost');
+    await closeBids(bidsToRelease, 'rejected', product);
 
     schedule.status = 'closed';
     schedule.winningBidId = null;
@@ -696,7 +753,7 @@ const closeBargain = async (seller, productId, { force = false } = {}) => {
     bidStatus: { $in: ['active', 'pending_seller_decision'] }
   });
 
-  await releaseBidAuthorizations(losingBids, 'lost');
+  await closeBids(losingBids, 'lost', product);
 
   winningBid.bidStatus = 'won';
   winningBid.paymentStatus = 'not_required';
@@ -818,30 +875,10 @@ const getActiveBargains = async () => {
 };
 
 const getBuyerBids = async (buyer) => {
-  const now = new Date();
-  const buyerBids = await Bid.find({ buyerId: buyer.id })
+  const buyerBids = await withBidPaymentState(await Bid.find({ buyerId: buyer.id })
     .populate(activeProductPopulate)
     .sort({ createdAt: -1 })
-    .lean();
-
-  const razorpayOrderIds = [...new Set(
-    buyerBids
-      .map((bid) => bid.razorpayOrderId || bid.razorpay?.orderId || '')
-      .filter(Boolean)
-  )];
-
-  const relatedOrders = razorpayOrderIds.length > 0
-    ? await Order.find({
-      buyerId: buyer.id,
-      razorpayOrderId: { $in: razorpayOrderIds }
-    })
-      .select('_id razorpayOrderId paymentStatus')
-      .lean()
-    : [];
-
-  const orderByRazorpayOrderId = new Map(
-    relatedOrders.map((order) => [String(order.razorpayOrderId || ''), order])
-  );
+    .lean());
 
   const productIds = [...new Set(
     buyerBids
@@ -866,24 +903,11 @@ const getBuyerBids = async (buyer) => {
     const product = bid.productId && bid.productId._id ? bid.productId : null;
     const productId = product?._id?.toString() || bid.productId?.toString() || '';
     const schedule = latestScheduleByProductId.get(productId);
-    const paymentWindowEndsAt = bid.razorpay?.authorizationExpiresAt || null;
-    const linkedOrder = bid.orderId
-      ? { _id: bid.orderId, paymentStatus: null }
-      : orderByRazorpayOrderId.get(String(bid.razorpayOrderId || bid.razorpay?.orderId || ''));
-    const hasOrderLinked = Boolean(linkedOrder?._id);
-    const canProceedToPayment =
-      ['accepted', 'won'].includes(bid.bidStatus)
-      && !hasOrderLinked
-      && !['captured', 'refunded', 'cancelled'].includes(String(bid.paymentStatus || '').toLowerCase())
-      && (!paymentWindowEndsAt || new Date(paymentWindowEndsAt) > now);
-
     return {
       ...bid,
       product,
       scheduleEndDate: schedule?.endDate || null,
-      scheduleStatus: schedule?.status || null,
-      paymentWindowEndsAt,
-      canProceedToPayment
+      scheduleStatus: schedule?.status || null
     };
   });
 };
